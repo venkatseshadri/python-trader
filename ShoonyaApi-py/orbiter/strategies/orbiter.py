@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+🚀 ORBITER - NIFTY F&O ORB Trading Bot (FIXED VERSION)
+TOP 7 Execution | Modular Filters | Shoonya API
+"""
+
+import time
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -6,127 +12,148 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.client import BrokerClient
 from filters import *
 from config import SYMBOLS_UNIVERSE, TOP_N, TRADE_SCORE
-import time
 from operator import itemgetter
+from utils.utils import safe_ltp, format_position
+from datetime import datetime, time as time_class
+import pytz
 
-print("✅ Modular filters + config loaded!")
-print(f"📊 Universe: {len(SYMBOLS_UNIVERSE)} NIFTY F&O stocks")
-print(f"🎯 Execute TOP {TOP_N} ≥ {TRADE_SCORE}pts")
+def dt_time(hour, minute):
+    """Market time helper - FIXED"""
+    return time_class(hour, minute)
 
 class OrbiterStrategy:
-    FILTERS = [orb_filter, price_above_5ema_filter, ema5_above_9ema_filter]
-    WEIGHTS = [25, 20, 18]
-    
     def __init__(self, client):
-        self.client = client
-        self.ema_histories = {}
+        self.client = client  # Pass client from main
+        self.load_config()
+        self.load_components()
+        
+    def load_config(self):
+        """Load TOP_N, TRADE_SCORE from config.py"""
+        self.TRADE_SCORE = TRADE_SCORE
+        self.TOP_N = TOP_N
+        self.ENTRY_WEIGHTS = [25.0, 20.0, 18.0]  # F1,F2,F3 weights
+        self.SL_WEIGHTS = [1.0] * 10
+        
+        # Trading hours IST
+        ist = pytz.timezone('Asia/Kolkata')
+        self.MARKET_OPEN = dt_time(9, 15)
+        self.MARKET_CLOSE = dt_time(15, 30)
+        
+        print("🚀 NIFTY F&O Universe loaded")
+        print(f"📈 TOP {self.TOP_N} execution | Min score: {self.TRADE_SCORE}pts")
+        
+    def load_components(self):
+        """Load universe and filters - FIXED"""
+        print("✅ Modular filters + config loaded!")
+        
+        # Use existing config.py SYMBOLS_UNIVERSE
         self.symbols = SYMBOLS_UNIVERSE
-        self.trade_count = 0
-    
-    def safe_ltp(self, token):
-        """🔥 SAFE LTP conversion - handles string/float issues"""
-        try:
-            ltp_raw = self.client.SYMBOLDICT[token].get('lp', '0')
-            ltp = float(ltp_raw) if ltp_raw else 0.0
-            return ltp, f"₹{ltp:.2f}"
-        except (ValueError, TypeError):
-            return 0.0, "₹0.00"
-    
+        print(f"📊 Universe: {len(self.symbols)} NIFTY F&O stocks")
+        
+        # Direct filter functions (no FilterManager class needed)
+        self.filters = {
+            'f1_orb': orb_filter,
+            'f2_5ema': price_above_5ema_filter,
+            'f3_9ema': ema5_above_9ema_filter
+        }
+        print(f"🎯 Filters: F1(25)+F2(20)+F3(18) | TOP {self.TOP_N}")
+        
     def evaluate_filters(self, token):
-        if token not in self.client.SYMBOLDICT:
+        """Evaluate entry filters for token - FIXED"""
+        data = self.client.SYMBOLDICT.get(token)
+        if not data:
             return 0
-        data = self.client.SYMBOLDICT[token]
-        scores = []
-        for f, w in zip(self.FILTERS, self.WEIGHTS):
-            score = f(data, w, self.ema_histories)
-            scores.append(score)
-        total = sum(scores)
-        tsym = data.get('ts', token)
-        print(f"📊 {tsym}: {scores} = {total}pts")
+            
+        ltp, ltp_display = safe_ltp(data)
+    
+        # Apply actual filter functions
+        scores = [
+            self.filters['f1_orb'](data),           # F1 ORB
+            self.filters['f2_5ema'](data),         # F2 5EMA
+            self.filters['f3_9ema'](data)          # F3 9EMA
+        ]
+        
+        total = sum(w * s for w, s in zip(self.ENTRY_WEIGHTS, scores))
         return total
-    
+        
     def evaluate_all(self):
-        """Evaluate ALL stocks"""
+        """Evaluate all symbols - TOKEN FORMAT FIX"""
         scores = {}
-        for token in self.symbols:
-            if token in self.client.SYMBOLDICT:
-                scores[token] = self.evaluate_filters(token)
+        skipped = 0
+
+        for full_token in self.symbols:
+
+            if full_token in self.client.SYMBOLDICT:
+                score = self.evaluate_filters(full_token)
+                if score > 0:
+                    scores[full_token] = score
+            else:
+                skipped += 1
+                
+        print(f"📊 Scanned {len(self.symbols)} → {len(scores)} signals ({skipped} skipped)")
         return scores
-    
-    def get_top_n_trades(self, scores):
-        """SORT → TOP 7 with SAFE LTP display"""
+
+    def rank_signals(self, scores):
+        """Rank top signals - FIXED format_score"""
         if not scores:
-            print("❌ No stock data")
             return []
+            
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:self.TOP_N]
+        print("\n🏆 RANKING (Top {}):".format(self.TOP_N))
+        for i, (token, score) in enumerate(ranked, 1):
+            data = self.client.SYMBOLDICT.get(token)
+            name = self.client.SYMBOLDICT.get(token)['ts'].replace('-EQ', '')
+            ltp, ltp_display = safe_ltp(data) if data else (0, "N/A")
+            status = "🟢 ENTRY" if score >= self.TRADE_SCORE else "⚪ MONITOR"
+            print(f"  {i}. {name} {ltp_display} = {score:.0f}pts {status}")
+            
+        return [(token, score) for token, score in ranked if score >= self.TRADE_SCORE]
         
-        sorted_scores = sorted(scores.items(), key=itemgetter(1), reverse=True)
-        valid_scores = {k: v for k, v in sorted_scores if k in self.client.SYMBOLDICT}
+    def is_market_hours(self):
+        """Check market hours 9:15-15:30 IST"""
+        now = datetime.now()
+        now_ist = now.astimezone(pytz.timezone('Asia/Kolkata'))
+        current_time = now_ist.time()
+        return self.MARKET_OPEN <= current_time <= self.MARKET_CLOSE
         
-        if not valid_scores:
-            print("❌ No valid stocks")
-            return []
-        
-        top_n = sorted(valid_scores.items(), key=itemgetter(1), reverse=True)[:TOP_N]
-        
-        print("\n🏆 RANKING (Top {}):".format(TOP_N))
-        for i, (token, score) in enumerate(top_n, 1):
-            tsym = self.client.SYMBOLDICT[token].get('ts', token)
-            ltp, ltp_display = self.safe_ltp(token)
-            status = "🟢 TRADE!" if score >= TRADE_SCORE else "⚪ MONITOR"
-            print(f"  {i}. {tsym} {ltp_display} = {score}pts {status}")
-        
-        return top_n
-    
     def run(self):
+        """Main trading loop - NEEDS WEBSOCKET START"""
+        # CRITICAL: Start WebSocket feed FIRST
+        print("🚀 Starting WebSocket feed...")
         self.client.start_live_feed(self.symbols)
-        print(f"\n🚀 ORBITER LIVE - {len(self.symbols)} STOCKS → EXECUTE TOP {TOP_N}!")
-        print("F1: ORB(25) | F2: LTP>5EMA(20) | F3: 5EMA>9EMA(18)")
-        print("🔔 SIMULATION MODE - NO REAL ORDERS PLACED")
-        print("-" * 80)
         
-        while True:
-            try:
-                scores = self.evaluate_all()
-                
-                if not scores:
-                    print("⏳ Waiting for WebSocket data...\n")
-                    time.sleep(5)
-                    continue
-                
-                top_trades = self.get_top_n_trades(scores)
-                
-                if top_trades:
-                    # 🔥 EXECUTE ALL TOP 7 WINNERS ≥ TRADE_SCORE!
-                    trade_signals = [trade for trade in top_trades if trade[1] >= TRADE_SCORE]
+        try:
+            while True:
+                # if not self.is_market_hours():
+                #     print("😴 Outside market hours (9:15-15:30 IST)")
+                #     time.sleep(60)
+                #     continue
                     
-                    if trade_signals:
-                        self.trade_count += len(trade_signals)
-                        print(f"\n🚀 SESSION: {self.trade_count} signals | EXECUTING {len(trade_signals)}/{TOP_N} TRADES (SIMULATION):")
-                        for i, (token, score) in enumerate(trade_signals, 1):
-                            tsym = self.client.SYMBOLDICT[token]['ts']
-                            ltp, ltp_display = self.safe_ltp(token)
-                            sl_price = ltp * 0.98
-                            print(f"  {i}. 🟢 BUY {tsym} @ {ltp_display} ({score}pts)")
-                            print(f"     📏 Lot: 50 | MIS | NSE | SL: ₹{sl_price:.2f}")
-                    else:
-                        print(f"\n⏳ NO TRADES (Need {TRADE_SCORE}+pts)")
+                scores = self.evaluate_all()
+                entry_signals = self.rank_signals(scores)
+                
+                if entry_signals:
+                    print(f"\n🚀 {len(entry_signals)} ENTRY SIGNALS!")
+                    for token, score in entry_signals:
+                        name = self.client.SYMBOLDICT.get(token)['ts'].replace('-EQ', '')
+                        print(f"   🎯 BUY {name} ({score:.0f}pts)")
+                        # TODO: self.client.place_order(...)
                 else:
-                    print("\n❌ No stocks passed filters\n")
+                    print("⏳ No signals")
+                    
+                time.sleep(5)  # Scan every 5 seconds
                 
-                print("-" * 80)
-                time.sleep(5)
-                
-            except KeyboardInterrupt:
-                print(f"\n\n🛑 ORBITER STOPPED | Total signals: {self.trade_count}")
-                break
-            except Exception as e:
-                print(f"❌ Error: {e}")
-                time.sleep(5)
+        except KeyboardInterrupt:
+            print("\n👋 Shutdown complete")
+        except Exception as e:
+            print(f"💥 ERROR: {e}")
+            raise
 
 if __name__ == "__main__":
     client = BrokerClient()
     if client.login():
-        orbiter = OrbiterStrategy(client)
+        print("✅ Broker connected!")
+        orbiter = OrbiterStrategy(client)  # Pass client
         orbiter.run()
     else:
         print("❌ Login failed")
