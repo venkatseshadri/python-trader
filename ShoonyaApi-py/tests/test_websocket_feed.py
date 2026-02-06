@@ -1,5 +1,6 @@
 import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir) 
 from api_helper import ShoonyaApiPy
 import datetime
 import logging
@@ -64,7 +65,7 @@ def get_time(time_string):
 api = ShoonyaApiPy()
 
 #yaml for parameters
-with open('cred.yml') as f:
+with open('./cred.yml') as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
     print(cred)
 

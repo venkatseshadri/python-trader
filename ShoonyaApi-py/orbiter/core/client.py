@@ -47,35 +47,53 @@ class BrokerClient:
         )
         return bool(ret)
     
-    def start_live_feed(self, symbols: list = None):
-        """Start WebSocket with your trading symbols"""
-        if symbols is None:
-            symbols = ['NSE|2885', 'NSE|11630', 'NSE|3703']  # RELIANCE, NTPC, VIPIND
-            
-        def quote_callback(message):
-            """LIVE quote handler (ts safety fixed)"""
-            if 'ts' not in message or 'lp' not in message:
-                return
-                
+    def start_live_feed(self, symbols: list): 
+        print(f"🚀 Starting WS for {len(symbols)} symbols...")
+        self.symbols = symbols
+        
+        # Official ShoonyaApiPy syntax (from docs)
+        def on_tick(message):
+            if 'ts' not in message or 'lp' not in message: return
             key = f"{message['e']}|{message['tk']}"
             self.SYMBOLDICT[key] = message
             print(f"📊 LIVE: {message['ts']} ₹{message['lp']}")
         
-        def open_callback():
-            """Auto-subscribe on connect"""
+        def on_open():
             self.socket_opened = True
             print("🚀 WEBSOCKET LIVE!")
             self.api.subscribe(symbols, feed_type='d')
-            print(f"✅ Subscribed {len(symbols)} symbols")
-        
-        def order_callback(message):
-            """Live order tracking"""
-            print(f"📋 ORDER: {message.get('status')} {message.get('tsym')}")
         
         self.api.start_websocket(
-            order_update_callback=order_callback,
-            subscribe_callback=quote_callback,
-            socket_open_callback=open_callback
+            subscribe_callback=on_tick,
+            socket_open_callback=on_open,
+            order_update_callback=lambda x: print("ORDER:", x)
+        )
+
+            
+    def quote_callback(self, message):
+        if 'ts' not in message or 'lp' not in message:
+            return
+        key = f"{message['e']}|{message['tk']}"
+        self.SYMBOLDICT[key] = message
+        print(f"📊 LIVE: {message['ts']} ₹{message['lp']}")
+
+    
+    def open_callback(self):
+        self.socket_opened = True
+        print("🚀 WEBSOCKET LIVE!")
+        self.api.subscribe(self.symbols, feed_type='d')  # ← 'symbols' also undefined
+    
+    def order_callback(message):
+        """Live order tracking"""
+        print(f"📋 ORDER: {message.get('status')} {message.get('tsym')}")
+    
+    def start_websocket(self):
+        def on_feed(tick):
+            print("FEED:", tick)  # Test callback
+            
+        self.api.start_websocket(
+            subscribecallback=on_feed,
+            orderupdatecallback=lambda order: print("ORDER:", order)
         )
     
     def get_ltp(self, exch_token: str) -> Optional[float]:

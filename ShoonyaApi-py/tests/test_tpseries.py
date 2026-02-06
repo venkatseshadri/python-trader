@@ -1,5 +1,6 @@
 import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir) 
 from api_helper import ShoonyaApiPy
 import logging
 import yaml
@@ -26,7 +27,7 @@ api = ShoonyaApiPy()
 #ret = api.login(userid = user, password = pwd, twoFA=factor2, vendor_code=vc, api_secret=apikey, imei=imei)
 
 #yaml for parameters
-with open('..\\cred.yml') as f:
+with open('./cred.yml') as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
     print(cred)
 
@@ -53,7 +54,7 @@ if ret != None:
     endtime   =  datetime.datetime.today()
     endtime   =  endtime.replace(hour=0, minute=0, second=0, microsecond=0)  + datetime.timedelta(days = 1)
     
-    ret = api.get_time_price_series(exchange='NSE', token='26009', starttime=lastBusDay.timestamp(), endtime=endtime.timestamp(), interval=240)
+    ret = api.get_time_price_series(exchange='NSE', token='2885', starttime=lastBusDay.timestamp(), endtime=endtime.timestamp(), interval=240)
 
 
     #ret = api.get_time_price_series(exchange='NSE', token='2885', starttime=lastBusDay.timestamp())
@@ -66,4 +67,4 @@ if ret != None:
         #for val in ret:
         #    print(val)
 
-    print("The time difference is :", timeit.default_timer() - starttime)
+   # print("The time difference is :", timeit.default_timer() - starttime)
