@@ -60,7 +60,7 @@ def price_above_5ema_filter(data, candle_data, token, weight=20):
     
     if ltp > latest_ema:
         print(f"🟢 5EMA BULL {token}: {ltp:.2f} > {latest_ema:.2f} → +{weight}pts")
-        return weight
+        return {'score': weight, 'ema5': latest_ema}  # ✅ DICT
     else:
         print(f"🔴 5EMA FAIL {token}: {ltp:.2f} <= {latest_ema:.2f}")
-        return 0
+        return {'score': 0, 'ema5': latest_ema}      # ✅ DICT

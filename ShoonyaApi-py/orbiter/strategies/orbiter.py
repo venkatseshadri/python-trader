@@ -6,6 +6,8 @@
 import time
 import sys
 import os
+
+import pytz
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir) 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -49,17 +51,37 @@ class Orbiter:
         self.client.login()  # Uses EXISTING client
         self.client.start_live_feed(symbols)
 
+    def is_eod_reset_time(self):
+        """⭐ EOD RESET: Clear positions at 3:25PM"""
+        now = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+        eod_reset = time(15, 25)  # 3:25PM
+        return now >= eod_reset
+
     def run(self):
         """Main orchestrator"""
         try:
+            last_sl_check = 0
             while True:
                 # if not self.helper.is_market_hours():  # ← MOVED!
                 #     print("😴 Outside market hours")
                 #     time.sleep(60)
                 #     continue
+
+                # # ⭐ EOD AUTO-RESET
+                # if self.is_eod_reset_time():
+                #     self.helper.active_positions.clear()
+                #     print("🔄 EOD 3:25PM: All positions RESET")
                 
                 scores = self.helper.evaluate_all()
                 entry_signals = self.helper.rank_signals(scores)
+
+                # Periodically check SLs every 60 seconds
+                now = time.time()
+                if now - last_sl_check >= 60:
+                    sl_hits = self.helper.check_sl()
+                    if sl_hits:
+                        print(f"🔔 SL Hits: {len(sl_hits)} positions squared off")
+                    last_sl_check = now
                 
                 if entry_signals:
                     print(f"\n🚀 {len(entry_signals)} ENTRY SIGNALS!")

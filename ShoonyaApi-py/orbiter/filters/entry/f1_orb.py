@@ -21,22 +21,22 @@ def orb_filter(data, ret, weight=25, token='', buffer_pct=0.2):
     ltp = float(data.get('lp', 0) or 0)
     
     if not token or ltp == 0:
-        return 0
+        return {'score': 0, 'orb_high': 0, 'orb_low': 0}   # ⭐ CHANGED
     
     buf = buffer_pct / 100
     upper, lower = calculate_orb_range(ret, token)
     
     if not upper or not lower:
-        return 0
+        return {'score': 0, 'orb_high': 0, 'orb_low': 0}  # ⭐ CHANGED
     
     if ltp > upper * (1 + buf):
         print(f"🟢 ORB BULL {token}: ₹{ltp:.2f} > ₹{upper:.2f}")
-        return weight
+        return {'score': weight, 'orb_high': upper, 'orb_low': lower}  # ⭐ CHANGED
     elif ltp < lower * (1 - buf):
         print(f"🔴 ORB BEAR {token}: ₹{ltp:.2f} < ₹{lower:.2f}")
-        return weight
+        return {'score': weight, 'orb_high': upper, 'orb_low': lower}  # ⭐ CHANGED
     
-    return 0
+    return {'score': 0, 'orb_high': upper, 'orb_low': lower}  # ⭐ CHANGED
 
 def get_today_orb_times():
     """Dynamic ORB: Today's date + fixed 9:15-9:30"""

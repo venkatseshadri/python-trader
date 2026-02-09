@@ -59,7 +59,8 @@ SYMBOLS_UNIVERSE = [
 
 # 🔥 CONFIGURATION
 TOP_N = 7                    # Execute TOP 7 highest scoring
-TRADE_SCORE = 45             # Minimum score (out of 63pts)
+#TRADE_SCORE = 45             # Minimum score (out of 63pts)
+TRADE_SCORE = 20             # Minimum score (out of 63pts)
 UPDATE_INTERVAL = 5          # Seconds between scans
 
 # 🔥 F&O ORB BREAKOUT LEVELS (Adjust based on market)
