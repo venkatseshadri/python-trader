@@ -16,24 +16,24 @@ class ShoonyaWebSocketClient:
         self.config = config
         self.ltp_cache = {}
         
-def login(self) -> bool:
-    try:
-        # Map your config keys → Shoonya API parameter names
-        login_params = {
-            'userid': self.config['shoonya']['user_id'],
-            'password': self.config['shoonya']['password'],
-            'twoFA': self.config['shoonya']['factor2'],  # DOB/PAN/TOTP
-            'vendor_code': self.config['shoonya']['vendor_code'],
-            'api_secret': self.config['shoonya']['api_key'],
-            'imei': self.config['shoonya']['imei']
-        }
-        
-        ret = self.api.login(**login_params)
-        logging.info("✅ Shoonya login success")
-        return ret is not None
-    except Exception as e:
-        logging.error(f"❌ Login failed: {e}")
-        return False
+    def login(self) -> bool:
+        try:
+            # Map your config keys → Shoonya API parameter names
+            login_params = {
+                'userid': self.config['shoonya']['user_id'],
+                'password': self.config['shoonya']['password'],
+                'twoFA': self.config['shoonya']['factor2'],  # DOB/PAN/TOTP
+                'vendor_code': self.config['shoonya']['vendor_code'],
+                'api_secret': self.config['shoonya']['api_key'],
+                'imei': self.config['shoonya']['imei']
+            }
+            
+            ret = self.api.login(**login_params)
+            logging.info("✅ Shoonya login success")
+            return ret is not None
+        except Exception as e:
+            logging.error(f"❌ Login failed: {e}")
+            return False
 
     
     def start_websocket(self, ltp_callback):
