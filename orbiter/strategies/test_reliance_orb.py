@@ -6,9 +6,9 @@ with open('cred.yml') as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
     print(cred)
 
-# FIXED PATH - Go up 2 levels from strategies/
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, base_dir)
+# Add ShoonyaApi-py to path for api_helper import
+shoonya_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ShoonyaApi-py')
+sys.path.insert(0, shoonya_path)
 
 from api_helper import ShoonyaApiPy 
 

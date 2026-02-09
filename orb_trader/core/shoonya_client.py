@@ -1,6 +1,9 @@
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))  # ShoonyaApi-py
+
+# Add ShoonyaApi-py to path for api_helper import
+shoonya_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'ShoonyaApi-py')
+sys.path.insert(0, shoonya_path)
 
 from api_helper import ShoonyaApiPy
 from typing import Dict, Optional, Callable

@@ -37,7 +37,7 @@ class Orbiter:
         print("✅ Modular filters + config loaded!")
         
         symbols = config.SYMBOLS_UNIVERSE
-        self.client = BrokerClient("../cred.yml")
+        self.client = BrokerClient("../ShoonyaApi-py/cred.yml")
         self.helper = OrbiterHelper(self.client, symbols, filters, self.config)
 
         print(f"📊 Universe: {len(symbols)} NIFTY F&O stocks")

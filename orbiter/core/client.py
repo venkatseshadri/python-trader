@@ -12,7 +12,10 @@ import requests
 import zipfile
 import io
 import pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Add ShoonyaApi-py to path for api_helper import
+shoonya_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'ShoonyaApi-py')
+sys.path.insert(0, shoonya_path)
 
 from api_helper import ShoonyaApiPy
 import yaml
@@ -29,9 +32,10 @@ class BrokerClient:
         self.TOKEN_TO_COMPANY: Dict[str, str] = {}  # ✅ Add company name mapping
         
         # Load credentials
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # persist the absolute path so we can update credentials later
-        self.config_file = os.path.join(project_root, config_path)
+        # client.py is at: python-trader/orbiter/core/client.py
+        # We need to find python-trader root (3 levels up)
+        orbiter_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.config_file = os.path.abspath(os.path.join(orbiter_root, config_path))
         with open(self.config_file) as f:
             self.cred = yaml.load(f, Loader=yaml.FullLoader)
             
