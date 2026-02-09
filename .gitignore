@@ -1,5 +1,6 @@
 # Credentials and secrets
 credentials.json
+orbiter/bot/credentials.json
 cred.yml
 *.key
 *.pem
