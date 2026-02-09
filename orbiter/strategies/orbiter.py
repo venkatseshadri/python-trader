@@ -15,18 +15,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from datetime import datetime, time as dt_time
 from core.client import BrokerClient
 import filters
-from config import SYMBOLS_UNIVERSE, TOP_N, TRADE_SCORE
 from orbiter_helper import OrbiterHelper
 import config
 
 class Orbiter:
     def __init__(self):        
         self.config = {
-            'TRADE_SCORE': 25,
-            'TOP_N': 6,
-            'ENTRY_WEIGHTS': [1.0, 1.0, 0.0],
-            'MARKET_OPEN': dt_time(9, 15),
-            'MARKET_CLOSE': dt_time(15, 30)
+            'TRADE_SCORE': config.TRADE_SCORE,
+            'TOP_N': config.TOP_N,
+            'ENTRY_WEIGHTS': config.ENTRY_WEIGHTS,
+            'MARKET_OPEN': config.MARKET_OPEN,
+            'MARKET_CLOSE': config.MARKET_CLOSE,
+            'OPTION_EXECUTE': config.OPTION_EXECUTE,
+            'OPTION_PRODUCT_TYPE': config.OPTION_PRODUCT_TYPE,
+            'OPTION_PRICE_TYPE': config.OPTION_PRICE_TYPE,
+            'OPTION_EXPIRY': config.OPTION_EXPIRY,
+            'OPTION_INSTRUMENT': config.OPTION_INSTRUMENT,
+            'HEDGE_STEPS': config.HEDGE_STEPS
         }
         
         self.client = None
@@ -43,18 +48,22 @@ class Orbiter:
         print(f"📊 Universe: {len(symbols)} NIFTY F&O stocks")
         print(f"🎯 Entry: TOP {self.config['TOP_N']} ≥ {self.config['TRADE_SCORE']}pts")
         
-    def login(self):
+    def login(self, factor2_override: str | None = None):
         """Shoonya login - NO NEW CLIENT!"""
-        symbols = config.SYMBOLS_UNIVERSE
+        symbols = self.helper.symbols
         # print("🚀 BrokerClient initialized:", self.client.cred['user'])  # FA333160
         # print("🔐 Authenticating...")
-        self.client.login()  # Uses EXISTING client
+        ok = self.client.login(factor2_override=factor2_override)  # Uses EXISTING client
+        if not ok:
+            print("🛑 Aborting: login failed, websocket not started")
+            return False
         self.client.start_live_feed(symbols)
+        return True
 
     def is_eod_reset_time(self):
         """⭐ EOD RESET: Clear positions at 3:25PM"""
         now = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-        eod_reset = time(15, 25)  # 3:25PM
+        eod_reset = dt_time(15, 25)  # 3:25PM
         return now >= eod_reset
 
     def run(self):
@@ -62,6 +71,8 @@ class Orbiter:
         try:
             last_sl_check = 0
             while True:
+                now_ts = time.time()
+
                 # if not self.helper.is_market_hours():  # ← MOVED!
                 #     print("😴 Outside market hours")
                 #     time.sleep(60)
@@ -76,12 +87,11 @@ class Orbiter:
                 entry_signals = self.helper.rank_signals(scores)
 
                 # Periodically check SLs every 60 seconds
-                now = time.time()
-                if now - last_sl_check >= 60:
+                if now_ts - last_sl_check >= 60:
                     sl_hits = self.helper.check_sl()
                     if sl_hits:
                         print(f"🔔 SL Hits: {len(sl_hits)} positions squared off")
-                    last_sl_check = now
+                    last_sl_check = now_ts
                 
                 if entry_signals:
                     print(f"\n🚀 {len(entry_signals)} ENTRY SIGNALS!")
@@ -94,7 +104,8 @@ class Orbiter:
 def main():
     orbiter = Orbiter()
     orbiter.setup()
-    orbiter.login()
+    if not orbiter.login():
+        return
     orbiter.run()
 
 if __name__ == "__main__":

@@ -2,12 +2,13 @@
 """
 🚀 ORBITER Helper - Complete Trading Logic
 """
-from utils.utils import safe_ltp, format_score, get_today_orb_times
-from datetime import datetime, time as dt_time
+from utils.utils import safe_ltp, get_today_orb_times
+from datetime import datetime
+import time
 import pytz
+import filters
 
 # Add to TOP:
-import sys, os
 import importlib.util
 import os
 
@@ -18,17 +19,10 @@ sheets = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sheets)
 log_buy_signals = sheets.log_buy_signals  # ✅ WORKS EVERYWHERE
 log_square_off = getattr(sheets, 'log_square_off', None)
+log_scan_metrics = getattr(sheets, 'log_scan_metrics', None)
 
-# SL filters - dynamic load from orbiter/filters/sl
-sl_f1 = None
-try:
-    sl_path = os.path.join(base_dir, 'filters', 'sl', 'f1_price_drop_10.py')
-    if os.path.exists(sl_path):
-        sl_spec = importlib.util.spec_from_file_location('sl_f1', sl_path)
-        sl_f1 = importlib.util.module_from_spec(sl_spec)
-        sl_spec.loader.exec_module(sl_f1)
-except Exception:
-    sl_f1 = None
+# SL filters - generic registry from filters package
+SL_FILTERS = getattr(filters, 'get_filters', lambda _: [])('sl')
 
 class OrbiterHelper:
     def __init__(self, client, symbols, filters, config):
@@ -39,6 +33,8 @@ class OrbiterHelper:
         # ⭐ NEW: Track active buy positions: token -> info
         # info = {'entry_price': float, 'entry_time': datetime, 'symbol': str, 'company_name': str}
         self.active_positions = {}  # {'NSE|3045': {...}}
+        self.last_scan_metrics = []
+        self.last_scan_log_ts = 0
         
     def evaluate_filters(self, token):
         """Evaluate entry filters - Store returnvalues + return numeric total"""
@@ -52,60 +48,117 @@ class OrbiterHelper:
         print(f"🔍 websocket='{websocket_token}' ltp={data.get('lp', 'MISSING')}")
         
         #ltp, ltp_display, symbol  = safe_ltp(data)
-        startime, endtime = get_today_orb_times()
-        orb_start_ts = int(startime.timestamp())
-        orb_end_ts = int(endtime.timestamp())
+        start_time, end_time = get_today_orb_times()
+        start_ts = int(start_time.timestamp())
+        end_ts = int(end_time.timestamp())
         
         try:
             candle_data = self.client.api.get_time_price_series(
                 exchange='NSE', 
                 token=websocket_token,
-                starttime=orb_start_ts, 
-                endtime=orb_end_ts, 
+                starttime=start_ts, 
+                endtime=end_ts, 
                 interval=1
             )
-        
+
+            entry_filters = getattr(self.filters, 'get_filters', lambda _: [])('entry')
+            filter_results = {}
+            scores = []
+
             if not candle_data or len(candle_data) < 5:
-                print(f"🔴 5EMA {token}: Insufficient data ({len(candle_data)})")
-                return 0
-            
-            # ⭐ Get FULL returnvalues from filters
-            orb_result = self.filters.orb_filter(data, candle_data, token=websocket_token)
-            ema_result = self.filters.price_above_5ema_filter(data, candle_data, token=websocket_token)
-            
-            # ⭐ Extract JUST scores for evaluation
-            scores = [
-                orb_result['score'],    # 25 or 0
-                ema_result['score'],    # 20 or 0  
-                0                       # F3 OFF
-            ]
-            
-            total = sum(w * s for w, s in zip(self.config['ENTRY_WEIGHTS'], scores))
-            
+                print(f"🔴 FILTERS {token}: Insufficient candle data ({len(candle_data)})")
+                for entry_filter in entry_filters:
+                    filter_results[entry_filter.key] = {'score': 0}
+                    scores.append(0)
+            else:
+                # ⭐ Get FULL returnvalues from filters via common evaluate interface
+                for entry_filter in entry_filters:
+                    result = entry_filter.evaluate(data, candle_data, token=websocket_token)
+                    if not isinstance(result, dict):
+                        result = {'score': result}
+                    filter_results[entry_filter.key] = result
+                    scores.append(result.get('score', 0))
+
+            if not scores:
+                total = 0
+            else:
+                total = sum(w * s for w, s in zip(self.config['ENTRY_WEIGHTS'], scores))
+
             # ⭐ STORE returnvalues for rank_signals() to use later
             data['_filter_results'] = {
-                'orb': orb_result,      # {'score':25, 'orb_high':1074.50, 'orb_low':1067.20}
-                'ema': ema_result,      # {'score':20, 'ema5':1072.15}
-                'total': total          # 45
+                **filter_results,
+                'total': total
             }
-            
-            print(f"📊 {token}: ORB={orb_result['score']} EMA={ema_result['score']} TOTAL={total}")
+
+            # Collect scan metrics for Sheets
+            day_open = data.get('o') or data.get('open')
+            day_high = data.get('h') or data.get('high')
+            day_low = data.get('l') or data.get('low')
+            day_close = data.get('c') or data.get('close')
+
+            ltp = float(data.get('lp', 0) or 0)
+
+            token_id = token.split("|")[-1]
+            mapped_symbol = self.client.get_symbol(token_id)
+            mapped_company = self.client.get_company_name(token_id)
+            live_symbol = data.get('t') or data.get('symbol')
+            live_company = data.get('company_name')
+            symbol_out = live_symbol or mapped_symbol or token
+            company_out = live_company or mapped_company or symbol_out
+
+            filters_payload = filter_results
+
+            self.last_scan_metrics.append({
+                'token': token,
+                'symbol': symbol_out,
+                'company_name': company_out,
+                'day_open': float(day_open) if day_open is not None else None,
+                'day_high': float(day_high) if day_high is not None else None,
+                'day_low': float(day_low) if day_low is not None else None,
+                'day_close': float(day_close) if day_close is not None else None,
+                'ltp': ltp,
+                'filters': filters_payload
+            })
+
+            if filter_results:
+                parts = [
+                    f"{key.upper()}={value.get('score', 0)}"
+                    for key, value in filter_results.items()
+                    if isinstance(value, dict)
+                ]
+                details = " ".join(parts)
+                print(f"📊 {token}: {details} TOTAL={total}")
+            else:
+                print(f"📊 {token}: TOTAL={total}")
             return total  # ⭐ ONLY numeric total for ranking
-            
+
         except Exception as e:
-            print(f"❌ 5EMA ERROR {token}: {e}")
+            print(f"❌ FILTER EVAL ERROR {token}: {e}")
             return 0
 
     def evaluate_all(self):
         """Scan all symbols"""
         scores = {}
+        self.last_scan_metrics = []
         for token in self.symbols:
             # Use FULL token key - NO stripping needed!
             if token not in self.client.SYMBOLDICT:
+                token_id = token.split("|")[-1]
+                self.last_scan_metrics.append({
+                    'token': token,
+                    'symbol': self.client.get_symbol(token_id),
+                    'company_name': self.client.get_company_name(token_id),
+                    'day_open': None,
+                    'day_high': None,
+                    'day_low': None,
+                    'day_close': None,
+                    'ltp': None,
+                    'filters': {}
+                })
                 continue
                 
             score = self.evaluate_filters(token)
-            if score > 0:
+            if score != 0:
                 scores[token] = score
                 
         print(f"📊 Scanned {len(self.symbols)} → {len(scores)} signals")
@@ -118,7 +171,7 @@ class OrbiterHelper:
     # In your rank_signals() method:
     def rank_signals(self, scores):
         buy_signals = []
-        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:self.config['TOP_N']]
+        ranked = sorted(scores.items(), key=lambda x: abs(x[1]), reverse=True)[:self.config['TOP_N']]
         
         print(f"🔍 DEBUG: active_positions={self.active_positions}")  # ⭐ SEE STATE
         
@@ -130,17 +183,44 @@ class OrbiterHelper:
                 print(f"⏭️ SKIP {token} - Position active")
                 continue
 
-            # ⭐ 45pt CONFIRMED → NEW POSITION
-            if score >= self.config['TRADE_SCORE']:  # 45pts
-                print(f"🟢 NEW BUY: {token} {score}pts")  # ⭐ CONFIRMED
+            # ⭐ CONFIRMED → NEW POSITION (bull or bear)
+            if score >= self.config['TRADE_SCORE'] or score <= -self.config['TRADE_SCORE']:
+                print(f"🟢 NEW SIGNAL: {token} {score}pts")
                 
                 data = self.client.SYMBOLDICT.get(token)
-                # WITH:  
-                filter_results = data.get('_filter_results', {
-                    'orb': {'orb_high': data.get('high', 0), 'orb_low': data.get('low', 0)},
-                    'ema': {'ema5': data.get('ltp', 0)}
-                })
+                filter_results = data.get('_filter_results') or {}
+                orb_result = filter_results.get('ef1_orb', {}) if isinstance(filter_results.get('ef1_orb', {}), dict) else {}
+                ema5_result = filter_results.get('ef2_price_above_5ema', {}) if isinstance(filter_results.get('ef2_price_above_5ema', {}), dict) else {}
                 ltp, ltp_display, symbol = safe_ltp(data)  # ✅ 3 values
+
+                if score >= self.config['TRADE_SCORE']:
+                    spread = self.client.place_put_credit_spread(
+                        symbol=symbol,
+                        ltp=ltp,
+                        hedge_steps=self.config.get('HEDGE_STEPS', 4),
+                        expiry_type=self.config.get('OPTION_EXPIRY', 'monthly'),
+                        execute=self.config.get('OPTION_EXECUTE', False),
+                        product_type=self.config.get('OPTION_PRODUCT_TYPE', 'I'),
+                        price_type=self.config.get('OPTION_PRICE_TYPE', 'MKT'),
+                        instrument=self.config.get('OPTION_INSTRUMENT', 'OPTSTK')
+                    )
+                    strategy = 'PUT_CREDIT_SPREAD'
+                else:
+                    spread = self.client.place_call_credit_spread(
+                        symbol=symbol,
+                        ltp=ltp,
+                        hedge_steps=self.config.get('HEDGE_STEPS', 4),
+                        expiry_type=self.config.get('OPTION_EXPIRY', 'monthly'),
+                        execute=self.config.get('OPTION_EXECUTE', False),
+                        product_type=self.config.get('OPTION_PRODUCT_TYPE', 'I'),
+                        price_type=self.config.get('OPTION_PRICE_TYPE', 'MKT'),
+                        instrument=self.config.get('OPTION_INSTRUMENT', 'OPTSTK')
+                    )
+                    strategy = 'CALL_CREDIT_SPREAD'
+
+                if not spread.get('ok'):
+                    print(f"⚠️ Spread order failed for {symbol}: {spread.get('reason')}")
+                    continue
 
                 buy_signals.append({
                     'token': token,
@@ -148,10 +228,17 @@ class OrbiterHelper:
                     'company_name': data.get('company_name', symbol),  # ✅ Use company name from websocket data
                     'ltp': ltp,
                     'ltp_display': ltp_display, # ₹1446.40 (bonus)
-                    'orb_high': filter_results['orb']['orb_high'],
-                    'orb_low': filter_results['orb']['orb_low'],
-                    'ema5': filter_results['ema']['ema5'],
-                    'score': score
+                    'score': score,
+                    'orb_high': orb_result.get('orb_high', 0),
+                    'orb_low': orb_result.get('orb_low', 0),
+                    'ema5': ema5_result.get('ema5', 0),
+                    'strategy': strategy,
+                    'expiry': spread.get('expiry'),
+                    'atm_strike': spread.get('atm_strike'),
+                    'hedge_strike': spread.get('hedge_strike'),
+                    'atm_symbol': spread.get('atm_symbol'),
+                    'hedge_symbol': spread.get('hedge_symbol'),
+                    'dry_run': spread.get('dry_run', False)
                 })
                 
                 # ⭐ ADD TO POSITIONS IMMEDIATELY (inside 45pt block)
@@ -159,7 +246,13 @@ class OrbiterHelper:
                     'entry_price': ltp,
                     'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                     'symbol': symbol,
-                    'company_name': data.get('company_name', symbol)
+                    'company_name': data.get('company_name', symbol),
+                    'strategy': strategy,
+                    'atm_symbol': spread.get('atm_symbol'),
+                    'hedge_symbol': spread.get('hedge_symbol'),
+                    'expiry': spread.get('expiry'),
+                    'atm_strike': spread.get('atm_strike'),
+                    'hedge_strike': spread.get('hedge_strike')
                 }
                 print(f"✅ POSITION ADDED: {token} @ {ltp}")
         
@@ -167,6 +260,15 @@ class OrbiterHelper:
         if buy_signals:
             log_buy_signals(buy_signals)
             print(f"✅ {len(buy_signals)} NEW buys → Google Sheets")
+
+        if log_scan_metrics and self.last_scan_metrics:
+            now_ts = time.time()
+            if now_ts - self.last_scan_log_ts >= 60:
+                trade_tokens = {item.get('token') for item in buy_signals}
+                for item in self.last_scan_metrics:
+                    item['trade_taken'] = item.get('token') in trade_tokens
+                log_scan_metrics(self.last_scan_metrics)
+                self.last_scan_log_ts = now_ts
         
         return buy_signals
 
@@ -188,11 +290,20 @@ class OrbiterHelper:
             if ltp is None:
                 continue
 
-            # run SL filters (start with f1_price_drop_10)
-            if not sl_f1:
-                continue
-            res = sl_f1.check_sl(info, float(ltp))
-            if res.get('hit'):
+            # run SL filters (any match triggers square-off)
+            res = None
+            for sl_filter in SL_FILTERS:
+                try:
+                    candidate = sl_filter.evaluate(info, float(ltp), data)
+                except Exception as exc:
+                    candidate = {'hit': False, 'reason': f"error:{exc}"}
+                if candidate and candidate.get('hit'):
+                    res = candidate
+                    if 'reason' not in res:
+                        res['reason'] = sl_filter.key
+                    break
+
+            if res and res.get('hit'):
                 pct = res.get('pct', 0.0)
                 reason = res.get('reason', 'SL HIT')
                 so = {

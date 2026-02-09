@@ -1,0 +1,31 @@
+{
+  "credentials_path": "../cred.yml",
+  "actid": "",
+  "haircut": 0.2,
+  "positions": [
+    {
+      "prd": "M",
+      "exch": "NFO",
+      "instname": "OPTSTK",
+      "symname": "NTPC",
+      "exd": "27-FEB-2026",
+      "optt": "PE",
+      "strprc": "373",
+      "buyqty": "0",
+      "sellqty": "1500",
+      "netqty": "-1500"
+    },
+    {
+      "prd": "M",
+      "exch": "NFO",
+      "instname": "OPTSTK",
+      "symname": "NTPC",
+      "exd": "27-FEB-2026",
+      "optt": "PE",
+      "strprc": "363",
+      "buyqty": "1500",
+      "sellqty": "0",
+      "netqty": "1500"
+    }
+  ]
+}

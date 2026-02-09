@@ -12,6 +12,8 @@ import requests
 import zipfile
 import io
 import pandas as pd
+import datetime
+import calendar
 
 # Add ShoonyaApi-py to path for api_helper import
 shoonya_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'ShoonyaApi-py')
@@ -30,6 +32,8 @@ class BrokerClient:
         self.TOKEN_TO_SYMBOL: Dict[str, str] = {}
         self.SYMBOL_TO_TOKEN: Dict[str, str] = {}
         self.TOKEN_TO_COMPANY: Dict[str, str] = {}  # ✅ Add company name mapping
+        self.NFO_OPTIONS = []
+        self.NFO_OPTIONS_LOADED = False
         
         # Load credentials
         # client.py is at: python-trader/orbiter/core/client.py
@@ -41,16 +45,427 @@ class BrokerClient:
             
         logging.basicConfig(level=logging.DEBUG)
         print(f"🚀 BrokerClient initialized: {self.cred['user']}")
+
+        self.trade_log_path = os.path.join(orbiter_root, 'logs', 'trade_calls.log')
+        os.makedirs(os.path.dirname(self.trade_log_path), exist_ok=True)
+        self.trade_logger = logging.getLogger("trade_calls")
+        self.trade_logger.setLevel(logging.INFO)
+        if not any(isinstance(h, logging.FileHandler) and h.baseFilename == self.trade_log_path for h in self.trade_logger.handlers):
+            handler = logging.FileHandler(self.trade_log_path)
+            handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+            self.trade_logger.addHandler(handler)
         
         # 🔥 CRITICAL: Load FULL symbol mapping
         self.load_symbol_mapping()
+
+    def _parse_expiry_date(self, raw: str) -> Optional[datetime.date]:
+        if not raw:
+            return None
+        for fmt in ("%d-%b-%Y", "%d-%m-%Y", "%Y-%m-%d"):
+            try:
+                return datetime.datetime.strptime(raw, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    def _is_last_thursday(self, d: datetime.date) -> bool:
+        last_day = calendar.monthrange(d.year, d.month)[1]
+        last_date = datetime.date(d.year, d.month, last_day)
+        while last_date.weekday() != 3:
+            last_date -= datetime.timedelta(days=1)
+        return d == last_date
+
+    def load_nfo_symbol_mapping(self):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        json_file = os.path.join(base_dir, 'data', 'nfo_symbol_map.json')
+
+        if os.path.exists(json_file):
+            try:
+                with open(json_file, 'r') as f:
+                    data = json.load(f)
+                self.NFO_OPTIONS = data.get('options', [])
+                self.NFO_OPTIONS_LOADED = True
+                print(f"✅ Loaded {len(self.NFO_OPTIONS):,} NFO option symbols")
+                return
+            except Exception as e:
+                print(f"⚠️ NFO cache invalid: {e}")
+
+        print("📥 DOWNLOADING NFO SYMBOLS...")
+        self.download_nfo_scrip_master()
+
+    def download_nfo_scrip_master(self):
+        print("📥 Downloading NFO_symbols.txt.zip...")
+        options = []
+        try:
+            r = requests.get("https://api.shoonya.com/NFO_symbols.txt.zip", timeout=10)
+            r.raise_for_status()
+
+            with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+                with z.open("NFO_symbols.txt") as f:
+                    lines = f.readlines()
+                    headers = lines[0].decode().strip().rstrip(',').split(',')
+
+                    # Column indexes (fallback to None if not present)
+                    def col_idx(name: str) -> Optional[int]:
+                        return headers.index(name) if name in headers else None
+
+                    exch_i = col_idx("Exchange")
+                    token_i = col_idx("Token")
+                    lot_i = col_idx("LotSize")
+                    sym_i = col_idx("Symbol")
+                    tsym_i = col_idx("TradingSymbol")
+                    inst_i = col_idx("Instrument")
+                    exp_i = col_idx("Expiry")
+                    strike_i = col_idx("StrikePrice")
+                    opt_i = col_idx("OptionType")
+
+                    for line in lines[1:]:
+                        parts = line.decode().strip().rstrip(',').split(',')
+                        if not parts or len(parts) <= max(filter(None, [sym_i, tsym_i, inst_i])):
+                            continue
+
+                        instrument = parts[inst_i].strip() if inst_i is not None else ''
+                        if instrument not in ("OPTSTK", "OPTIDX"):
+                            continue
+
+                        symbol = parts[sym_i].strip() if sym_i is not None else ''
+                        tsym = parts[tsym_i].strip() if tsym_i is not None else ''
+                        expiry_raw = parts[exp_i].strip() if exp_i is not None else ''
+                        expiry = self._parse_expiry_date(expiry_raw)
+                        strike_raw = parts[strike_i].strip() if strike_i is not None else ''
+                        opt_type = parts[opt_i].strip() if opt_i is not None else ''
+                        lot_raw = parts[lot_i].strip() if lot_i is not None else '0'
+
+                        try:
+                            strike = float(strike_raw) if strike_raw else 0.0
+                            lot_size = int(float(lot_raw)) if lot_raw else 0
+                        except ValueError:
+                            continue
+
+                        if not symbol or not tsym or not expiry or strike <= 0 or opt_type not in ("PE", "CE"):
+                            continue
+
+                        options.append({
+                            'symbol': symbol,
+                            'tradingsymbol': tsym,
+                            'instrument': instrument,
+                            'expiry': expiry.isoformat(),
+                            'strike': strike,
+                            'option_type': opt_type,
+                            'lot_size': lot_size,
+                            'token': parts[token_i].strip() if token_i is not None else ''
+                        })
+
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            data_dir = os.path.join(base_dir, 'data')
+            os.makedirs(data_dir, exist_ok=True)
+            cache_file = os.path.join(data_dir, 'nfo_symbol_map.json')
+            with open(cache_file, 'w') as f:
+                json.dump({'options': options}, f)
+
+            self.NFO_OPTIONS = options
+            self.NFO_OPTIONS_LOADED = True
+            print(f"✅ Cached {len(options):,} NFO option symbols at {cache_file}")
+
+        except Exception as e:
+            print(f"⚠️ NFO download failed: {e}")
+
+    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str = "OPTSTK"):
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+
+        expiry_str = expiry.isoformat()
+        return [
+            row for row in self.NFO_OPTIONS
+            if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('expiry') == expiry_str
+        ]
+
+    def _select_expiry(self, symbol: str, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Optional[datetime.date]:
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+
+        expiries = set()
+        for row in self.NFO_OPTIONS:
+            if row.get('symbol') != symbol or row.get('instrument') != instrument:
+                continue
+            exp = self._parse_expiry_date(row.get('expiry'))
+            if exp:
+                expiries.add(exp)
+
+        if not expiries:
+            return None
+
+        today = datetime.date.today()
+        valid = sorted(d for d in expiries if d >= today)
+        if not valid:
+            return None
+
+        if expiry_type == "monthly":
+            monthly = [d for d in valid if self._is_last_thursday(d)]
+            return monthly[0] if monthly else valid[0]
+
+        return valid[0]
+
+    def _get_atm_strike(self, symbol: str, expiry: datetime.date, ltp: float, instrument: str = "OPTSTK") -> Optional[float]:
+        rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        strikes = sorted({row.get('strike') for row in rows if row.get('strike')})
+        if not strikes:
+            return None
+        return min(strikes, key=lambda s: abs(s - ltp))
+
+    def _get_strike_step(self, strikes):
+        if not strikes or len(strikes) < 2:
+            return None
+        diffs = sorted({round(strikes[i + 1] - strikes[i], 2) for i in range(len(strikes) - 1) if strikes[i + 1] > strikes[i]})
+        return diffs[0] if diffs else None
+
+    def _find_option_symbol(self, symbol: str, expiry: datetime.date, strike: float, option_type: str, instrument: str = "OPTSTK"):
+        rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        for row in rows:
+            if row.get('strike') == strike and row.get('option_type') == option_type:
+                return row
+        return None
+
+    def place_put_credit_spread(self, symbol: str, ltp: float, hedge_steps: int = 4,
+                                expiry_type: str = "monthly", execute: bool = False,
+                                product_type: str = "I", price_type: str = "MKT",
+                                instrument: str = "OPTSTK") -> Dict[str, Any]:
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+
+        expiry = self._select_expiry(symbol, expiry_type=expiry_type, instrument=instrument)
+        if not expiry:
+            return {'ok': False, 'reason': 'no_expiry'}
+
+        rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        strikes = sorted({row.get('strike') for row in rows if row.get('strike')})
+        if not strikes:
+            return {'ok': False, 'reason': 'no_strikes'}
+
+        atm_strike = self._get_atm_strike(symbol, expiry, ltp, instrument=instrument)
+        step = self._get_strike_step(strikes)
+        if atm_strike is None or not step:
+            return {'ok': False, 'reason': 'no_atm_or_step'}
+
+        hedge_strike = round(atm_strike - hedge_steps * step, 2)
+        hedge_row = self._find_option_symbol(symbol, expiry, hedge_strike, 'PE', instrument=instrument)
+        atm_row = self._find_option_symbol(symbol, expiry, atm_strike, 'PE', instrument=instrument)
+
+        if not hedge_row or not atm_row:
+            return {'ok': False, 'reason': 'option_symbol_not_found'}
+
+        lot_size = int(atm_row.get('lot_size') or 0)
+        if lot_size <= 0:
+            return {'ok': False, 'reason': 'invalid_lot_size'}
+
+        if not execute:
+            # Dry-run mode: skip live orders, return resolved contract details for logging.
+            self.trade_logger.info(
+                "sim_order side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_hedge",
+                hedge_row['tradingsymbol'], lot_size, product_type, price_type
+            )
+            self.trade_logger.info(
+                "sim_order side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_sell",
+                atm_row['tradingsymbol'], lot_size, product_type, price_type
+            )
+            return {
+                'ok': True,
+                'expiry': expiry.isoformat(),
+                'atm_strike': atm_strike,
+                'hedge_strike': hedge_strike,
+                'lot_size': lot_size,
+                'atm_symbol': atm_row['tradingsymbol'],
+                'hedge_symbol': hedge_row['tradingsymbol'],
+                'dry_run': True
+            }
+
+        self.trade_logger.info(
+            "sim_order side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_hedge",
+            hedge_row['tradingsymbol'], lot_size, product_type, price_type
+        )
+        self.trade_logger.info(
+            "sim_order side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_sell",
+            atm_row['tradingsymbol'], lot_size, product_type, price_type
+        )
+
+        # Buy hedge first
+        buy_resp = self.api.place_order(
+            buy_or_sell='B',
+            product_type=product_type,
+            exchange='NFO',
+            tradingsymbol=hedge_row['tradingsymbol'],
+            quantity=lot_size,
+            discloseqty=0,
+            price_type=price_type,
+            price=0,
+            trigger_price=None,
+            retention='DAY',
+            remarks='orb_put_spread_hedge'
+        )
+        self.trade_logger.info(
+            "order_call side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_hedge resp=%s",
+            hedge_row['tradingsymbol'], lot_size, product_type, price_type, buy_resp
+        )
+
+        if not buy_resp or buy_resp.get('stat') != 'Ok':
+            return {'ok': False, 'reason': 'hedge_order_failed', 'buy_resp': buy_resp}
+
+        sell_resp = self.api.place_order(
+            buy_or_sell='S',
+            product_type=product_type,
+            exchange='NFO',
+            tradingsymbol=atm_row['tradingsymbol'],
+            quantity=lot_size,
+            discloseqty=0,
+            price_type=price_type,
+            price=0,
+            trigger_price=None,
+            retention='DAY',
+            remarks='orb_put_spread_sell'
+        )
+        self.trade_logger.info(
+            "order_call side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_put_spread_sell resp=%s",
+            atm_row['tradingsymbol'], lot_size, product_type, price_type, sell_resp
+        )
+
+        if not sell_resp or sell_resp.get('stat') != 'Ok':
+            return {'ok': False, 'reason': 'sell_order_failed', 'buy_resp': buy_resp, 'sell_resp': sell_resp}
+
+        return {
+            'ok': True,
+            'expiry': expiry.isoformat(),
+            'atm_strike': atm_strike,
+            'hedge_strike': hedge_strike,
+            'lot_size': lot_size,
+            'buy_resp': buy_resp,
+            'sell_resp': sell_resp,
+            'atm_symbol': atm_row['tradingsymbol'],
+            'hedge_symbol': hedge_row['tradingsymbol']
+        }
+
+    def place_call_credit_spread(self, symbol: str, ltp: float, hedge_steps: int = 4,
+                                 expiry_type: str = "monthly", execute: bool = False,
+                                 product_type: str = "I", price_type: str = "MKT",
+                                 instrument: str = "OPTSTK") -> Dict[str, Any]:
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+
+        expiry = self._select_expiry(symbol, expiry_type=expiry_type, instrument=instrument)
+        if not expiry:
+            return {'ok': False, 'reason': 'no_expiry'}
+
+        rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        strikes = sorted({row.get('strike') for row in rows if row.get('strike')})
+        if not strikes:
+            return {'ok': False, 'reason': 'no_strikes'}
+
+        atm_strike = self._get_atm_strike(symbol, expiry, ltp, instrument=instrument)
+        step = self._get_strike_step(strikes)
+        if atm_strike is None or not step:
+            return {'ok': False, 'reason': 'no_atm_or_step'}
+
+        hedge_strike = round(atm_strike + hedge_steps * step, 2)
+        hedge_row = self._find_option_symbol(symbol, expiry, hedge_strike, 'CE', instrument=instrument)
+        atm_row = self._find_option_symbol(symbol, expiry, atm_strike, 'CE', instrument=instrument)
+
+        if not hedge_row or not atm_row:
+            return {'ok': False, 'reason': 'option_symbol_not_found'}
+
+        lot_size = int(atm_row.get('lot_size') or 0)
+        if lot_size <= 0:
+            return {'ok': False, 'reason': 'invalid_lot_size'}
+
+        if not execute:
+            self.trade_logger.info(
+                "sim_order side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_hedge",
+                hedge_row['tradingsymbol'], lot_size, product_type, price_type
+            )
+            self.trade_logger.info(
+                "sim_order side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_sell",
+                atm_row['tradingsymbol'], lot_size, product_type, price_type
+            )
+            return {
+                'ok': True,
+                'expiry': expiry.isoformat(),
+                'atm_strike': atm_strike,
+                'hedge_strike': hedge_strike,
+                'lot_size': lot_size,
+                'atm_symbol': atm_row['tradingsymbol'],
+                'hedge_symbol': hedge_row['tradingsymbol'],
+                'dry_run': True
+            }
+
+        self.trade_logger.info(
+            "sim_order side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_hedge",
+            hedge_row['tradingsymbol'], lot_size, product_type, price_type
+        )
+        self.trade_logger.info(
+            "sim_order side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_sell",
+            atm_row['tradingsymbol'], lot_size, product_type, price_type
+        )
+
+        buy_resp = self.api.place_order(
+            buy_or_sell='B',
+            product_type=product_type,
+            exchange='NFO',
+            tradingsymbol=hedge_row['tradingsymbol'],
+            quantity=lot_size,
+            discloseqty=0,
+            price_type=price_type,
+            price=0,
+            trigger_price=None,
+            retention='DAY',
+            remarks='orb_call_spread_hedge'
+        )
+        self.trade_logger.info(
+            "order_call side=B exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_hedge resp=%s",
+            hedge_row['tradingsymbol'], lot_size, product_type, price_type, buy_resp
+        )
+
+        if not buy_resp or buy_resp.get('stat') != 'Ok':
+            return {'ok': False, 'reason': 'hedge_order_failed', 'buy_resp': buy_resp}
+
+        sell_resp = self.api.place_order(
+            buy_or_sell='S',
+            product_type=product_type,
+            exchange='NFO',
+            tradingsymbol=atm_row['tradingsymbol'],
+            quantity=lot_size,
+            discloseqty=0,
+            price_type=price_type,
+            price=0,
+            trigger_price=None,
+            retention='DAY',
+            remarks='orb_call_spread_sell'
+        )
+        self.trade_logger.info(
+            "order_call side=S exchange=NFO symbol=%s qty=%s product=%s price_type=%s price=0 remarks=orb_call_spread_sell resp=%s",
+            atm_row['tradingsymbol'], lot_size, product_type, price_type, sell_resp
+        )
+
+        if not sell_resp or sell_resp.get('stat') != 'Ok':
+            return {'ok': False, 'reason': 'sell_order_failed', 'buy_resp': buy_resp, 'sell_resp': sell_resp}
+
+        return {
+            'ok': True,
+            'expiry': expiry.isoformat(),
+            'atm_strike': atm_strike,
+            'hedge_strike': hedge_strike,
+            'lot_size': lot_size,
+            'buy_resp': buy_resp,
+            'sell_resp': sell_resp,
+            'atm_symbol': atm_row['tradingsymbol'],
+            'hedge_symbol': hedge_row['tradingsymbol']
+        }
     
-    def login(self) -> bool:
+    def login(self, factor2_override: Optional[str] = None) -> bool:
         print("🔐 Authenticating...")
         # Prompt for fresh 2FA every run and persist it to cred.yml
         try:
             current = self.cred.get('factor2', '')
-            new2 = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
+            new2 = (factor2_override or "").strip()
+            if not new2:
+                new2 = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
             if new2:
                 self.cred['factor2'] = new2
                 try:
@@ -70,11 +485,17 @@ class BrokerClient:
             api_secret=self.cred['apikey'],
             imei=self.cred['imei']
         )
+        if not ret or str(ret.get('stat', '')).lower() != 'ok':
+            reason = ''
+            if isinstance(ret, dict):
+                reason = ret.get('emsg') or ret.get('reason') or ''
+            print(f"❌ Login failed{': ' + reason if reason else ''}")
+            return False
         # 🔥 CRITICAL: Ensure symbol mapping is loaded before WebSocket data
         if not self.TOKEN_TO_SYMBOL:
             print("📥 Symbol mapping not loaded, loading now...")
             self.load_symbol_mapping()
-        return bool(ret)
+        return True
     
     def start_live_feed(self, symbols: list):
         """🚀 PRODUCTION WEBSOCKET - FULLY WORKING"""

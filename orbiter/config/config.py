@@ -2,6 +2,8 @@
 ORBITER CONFIG: NIFTY 50 F&O STOCKS ONLY (All have active F&O contracts)
 """
 
+from datetime import time as dt_time
+
 # 🔥 STANDARD NIFTY 50 F&O TOKENS (Confirmed Shoonya NSE tokens)
 SYMBOLS_UNIVERSE = [
     # BANKING & FINANCE (F&O Active)
@@ -61,21 +63,14 @@ SYMBOLS_UNIVERSE = [
 TOP_N = 7                    # Execute TOP 7 highest scoring
 #TRADE_SCORE = 45             # Minimum score (out of 63pts)
 TRADE_SCORE = 20             # Minimum score (out of 63pts)
+ENTRY_WEIGHTS = [1.0, 1.0, 0.0]
+MARKET_OPEN = dt_time(9, 15)
+MARKET_CLOSE = dt_time(15, 30)
+OPTION_EXECUTE = False
+OPTION_PRODUCT_TYPE = 'I'
+OPTION_PRICE_TYPE = 'MKT'
+OPTION_EXPIRY = 'monthly'
+OPTION_INSTRUMENT = 'OPTSTK'
+HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
 
-# 🔥 F&O ORB BREAKOUT LEVELS (Adjust based on market)
-ORB_LEVELS = {
-    'NSE|2885': 1450,        # RELIANCE
-    'NSE|11630': 360,        # NTPC
-    'NSE|317': 7000,         # BAJFINANCE
-    'NSE|3045': 800,         # SBIN
-    'NSE|1333': 1600,        # HDFCBANK
-    'NSE|1660': 500,         # ITC
-    'NSE|1394': 2600,        # HINDUNILVR
-    'NSE|500875': 1800,      # INFY
-    'NSE|570': 12500,        # MARUTI
-    'NSE|500295': 3600,      # LT
-}
-
-print(f"🚀 NIFTY 50 F&O Universe: {len(SYMBOLS_UNIVERSE)} stocks")
-print(f"📈 TOP {TOP_N} execution | Min score: {TRADE_SCORE}pts")

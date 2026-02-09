@@ -41,22 +41,12 @@ def format_score(score):
     return f" 🔴 HOLD{int(score)}"
 
 def get_today_orb_times():
-    """Dynamic ORB: Today's date + fixed 9:15-9:30 IST"""
-    # Fetch 1min candles for ORB between 9:15 and 9:30 IST
+    """Dynamic ORB: fixed 9:15-9:30 IST (temporarily pinned to 2026-02-09)."""
+    # Fetch 1min candles for ORB between 9:15 and 9:30 IST.
+    # TEMP: hardcode date for refactor verification; revert after test.
     ist = pytz.timezone('Asia/Kolkata')
-    
-    # ⭐ TESTING: Use Friday Feb 6, 2026 (recent trading day with market data)
-    today = ist.localize(datetime.datetime(2026, 2, 6, 0, 0, 0))  # Friday Feb 6 - used for testing
-    # today = datetime.datetime.now(ist)  # ← CHANGE BACK TO TODAY when done testing
-    
-    # Today 9:15 AM IST
-    orb_start = today.replace(
-        hour=9, minute=15, second=0, microsecond=0
-    )
-    
-    # Today 9:30 AM IST
-    orb_end = today.replace(
-        hour=9, minute=30, second=0, microsecond=0
-    )
-    
-    return orb_start, orb_end
+
+    start_time = ist.localize(datetime.datetime(2026, 2, 9, 9, 15, 0))
+    end_time = ist.localize(datetime.datetime(2026, 2, 9, 9, 30, 0))
+
+    return start_time, end_time
