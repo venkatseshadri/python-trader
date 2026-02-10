@@ -31,7 +31,8 @@ class Orbiter:
             'OPTION_PRICE_TYPE': config.OPTION_PRICE_TYPE,
             'OPTION_EXPIRY': config.OPTION_EXPIRY,
             'OPTION_INSTRUMENT': config.OPTION_INSTRUMENT,
-            'HEDGE_STEPS': config.HEDGE_STEPS
+            'HEDGE_STEPS': config.HEDGE_STEPS,
+            'VERBOSE_LOGS': config.VERBOSE_LOGS
         }
         
         self.client = None

@@ -72,5 +72,4 @@ OPTION_EXPIRY = 'monthly'
 OPTION_INSTRUMENT = 'OPTSTK'
 HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
-VERBOSE_LOGS = False
 

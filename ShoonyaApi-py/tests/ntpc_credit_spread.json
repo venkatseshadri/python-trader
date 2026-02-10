@@ -1,31 +1,34 @@
 {
   "credentials_path": "../cred.yml",
+  "use_symbol_map": true,
+  "symbol_map_path": "../../orbiter/data/nfo_symbol_map.json",
+  "force_expiry": "24-FEB-2026",
   "actid": "",
   "haircut": 0.2,
   "positions": [
     {
       "prd": "M",
       "exch": "NFO",
-      "instname": "OPTSTK",
-      "symname": "NTPC",
-      "exd": "27-FEB-2026",
-      "optt": "PE",
-      "strprc": "373",
+      "instname": "OPTIDX",
+      "symname": "NIFTY",
+      "exd": "24-FEB-2026",
+      "optt": "CE",
+      "strprc": "26000",
       "buyqty": "0",
-      "sellqty": "1500",
-      "netqty": "-1500"
+      "sellqty": "50",
+      "netqty": "-50"
     },
     {
       "prd": "M",
       "exch": "NFO",
-      "instname": "OPTSTK",
-      "symname": "NTPC",
-      "exd": "27-FEB-2026",
+      "instname": "OPTIDX",
+      "symname": "NIFTY",
+      "exd": "24-FEB-2026",
       "optt": "PE",
-      "strprc": "363",
-      "buyqty": "1500",
+      "strprc": "26000",
+      "buyqty": "50",
       "sellqty": "0",
-      "netqty": "1500"
+      "netqty": "50"
     }
   ]
 }

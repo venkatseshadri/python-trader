@@ -23,6 +23,8 @@ from api_helper import ShoonyaApiPy
 import yaml
 import logging
 from typing import Dict, Optional, Any
+from NorenRestApiPy.NorenApi import position
+from config.config import VERBOSE_LOGS
 
 class BrokerClient:
     def __init__(self, config_path: str = '../cred.yml'):
@@ -34,6 +36,8 @@ class BrokerClient:
         self.TOKEN_TO_COMPANY: Dict[str, str] = {}  # ✅ Add company name mapping
         self.NFO_OPTIONS = []
         self.NFO_OPTIONS_LOADED = False
+        self.span_cache_path = None
+        self.span_cache = None
         
         # Load credentials
         # client.py is at: python-trader/orbiter/core/client.py
@@ -43,8 +47,11 @@ class BrokerClient:
         with open(self.config_file) as f:
             self.cred = yaml.load(f, Loader=yaml.FullLoader)
             
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("websocket").setLevel(logging.WARNING)
         print(f"🚀 BrokerClient initialized: {self.cred['user']}")
+        self.verbose_logs = VERBOSE_LOGS
 
         self.trade_log_path = os.path.join(orbiter_root, 'logs', 'trade_calls.log')
         os.makedirs(os.path.dirname(self.trade_log_path), exist_ok=True)
@@ -57,6 +64,33 @@ class BrokerClient:
         
         # 🔥 CRITICAL: Load FULL symbol mapping
         self.load_symbol_mapping()
+
+    def set_span_cache_path(self, path: str):
+        self.span_cache_path = path
+
+    def load_span_cache(self):
+        if not self.span_cache_path:
+            return
+        if self.span_cache is not None:
+            return
+        try:
+            if os.path.exists(self.span_cache_path):
+                with open(self.span_cache_path, 'r') as f:
+                    self.span_cache = json.load(f)
+            else:
+                self.span_cache = {}
+        except Exception:
+            self.span_cache = {}
+
+    def save_span_cache(self):
+        if not self.span_cache_path or self.span_cache is None:
+            return
+        try:
+            os.makedirs(os.path.dirname(self.span_cache_path), exist_ok=True)
+            with open(self.span_cache_path, 'w') as f:
+                json.dump(self.span_cache, f)
+        except Exception:
+            pass
 
     def _parse_expiry_date(self, raw: str) -> Optional[datetime.date]:
         if not raw:
@@ -225,6 +259,151 @@ class BrokerClient:
             if row.get('strike') == strike and row.get('option_type') == option_type:
                 return row
         return None
+
+    def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str,
+                                    hedge_steps: int = 4, expiry_type: str = "monthly",
+                                    instrument: str = "OPTSTK") -> Dict[str, Any]:
+        """Resolve contract symbols for a credit spread without placing orders."""
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+
+        expiry = self._select_expiry(symbol, expiry_type=expiry_type, instrument=instrument)
+        if not expiry:
+            return {'ok': False, 'reason': 'no_expiry'}
+
+        rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        strikes = sorted({row.get('strike') for row in rows if row.get('strike')})
+        if not strikes:
+            return {'ok': False, 'reason': 'no_strikes'}
+
+        atm_strike = self._get_atm_strike(symbol, expiry, ltp, instrument=instrument)
+        step = self._get_strike_step(strikes)
+        if atm_strike is None or not step:
+            return {'ok': False, 'reason': 'no_atm_or_step'}
+
+        side_key = side.upper()
+        if side_key == 'PUT':
+            hedge_strike = round(atm_strike - hedge_steps * step, 2)
+            hedge_row = self._find_option_symbol(symbol, expiry, hedge_strike, 'PE', instrument=instrument)
+            atm_row = self._find_option_symbol(symbol, expiry, atm_strike, 'PE', instrument=instrument)
+        else:
+            hedge_strike = round(atm_strike + hedge_steps * step, 2)
+            hedge_row = self._find_option_symbol(symbol, expiry, hedge_strike, 'CE', instrument=instrument)
+            atm_row = self._find_option_symbol(symbol, expiry, atm_strike, 'CE', instrument=instrument)
+
+        if not hedge_row or not atm_row:
+            return {'ok': False, 'reason': 'option_symbol_not_found'}
+
+        lot_size = int(atm_row.get('lot_size') or 0)
+        if lot_size <= 0:
+            return {'ok': False, 'reason': 'invalid_lot_size'}
+
+        return {
+            'ok': True,
+            'expiry': expiry.isoformat(),
+            'atm_strike': atm_strike,
+            'hedge_strike': hedge_strike,
+            'lot_size': lot_size,
+            'atm_symbol': atm_row['tradingsymbol'],
+            'hedge_symbol': hedge_row['tradingsymbol'],
+            'side': side_key
+        }
+
+    def _find_option_by_tradingsymbol(self, tradingsymbol: str) -> Optional[Dict[str, Any]]:
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+        for row in self.NFO_OPTIONS:
+            if row.get('tradingsymbol') == tradingsymbol:
+                return row
+        return None
+
+    def calculate_span_for_spread(self, spread: Dict[str, Any], product_type: str = "I", haircut: float = 0.20) -> Dict[str, Any]:
+        """Calculate SPAN/exposure margin for a 2-leg spread using Shoonya span_calculator."""
+        atm_symbol = spread.get('atm_symbol')
+        hedge_symbol = spread.get('hedge_symbol')
+        lot_size = spread.get('lot_size')
+
+        if not atm_symbol or not hedge_symbol or not lot_size:
+            return {'ok': False, 'reason': 'missing_spread_details'}
+
+        atm_row = self._find_option_by_tradingsymbol(atm_symbol)
+        hedge_row = self._find_option_by_tradingsymbol(hedge_symbol)
+        if not atm_row or not hedge_row:
+            return {'ok': False, 'reason': 'option_symbol_not_found'}
+
+        def _format_span_expiry(raw: Optional[str]) -> str:
+            if not raw:
+                return ""
+            try:
+                parsed = self._parse_expiry_date(raw)
+                if parsed:
+                    return parsed.strftime("%d-%b-%Y").upper()
+            except Exception:
+                pass
+            return str(raw).strip()
+
+        def _format_span_strike(raw: Any) -> str:
+            if raw is None:
+                return ""
+            try:
+                strike = float(raw)
+                if strike.is_integer():
+                    return str(int(strike))
+                return str(strike)
+            except Exception:
+                return str(raw).strip()
+
+        def _pos_from_row(row: Dict[str, Any], side: str) -> position:
+            pos = position()
+            pos.prd = "M" if product_type == "I" else product_type
+            pos.exch = "NFO"
+            pos.instname = row.get('instrument') or "OPTSTK"
+            pos.symname = row.get('symbol')
+            pos.exd = _format_span_expiry(row.get('expiry'))
+            pos.optt = row.get('option_type')
+            pos.strprc = _format_span_strike(row.get('strike'))
+            qty = int(lot_size)
+            if side == "B":
+                pos.buyqty = qty
+                pos.sellqty = 0
+                pos.netqty = qty
+            else:
+                pos.buyqty = 0
+                pos.sellqty = qty
+                pos.netqty = -qty
+            return pos
+
+        positionlist = [
+            _pos_from_row(hedge_row, "B"),
+            _pos_from_row(atm_row, "S"),
+        ]
+
+        actid = self.cred.get('user')
+        try:
+            ret = self.api.span_calculator(actid, positionlist)
+        except Exception as exc:
+            return {'ok': False, 'reason': f'span_error:{exc}'}
+
+        if not isinstance(ret, dict):
+            return {'ok': False, 'reason': 'span_invalid_response'}
+        if ret.get('stat') and ret.get('stat') != 'Ok':
+            return {'ok': False, 'reason': f"span_not_ok:{ret.get('emsg', '')}"}
+
+        span = float(ret.get('span', 0.0) or 0.0)
+        expo = float(ret.get('expo', 0.0) or 0.0)
+        if span == 0.0 and expo == 0.0:
+            return {'ok': False, 'reason': 'span_zero'}
+        total_margin = span + expo
+        pledged_required = total_margin / (1.0 - haircut) if total_margin else 0.0
+
+        return {
+            'ok': True,
+            'span': span,
+            'expo': expo,
+            'total_margin': total_margin,
+            'haircut': haircut,
+            'pledged_required': pledged_required
+        }
 
     def place_put_credit_spread(self, symbol: str, ltp: float, hedge_steps: int = 4,
                                 expiry_type: str = "monthly", execute: bool = False,
@@ -523,7 +702,8 @@ class BrokerClient:
             }
             
             symbol = self.get_symbol(token)
-            print(f"📊 LIVE: {symbol} ({token}): ₹{message['lp']}")
+            if self.verbose_logs:
+                print(f"📊 LIVE: {symbol} ({token}): ₹{message['lp']}")
         
         def on_open():
             self.socket_opened = True
@@ -540,6 +720,26 @@ class BrokerClient:
         """🔥 FIXED: Use 'ltp' not 'lp'"""
         data = self.SYMBOLDICT.get(exch_token, {})
         return data.get('ltp') if data else None
+
+    def get_option_ltp_by_symbol(self, tradingsymbol: str) -> Optional[float]:
+        """Fetch option LTP using NFO token resolved from tradingsymbol."""
+        if not tradingsymbol:
+            return None
+        row = self._find_option_by_tradingsymbol(tradingsymbol)
+        token = row.get('token') if row else None
+        if not token:
+            return None
+        try:
+            quote = self.api.get_quotes(exchange='NFO', token=token)
+        except Exception:
+            return None
+        if not quote:
+            return None
+        raw = quote.get('lp') or quote.get('ltp')
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return None
     
     def get_dk_levels(self, exch_token: str) -> Dict[str, float]:
         """🎯 Day's Key Levels for ORB"""
@@ -569,12 +769,12 @@ class BrokerClient:
                     self.SYMBOL_TO_TOKEN = data['symbol_to_token']
                     self.TOKEN_TO_COMPANY = data.get('token_to_company', {})  # ✅ Load company names
                     
-                    # 🔍 ADD THIS DEBUG:
-                    print("🔍 SAMPLE MAPPING:")
-                    for token in ['1394', '1660', '3045']:
-                        symbol = self.TOKEN_TO_SYMBOL.get(token, 'MISSING')
-                        company = self.TOKEN_TO_COMPANY.get(token, symbol)
-                        print(f"   NSE|{token} → {symbol} ({company})")
+                    if self.verbose_logs:
+                        print("🔍 SAMPLE MAPPING:")
+                        for token in ['1394', '1660', '3045']:
+                            symbol = self.TOKEN_TO_SYMBOL.get(token, 'MISSING')
+                            company = self.TOKEN_TO_COMPANY.get(token, symbol)
+                            print(f"   NSE|{token} → {symbol} ({company})")
                     
                     print(f"✅ Loaded {len(self.TOKEN_TO_SYMBOL):,} symbols")
                     return
@@ -597,7 +797,8 @@ class BrokerClient:
                     lines = f.readlines()
                     headers = lines[0].decode().strip().rstrip(',').split(',')  # ✅ COMMA-separated!
                     
-                    print(f"🔍 DEBUG: Found {len(headers)} columns")
+                    if self.verbose_logs:
+                        print(f"🔍 DEBUG: Found {len(headers)} columns")
                     
                     # CSV columns: [Exchange, Token, LotSize, Symbol, TradingSymbol, Instrument, TickSize, ...]
                     token_idx = 1  # Token is column 1
@@ -627,7 +828,7 @@ class BrokerClient:
                                     token_to_company[token] = company_name
                                 
                                 # 🔍 DEBUG: Show first few extracted
-                                if i < 5:
+                                if self.verbose_logs and i < 5:
                                     print(f"🔍 Row {i}: token={token}, symbol={symbol}, company={company_name}")
                             except (ValueError, IndexError) as e:
                                 continue  # Skip bad rows

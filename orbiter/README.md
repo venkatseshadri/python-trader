@@ -34,6 +34,42 @@ orbiter/
 4. Map to Current Week CE/PE options
 5. Market Entry → Websocket SL monitoring (30% option premium)
 
+Note on scoring (planned): move from fixed scores to weighted scores proportional to signal strength.
+
+Design plan (proposed):
+- Inputs: LTP, ORB high/low, EMA5, base weights (e.g., ORB=25, EMA=20)
+- Normalization: use percent distance so scores are comparable across stocks
+- Output: signed score per filter, then weighted sum
+
+Proposed formulas (per symbol), normalized to 100 so ORB and EMA are comparable. A 10% move maps to 100, 0% maps to 0:
+$$
+	ext{dist\_orb} =
+\begin{cases}
+\frac{LTP - ORB_{high}}{LTP} & LTP > ORB_{high} \\
+\frac{LTP - ORB_{low}}{LTP} & LTP < ORB_{low} \\
+0 & \text{otherwise}
+\end{cases}
+$$
+$$
+	ext{score\_orb} = 100 \cdot \text{clip}(\text{dist\_orb} / 0.10, -1, 1)
+$$
+$$
+	ext{dist\_ema} = \frac{LTP - EMA5}{LTP},\quad
+	ext{score\_ema} = 100 \cdot \text{clip}(\text{dist\_ema} / 0.10, -1, 1)
+$$
+
+Example (RELIANCE; ORB_high=1460, ORB_low=1440, EMA5=1452; 10% cap):
+
+| Scenario | LTP | dist_orb | score_orb | dist_ema | score_ema | Total |
+|---|---:|---:|---:|---:|---:|---:|
+| ORB HIGH (just above) | 1461 | (1461-1460)/1461=0.000684 | 100*0.00684=+0.7 | (1461-1452)/1461=0.00616 | 100*0.0616=+6.2 | +6.9 |
+| LTP >> ORB HIGH | 1480 | (1480-1460)/1480=0.01351 | 100*0.135=+13.5 | (1480-1452)/1480=0.0189 | 100*0.189=+18.9 | +32.4 |
+| ORB LOW (just below) | 1439 | (1439-1440)/1439=-0.000695 | 100*-0.00695=-0.7 | (1439-1452)/1439=-0.00903 | 100*-0.0903=-9.0 | -9.7 |
+| LTP << ORB LOW | 1415 | (1415-1440)/1415=-0.01767 | 100*-0.1767=-17.7 | (1415-1452)/1415=-0.02615 | 100*-0.2615=-26.2 | -43.9 |
+
+Notes:
+- clip(x, -1, 1) caps extreme moves so scores do not blow up
+
 
 ## 🛠 Quick Start
 

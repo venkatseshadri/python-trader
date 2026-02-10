@@ -33,17 +33,8 @@ def _hit_result(hit, reason=None, pct=None):
 FILTERS = [
     Filter('ef1_orb', 'entry', orb_filter),
     Filter('ef2_price_above_5ema', 'entry', price_above_5ema_filter),
+    # Only keep the 10% premium SL; all other SL filters are disabled.
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp)),
-    Filter('sf2_below_5ema', 'sl', lambda position, ltp, data: _hit_result(sl_below_5ema(data), 'below_5ema')),
-    Filter('sf3_5ema_below_9ema', 'sl', lambda position, ltp, data: _hit_result(sl_5ema_below_9ema(data), '5ema_below_9ema')),
-    Filter('sf4_below_orb_low', 'sl', lambda position, ltp, data: _hit_result(sl_below_orb_low(data), 'below_orb_low')),
-    Filter('sf5_rsi_oversold', 'sl', lambda position, ltp, data: _hit_result(sl_rsi_oversold(data), 'rsi_oversold')),
-    Filter('sf6_volume_dryup', 'sl', lambda position, ltp, data: _hit_result(sl_volume_dryup(data), 'volume_dryup')),
-    Filter('sf7_atr_spike', 'sl', lambda position, ltp, data: _hit_result(sl_atr_spike(data), 'atr_spike')),
-    Filter('sf8_red_candle', 'sl', lambda position, ltp, data: _hit_result(sl_red_candle_weakness(data), 'red_candle')),
-    Filter('sf9_below_vwap', 'sl', lambda position, ltp, data: _hit_result(sl_below_vwap(data), 'below_vwap')),
-    Filter('sf10_macd_bearish', 'sl', lambda position, ltp, data: _hit_result(sl_macd_bearish(data), 'macd_bearish')),
-    Filter('sf11_support_broken', 'sl', lambda position, ltp, data: _hit_result(sl_support_broken(data), 'support_broken')),
 ]
 
 

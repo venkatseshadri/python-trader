@@ -1,10 +1,12 @@
 # f1_orb.py - PURE MODULE FUNCTIONS (NO CLASS)
 from datetime import datetime, timedelta
+from config.config import VERBOSE_LOGS
 
 def calculate_orb_range(ret, token,):
     """FIXED: Precise 9:15-9:30 ORB (1min candles)"""
 
-    print(f"🔍 API Response={len(ret) if ret else 0} candles")
+    if VERBOSE_LOGS:
+        print(f"🔍 API Response={len(ret) if ret else 0} candles")
     
     if ret and len(ret) > 0:
         ok = [c for c in ret if c.get('stat') == 'Ok']
@@ -35,7 +37,8 @@ def calculate_orb_range(ret, token,):
             orb_open = float(first.get('into') or first.get('intc') or 0) or None
 
         if highs and lows:
-            print(f"📊 ORB {token}: ₹{min(lows):.2f} - ₹{max(highs):.2f}")
+            if VERBOSE_LOGS:
+                print(f"📊 ORB {token}: ₹{min(lows):.2f} - ₹{max(highs):.2f}")
             return max(highs), min(lows), orb_open
     return None, None, None
 
@@ -55,7 +58,8 @@ def orb_filter(data, ret, weight=25, token='', buffer_pct=0.2):
         return {'score': 0, 'orb_high': 0, 'orb_low': 0, 'orb_open': 0}
     
     if ltp > upper * (1 + buf):
-        print(f"🟢 ORB BULL {token}: ₹{ltp:.2f} > ₹{upper:.2f}")
+        if VERBOSE_LOGS:
+            print(f"🟢 ORB BULL {token}: ₹{ltp:.2f} > ₹{upper:.2f}")
         return {
             'score': weight,
             'orb_high': upper,
@@ -63,7 +67,8 @@ def orb_filter(data, ret, weight=25, token='', buffer_pct=0.2):
             'orb_open': orb_open
         }
     elif ltp < lower * (1 - buf):
-        print(f"🔴 ORB BEAR {token}: ₹{ltp:.2f} < ₹{lower:.2f}")
+        if VERBOSE_LOGS:
+            print(f"🔴 ORB BEAR {token}: ₹{ltp:.2f} < ₹{lower:.2f}")
         return {
             'score': -weight,
             'orb_high': upper,

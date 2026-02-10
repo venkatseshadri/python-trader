@@ -29,16 +29,19 @@ import numpy as np
 import pandas as pd
 import time
 from datetime import datetime
+from config.config import VERBOSE_LOGS
 
 def price_above_5ema_filter(data, candle_data, token, weight=20):
     """F2: TA-Lib EMA5 → 20pts (ULTRA FAST)"""
     ltp = float(data.get('lp', 0))
     if ltp == 0: 
-        print(f"🔴 5EMA {token}: LTP=0")
+        if VERBOSE_LOGS:
+            print(f"🔴 5EMA {token}: LTP=0")
         return 0
         
     if not candle_data or len(candle_data) < 5:
-        print(f"🔴 5EMA {token}: Insufficient data ({len(candle_data)})")
+        if VERBOSE_LOGS:
+            print(f"🔴 5EMA {token}: Insufficient data ({len(candle_data)})")
         return 0
     
     # ✅ FIXED LIST COMPREHENSION
@@ -49,21 +52,26 @@ def price_above_5ema_filter(data, candle_data, token, weight=20):
     ], dtype=float)
     
     if len(closes) < 5:
-        print(f"🔴 5EMA {token}: Valid candles={len(closes)}")
+        if VERBOSE_LOGS:
+            print(f"🔴 5EMA {token}: Valid candles={len(closes)}")
         return 0
     
     # 🔥 TA-Lib MAGIC
     ema5 = talib.EMA(closes, timeperiod=5)
     latest_ema = ema5[-1]
     
-    print(f"📊 TA-Lib 5EMA {token} LTP={ltp:.2f} EMA5={latest_ema:.2f}")
+    if VERBOSE_LOGS:
+        print(f"📊 TA-Lib 5EMA {token} LTP={ltp:.2f} EMA5={latest_ema:.2f}")
     
     if ltp > latest_ema:
-        print(f"🟢 5EMA BULL {token}: {ltp:.2f} > {latest_ema:.2f} → +{weight}pts")
+        if VERBOSE_LOGS:
+            print(f"🟢 5EMA BULL {token}: {ltp:.2f} > {latest_ema:.2f} → +{weight}pts")
         return {'score': weight, 'ema5': latest_ema}
     if ltp < latest_ema:
-        print(f"🔴 5EMA BEAR {token}: {ltp:.2f} < {latest_ema:.2f} → -{weight}pts")
+        if VERBOSE_LOGS:
+            print(f"🔴 5EMA BEAR {token}: {ltp:.2f} < {latest_ema:.2f} → -{weight}pts")
         return {'score': -weight, 'ema5': latest_ema}
 
-    print(f"🟡 5EMA FLAT {token}: {ltp:.2f} == {latest_ema:.2f}")
+    if VERBOSE_LOGS:
+        print(f"🟡 5EMA FLAT {token}: {ltp:.2f} == {latest_ema:.2f}")
     return {'score': 0, 'ema5': latest_ema}

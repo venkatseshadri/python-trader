@@ -9,12 +9,15 @@ SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 TRADE_LOG_HEADER = [
     "Timestamp", "Token", "Symbol", "Company", "LTP", "ORB High", "ORB Low", "EMA5",
     "Score", "Action", "Strategy", "Expiry", "ATM Strike", "Hedge Strike",
-    "ATM Symbol", "Hedge Symbol", "Dry Run"
+    "ATM Symbol", "Hedge Symbol", "Dry Run",
+    "ATM Premium Entry", "Hedge Premium Entry", "ATM Premium Exit", "Hedge Premium Exit"
 ]
 
 SCAN_METRICS_HEADER = [
     "Timestamp", "Token", "Symbol", "Company", "Day Open", "Day High", "Day Low",
     "Day Close", "ORB Open", "EMA5", "ORB High", "ORB Low", "LTP", "Trade Taken",
+    "SPAN PE", "Exposure PE", "Total Margin PE", "Pledged Required PE",
+    "SPAN CE", "Exposure CE", "Total Margin CE", "Pledged Required CE",
     "Filters"
 ]
 
@@ -182,7 +185,11 @@ def log_buy_signals(buy_signals):
             signal.get('hedge_strike', ''),
             signal.get('atm_symbol', ''),
             signal.get('hedge_symbol', ''),
-            "YES" if signal.get('dry_run') else ""
+            "YES" if signal.get('dry_run') else "",
+            f"₹{signal.get('atm_premium_entry', 0):.2f}" if signal.get('atm_premium_entry') is not None else "",
+            f"₹{signal.get('hedge_premium_entry', 0):.2f}" if signal.get('hedge_premium_entry') is not None else "",
+            "",
+            ""
         ]
         sheet.append_row(row)
 
@@ -213,7 +220,18 @@ def log_square_off(square_offs):
             f"{so.get('pct_change', 0):.2f}%",
             so.get('reason', ''),
             '',
-            "🔻 SQUARE-OFF"
+            "🔻 SQUARE-OFF",
+            so.get('strategy', ''),
+            so.get('expiry', ''),
+            so.get('atm_strike', ''),
+            so.get('hedge_strike', ''),
+            so.get('atm_symbol', ''),
+            so.get('hedge_symbol', ''),
+            "",
+            f"₹{so.get('atm_premium_entry', 0):.2f}" if so.get('atm_premium_entry') is not None else "",
+            f"₹{so.get('hedge_premium_entry', 0):.2f}" if so.get('hedge_premium_entry') is not None else "",
+            f"₹{so.get('atm_premium_exit', 0):.2f}" if so.get('atm_premium_exit') is not None else "",
+            f"₹{so.get('hedge_premium_exit', 0):.2f}" if so.get('hedge_premium_exit') is not None else ""
         ]
         sheet.append_row(row)
 
@@ -237,6 +255,12 @@ def log_scan_metrics(metrics):
     if not header:
         sheet.insert_row(SCAN_METRICS_HEADER, 1)
         header = SCAN_METRICS_HEADER
+    else:
+        missing = [col for col in SCAN_METRICS_HEADER if col not in header]
+        if missing:
+            last_col = _col_letter(len(SCAN_METRICS_HEADER))
+            sheet.update(f"A1:{last_col}1", [SCAN_METRICS_HEADER])
+            header = SCAN_METRICS_HEADER
 
     def _col_letter(index):
         letters = ""
@@ -269,6 +293,14 @@ def log_scan_metrics(metrics):
             "ORB Low": f"₹{orb.get('orb_low', 0):.2f}" if orb.get('orb_low') is not None else "",
             "LTP": f"₹{item.get('ltp', 0):.2f}" if item.get('ltp') is not None else "",
             "Trade Taken": "YES" if item.get('trade_taken') else "NO",
+            "SPAN PE": f"₹{item.get('span_pe', 0):.2f}" if item.get('span_pe') is not None else "",
+            "Exposure PE": f"₹{item.get('expo_pe', 0):.2f}" if item.get('expo_pe') is not None else "",
+            "Total Margin PE": f"₹{item.get('total_margin_pe', 0):.2f}" if item.get('total_margin_pe') is not None else "",
+            "Pledged Required PE": f"₹{item.get('pledged_required_pe', 0):.2f}" if item.get('pledged_required_pe') is not None else "",
+            "SPAN CE": f"₹{item.get('span_ce', 0):.2f}" if item.get('span_ce') is not None else "",
+            "Exposure CE": f"₹{item.get('expo_ce', 0):.2f}" if item.get('expo_ce') is not None else "",
+            "Total Margin CE": f"₹{item.get('total_margin_ce', 0):.2f}" if item.get('total_margin_ce') is not None else "",
+            "Pledged Required CE": f"₹{item.get('pledged_required_ce', 0):.2f}" if item.get('pledged_required_ce') is not None else "",
             "Filters": filters_json
         }
 

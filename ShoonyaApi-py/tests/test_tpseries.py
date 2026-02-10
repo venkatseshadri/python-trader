@@ -6,6 +6,7 @@ import logging
 import yaml
 import datetime
 import timeit
+import pytz
 
 #supress debug messages for prod/tests
 logging.basicConfig(level=logging.DEBUG)
@@ -27,34 +28,32 @@ api = ShoonyaApiPy()
 #ret = api.login(userid = user, password = pwd, twoFA=factor2, vendor_code=vc, api_secret=apikey, imei=imei)
 
 #yaml for parameters
-with open('./cred.yml') as f:
+cred_path = os.path.join(base_dir, 'cred.yml')
+with open(cred_path) as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
-    print(cred)
 
 ret = api.login(userid = cred['user'], password = cred['pwd'], twoFA=cred['factor2'], vendor_code=cred['vc'], api_secret=cred['apikey'], imei=cred['imei'])
 
-if ret != None:   
-    lastBusDay = datetime.datetime.today()
-    lastBusDay = lastBusDay.replace(hour=0, minute=0, second=0, microsecond=0)
+if ret != None:
+    ist = pytz.timezone('Asia/Kolkata')
+    now_ist = datetime.datetime.now(tz=ist)
+    lastBusDay = now_ist - datetime.timedelta(days=1)
+    while lastBusDay.weekday() >= 5:
+        lastBusDay = lastBusDay - datetime.timedelta(days=1)
 
-    if datetime.date.weekday(lastBusDay) == 5:      #if it's Saturday
-     lastBusDay = lastBusDay - datetime.timedelta(days = 1) #then make it Friday
-    elif datetime.date.weekday(lastBusDay) == 6:      #if it's Sunday
-     lastBusDay = lastBusDay - datetime.timedelta(days = 2); #then make it Friday
-
-    lastBusDay = datetime.datetime.today()
-    lastBusDay = lastBusDay.replace(hour=0, minute=0, second=0, microsecond=0)
-    print(lastBusDay.timestamp())
-    #lastBusDay = 1639098000
+    start_dt = lastBusDay.replace(hour=9, minute=15, second=0, microsecond=0)
+    end_dt = lastBusDay.replace(hour=15, minute=30, second=0, microsecond=0)
 
     starttime = timeit.default_timer()
     print("The start time is :",starttime)
-    #get one day's data
-    starttime =  lastBusDay
-    endtime   =  datetime.datetime.today()
-    endtime   =  endtime.replace(hour=0, minute=0, second=0, microsecond=0)  + datetime.timedelta(days = 1)
-    
-    ret = api.get_time_price_series(exchange='NSE', token='2885', starttime=lastBusDay.timestamp(), endtime=endtime.timestamp(), interval=240)
+    # get previous trading day's intraday data (IST)
+    ret = api.get_time_price_series(
+        exchange='NSE',
+        token='2885',
+        starttime=start_dt.timestamp(),
+        endtime=end_dt.timestamp(),
+        interval=240
+    )
 
 
     #ret = api.get_time_price_series(exchange='NSE', token='2885', starttime=lastBusDay.timestamp())
