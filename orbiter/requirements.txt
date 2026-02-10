@@ -3,3 +3,5 @@ pandas>=2.0
 numpy>=1.24
 TA-Lib>=0.4.28
 pytz>=2024.1
+gspread>=6.1.2
+google-auth>=2.29.0
