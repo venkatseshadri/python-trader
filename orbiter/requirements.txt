@@ -2,3 +2,4 @@ ShoonyaApi-py>=1.0.0
 pyyaml>=6.0
 pandas>=2.0
 numpy>=1.24
+TA-Lib>=0.4.28

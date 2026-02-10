@@ -1,6 +1,14 @@
 # f1_orb.py - PURE MODULE FUNCTIONS (NO CLASS)
 from datetime import datetime, timedelta
-from config.config import VERBOSE_LOGS
+import math
+from config.config import (
+    VERBOSE_LOGS,
+    SCORE_W_ORB_SIZE,
+    SCORE_W_ORB_HIGH,
+    SCORE_W_ORB_LOW,
+    SCORE_SCALE_ORB_SIZE_PCT,
+    SCORE_SCALE_ORB_BREAK_PCT,
+)
 
 def calculate_orb_range(ret, token,):
     """FIXED: Precise 9:15-9:30 ORB (1min candles)"""
@@ -57,26 +65,47 @@ def orb_filter(data, ret, weight=25, token='', buffer_pct=0.2):
     if not upper or not lower:
         return {'score': 0, 'orb_high': 0, 'orb_low': 0, 'orb_open': 0}
     
+    size_scale = SCORE_SCALE_ORB_SIZE_PCT if SCORE_SCALE_ORB_SIZE_PCT and SCORE_SCALE_ORB_SIZE_PCT > 0 else 0.05
+    break_scale = SCORE_SCALE_ORB_BREAK_PCT if SCORE_SCALE_ORB_BREAK_PCT and SCORE_SCALE_ORB_BREAK_PCT > 0 else 0.10
+
+    orb_size = (upper - lower) / ltp
+    size_score = SCORE_W_ORB_SIZE * math.tanh(orb_size / size_scale)
+
     if ltp > upper * (1 + buf):
+        dist = (ltp - upper) / ltp
+        high_score = SCORE_W_ORB_HIGH * math.tanh(dist / break_scale)
+        score = size_score + high_score
         if VERBOSE_LOGS:
-            print(f"🟢 ORB BULL {token}: ₹{ltp:.2f} > ₹{upper:.2f}")
+            print(
+                f"🟢 ORB BULL {token}: ₹{ltp:.2f} > ₹{upper:.2f} "
+                f"size={size_score:.1f} high={high_score:.1f} total={score:.1f}"
+            )
         return {
-            'score': weight,
+            'score': score,
             'orb_high': upper,
             'orb_low': lower,
-            'orb_open': orb_open
-        }
-    elif ltp < lower * (1 - buf):
-        if VERBOSE_LOGS:
-            print(f"🔴 ORB BEAR {token}: ₹{ltp:.2f} < ₹{lower:.2f}")
-        return {
-            'score': -weight,
-            'orb_high': upper,
-            'orb_low': lower,
-            'orb_open': orb_open
+            'orb_open': orb_open,
+            'orb_size': upper - lower
         }
 
-    return {'score': 0, 'orb_high': upper, 'orb_low': lower, 'orb_open': orb_open}
+    if ltp < lower * (1 - buf):
+        dist = (ltp - lower) / ltp
+        low_score = SCORE_W_ORB_LOW * math.tanh(dist / break_scale)
+        score = -size_score + low_score
+        if VERBOSE_LOGS:
+            print(
+                f"🔴 ORB BEAR {token}: ₹{ltp:.2f} < ₹{lower:.2f} "
+                f"size={size_score:.1f} low={low_score:.1f} total={score:.1f}"
+            )
+        return {
+            'score': score,
+            'orb_high': upper,
+            'orb_low': lower,
+            'orb_open': orb_open,
+            'orb_size': upper - lower
+        }
+
+    return {'score': 0, 'orb_high': upper, 'orb_low': lower, 'orb_open': orb_open, 'orb_size': upper - lower}
 
 def get_today_orb_times():
     """Dynamic ORB: Today's date + fixed 9:15-9:30"""

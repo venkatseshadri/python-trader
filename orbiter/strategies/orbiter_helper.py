@@ -57,7 +57,7 @@ class OrbiterHelper:
             print(f"🔍 websocket='{websocket_token}' ltp={data.get('lp', 'MISSING')}")
         
         #ltp, ltp_display, symbol  = safe_ltp(data)
-        start_time, end_time = get_today_orb_times()
+        start_time, end_time = get_today_orb_times(simulation=self.config.get('SIMULATION', False))
         start_ts = int(start_time.timestamp())
         end_ts = int(end_time.timestamp())
         

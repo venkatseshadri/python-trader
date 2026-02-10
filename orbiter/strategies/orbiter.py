@@ -6,6 +6,7 @@
 import time
 import sys
 import os
+import argparse
 
 import pytz
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +20,7 @@ from orbiter_helper import OrbiterHelper
 import config
 
 class Orbiter:
-    def __init__(self):        
+    def __init__(self, simulation: bool = False):        
         self.config = {
             'TRADE_SCORE': config.TRADE_SCORE,
             'TOP_N': config.TOP_N,
@@ -32,7 +33,8 @@ class Orbiter:
             'OPTION_EXPIRY': config.OPTION_EXPIRY,
             'OPTION_INSTRUMENT': config.OPTION_INSTRUMENT,
             'HEDGE_STEPS': config.HEDGE_STEPS,
-            'VERBOSE_LOGS': config.VERBOSE_LOGS
+            'VERBOSE_LOGS': config.VERBOSE_LOGS,
+            'SIMULATION': simulation
         }
         
         self.client = None
@@ -103,7 +105,15 @@ class Orbiter:
             print("\n👋 Shutdown complete")
 
 def main():
-    orbiter = Orbiter()
+    parser = argparse.ArgumentParser(description="Run ORBITER strategy")
+    parser.add_argument(
+        "--simulation",
+        action="store_true",
+        help="Use previous trading day's 9:15-9:30 ORB window for TPSeries"
+    )
+    args = parser.parse_args()
+
+    orbiter = Orbiter(simulation=args.simulation)
     orbiter.setup()
     if not orbiter.login():
         return

@@ -40,13 +40,16 @@ def format_score(score):
     if score >= 25:   return f" 🟢 ENTRY {int(score)}"
     return f" 🔴 HOLD{int(score)}"
 
-def get_today_orb_times():
-    """Dynamic ORB: current trading day 9:15-9:30 IST."""
+def get_today_orb_times(simulation: bool = False):
+    """Dynamic ORB: current or previous trading day 9:15-9:30 IST."""
     # Fetch 1min candles for ORB between 9:15 and 9:30 IST.
     ist = pytz.timezone('Asia/Kolkata')
     now_ist = datetime.datetime.now(tz=ist)
 
     trading_day = now_ist
+    if simulation:
+        trading_day = trading_day - datetime.timedelta(days=1)
+
     while trading_day.weekday() >= 5:
         trading_day = trading_day - datetime.timedelta(days=1)
 

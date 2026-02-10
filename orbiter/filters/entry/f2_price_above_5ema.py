@@ -29,7 +29,7 @@ import numpy as np
 import pandas as pd
 import time
 from datetime import datetime
-from config.config import VERBOSE_LOGS
+from config.config import VERBOSE_LOGS, SCORE_CAP_EMA_PCT
 
 def price_above_5ema_filter(data, candle_data, token, weight=20):
     """F2: TA-Lib EMA5 → 20pts (ULTRA FAST)"""
@@ -63,14 +63,18 @@ def price_above_5ema_filter(data, candle_data, token, weight=20):
     if VERBOSE_LOGS:
         print(f"📊 TA-Lib 5EMA {token} LTP={ltp:.2f} EMA5={latest_ema:.2f}")
     
+    cap = SCORE_CAP_EMA_PCT if SCORE_CAP_EMA_PCT and SCORE_CAP_EMA_PCT > 0 else 0.10
+    dist = (ltp - latest_ema) / ltp
+    score = 100.0 * max(-1.0, min(1.0, dist / cap))
+
     if ltp > latest_ema:
         if VERBOSE_LOGS:
-            print(f"🟢 5EMA BULL {token}: {ltp:.2f} > {latest_ema:.2f} → +{weight}pts")
-        return {'score': weight, 'ema5': latest_ema}
+            print(f"🟢 5EMA BULL {token}: {ltp:.2f} > {latest_ema:.2f} score={score:.1f}")
+        return {'score': score, 'ema5': latest_ema}
     if ltp < latest_ema:
         if VERBOSE_LOGS:
-            print(f"🔴 5EMA BEAR {token}: {ltp:.2f} < {latest_ema:.2f} → -{weight}pts")
-        return {'score': -weight, 'ema5': latest_ema}
+            print(f"🔴 5EMA BEAR {token}: {ltp:.2f} < {latest_ema:.2f} score={score:.1f}")
+        return {'score': score, 'ema5': latest_ema}
 
     if VERBOSE_LOGS:
         print(f"🟡 5EMA FLAT {token}: {ltp:.2f} == {latest_ema:.2f}")

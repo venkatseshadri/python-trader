@@ -60,6 +60,8 @@ $$
 
 Example (RELIANCE; ORB_high=1460, ORB_low=1440, EMA5=1452; 10% cap):
 
+Scaling note: with a 10% cap, $\text{score} = 100 \cdot \frac{\text{dist}}{0.10} = 1000 \cdot \text{dist}$ (clipped to [-100, 100]).
+
 | Scenario | LTP | dist_orb | score_orb | dist_ema | score_ema | Total |
 |---|---:|---:|---:|---:|---:|---:|
 | ORB HIGH (just above) | 1461 | (1461-1460)/1461=0.000684 | 100*0.00684=+0.7 | (1461-1452)/1461=0.00616 | 100*0.0616=+6.2 | +6.9 |
@@ -125,6 +127,13 @@ SIDEWAYS_NIFTY50 → Short strangles on range-bound
 MOMENTUM_TOP10 → EMA crossover on F&O stocks
 BANKNIFTY_ORB → Scale to BankNifty universe
 52W_BREAKOUT → Add filter for 52-week high/low proximity and breakout confirmation
+SWING_LEVELS → Identify swing highs/lows and exhaustion zones
+SMALL_CANDLES → Detect 3-candle small/doji clusters before breaks
+SUPERTREND → Add Supertrend filter for trend bias
+EMA_SLOPE → Use (EMA1 - EMA2) / EMA2 as slope filter
+PULLBACK_REVERSAL → Classify pullback vs reversal
+
+Timeframes: evaluate these filters on 5m or 15m candles.
 📋 Requirements
 text
 ShoonyaApi-py>=1.0.0
