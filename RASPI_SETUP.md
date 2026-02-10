@@ -42,5 +42,5 @@ Simulation mode:
 
 ## Notes
 
-- TA-Lib is installed via apt and pip.
+- TA-Lib is built from source during install.
 - The virtualenv is created at .venv/ in the repo root.

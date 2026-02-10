@@ -12,8 +12,21 @@ sudo apt-get install -y \
   build-essential \
   libssl-dev \
   libffi-dev \
-  libta-lib0 \
-  libta-lib-dev
+  wget
+
+# Build TA-Lib from source (apt packages may be unavailable on Pi)
+if ! ldconfig -p | grep -q libta_lib; then
+  mkdir -p /tmp/ta-lib-build
+  cd /tmp/ta-lib-build
+  wget -q https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
+  tar -xzf ta-lib-0.4.0-src.tar.gz
+  cd ta-lib
+  ./configure --prefix=/usr
+  make
+  sudo make install
+  cd /
+  rm -rf /tmp/ta-lib-build
+fi
 
 python3 -m venv "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --upgrade pip wheel
