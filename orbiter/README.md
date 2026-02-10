@@ -124,6 +124,7 @@ text
 SIDEWAYS_NIFTY50 → Short strangles on range-bound
 MOMENTUM_TOP10 → EMA crossover on F&O stocks
 BANKNIFTY_ORB → Scale to BankNifty universe
+52W_BREAKOUT → Add filter for 52-week high/low proximity and breakout confirmation
 📋 Requirements
 text
 ShoonyaApi-py>=1.0.0
