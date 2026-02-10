@@ -21,6 +21,10 @@ if ! ldconfig -p | grep -q libta_lib; then
   wget -q https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
   tar -xzf ta-lib-0.4.0-src.tar.gz
   cd ta-lib
+  # Refresh config.guess/config.sub for newer ARM platforms
+  wget -q -O config.guess "https://git.savannah.gnu.org/cgit/config.git/plain/config.guess"
+  wget -q -O config.sub "https://git.savannah.gnu.org/cgit/config.git/plain/config.sub"
+  chmod +x config.guess config.sub
   ./configure --prefix=/usr
   make
   sudo make install
