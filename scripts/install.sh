@@ -38,6 +38,5 @@ python3 -m venv "$VENV_DIR"
 
 "$VENV_DIR/bin/pip" install -r "$ROOT_DIR/orbiter/requirements.txt"
 "$VENV_DIR/bin/pip" install "$ROOT_DIR/ShoonyaApi-py/dist/NorenRestApi-0.0.30-py2.py3-none-any.whl"
-"$VENV_DIR/bin/pip" install -e "$ROOT_DIR/ShoonyaApi-py"
 
 echo "Install complete. Activate with: source $VENV_DIR/bin/activate"
