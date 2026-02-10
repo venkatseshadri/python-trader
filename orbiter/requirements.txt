@@ -2,3 +2,4 @@ pyyaml>=6.0
 pandas>=2.0
 numpy>=1.24
 TA-Lib>=0.4.28
+pytz>=2024.1
