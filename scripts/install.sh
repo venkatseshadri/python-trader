@@ -37,5 +37,6 @@ python3 -m venv "$VENV_DIR"
 
 "$VENV_DIR/bin/pip" install -r "$ROOT_DIR/orbiter/requirements.txt"
 "$VENV_DIR/bin/pip" install -r "$ROOT_DIR/ShoonyaApi-py/requirements.txt"
+"$VENV_DIR/bin/pip" install -e "$ROOT_DIR/ShoonyaApi-py"
 
 echo "Install complete. Activate with: source $VENV_DIR/bin/activate"
