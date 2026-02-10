@@ -15,7 +15,7 @@ sudo apt-get install -y \
   wget
 
 # Build TA-Lib from source (apt packages may be unavailable on Pi)
-if ! ldconfig -p | grep -q libta_lib; then
+if [[ ! -f /lib/libta_lib.so && ! -f /usr/lib/libta_lib.so && ! -f /usr/lib/aarch64-linux-gnu/libta_lib.so && ! -f /usr/local/lib/libta_lib.so ]]; then
   mkdir -p /tmp/ta-lib-build
   cd /tmp/ta-lib-build
   wget -q https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
@@ -28,6 +28,7 @@ if ! ldconfig -p | grep -q libta_lib; then
   ./configure --prefix=/usr
   make
   sudo make install
+  sudo ldconfig
   cd /
   rm -rf /tmp/ta-lib-build
 fi
@@ -36,7 +37,7 @@ python3 -m venv "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --upgrade pip wheel
 
 "$VENV_DIR/bin/pip" install -r "$ROOT_DIR/orbiter/requirements.txt"
-"$VENV_DIR/bin/pip" install -r "$ROOT_DIR/ShoonyaApi-py/requirements.txt"
+"$VENV_DIR/bin/pip" install "$ROOT_DIR/ShoonyaApi-py/dist/NorenRestApi-0.0.30-py2.py3-none-any.whl"
 "$VENV_DIR/bin/pip" install -e "$ROOT_DIR/ShoonyaApi-py"
 
 echo "Install complete. Activate with: source $VENV_DIR/bin/activate"
