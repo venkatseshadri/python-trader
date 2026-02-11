@@ -18,7 +18,7 @@ SCAN_METRICS_HEADER = [
     "Day Close", "ORB Open", "EMA5", "ORB High", "ORB Low", "LTP", "Trade Taken",
     "SPAN PE", "Exposure PE", "Total Margin PE", "Pledged Required PE",
     "SPAN CE", "Exposure CE", "Total Margin CE", "Pledged Required CE",
-    "Filters"
+    "F1 Score", "F2 Score", "F3 Score", "F4 Score"
 ]
 
 CONTROL_HEADER = ["Key", "Value"]
@@ -274,9 +274,10 @@ def log_scan_metrics(metrics):
 
     for item in metrics:
         filters_payload = item.get('filters') or {}
-        filters_json = json.dumps(filters_payload, ensure_ascii=True, sort_keys=True)
         orb = filters_payload.get('ef1_orb', {}) if isinstance(filters_payload.get('ef1_orb', {}), dict) else {}
         ema = filters_payload.get('ef2_price_above_5ema', {}) if isinstance(filters_payload.get('ef2_price_above_5ema', {}), dict) else {}
+        f3 = filters_payload.get('ef3_5ema_above_9ema', {}) if isinstance(filters_payload.get('ef3_5ema_above_9ema', {}), dict) else {}
+        f4 = filters_payload.get('ef4_supertrend', {}) if isinstance(filters_payload.get('ef4_supertrend', {}), dict) else {}
 
         values = {
             "Timestamp": timestamp,
@@ -301,7 +302,10 @@ def log_scan_metrics(metrics):
             "Exposure CE": f"₹{item.get('expo_ce', 0):.2f}" if item.get('expo_ce') is not None else "",
             "Total Margin CE": f"₹{item.get('total_margin_ce', 0):.2f}" if item.get('total_margin_ce') is not None else "",
             "Pledged Required CE": f"₹{item.get('pledged_required_ce', 0):.2f}" if item.get('pledged_required_ce') is not None else "",
-            "Filters": filters_json
+            "F1 Score": orb.get('score', 0),
+            "F2 Score": ema.get('score', 0),
+            "F3 Score": f3.get('score', 0),
+            "F4 Score": f4.get('score', 0)
         }
 
         row = [values.get(col, "") for col in header]
