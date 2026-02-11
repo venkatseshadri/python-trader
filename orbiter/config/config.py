@@ -59,9 +59,9 @@ SYMBOLS_UNIVERSE = [
 ]
 
 # 🔥 CONFIGURATION
-TOP_N = 1                    # Execute TOP 1 highest scoring
+TOP_N = 10                    # Execute TOP 10 highest scoring
 #TRADE_SCORE = 45             # Minimum score (out of 63pts)
-TRADE_SCORE = 20             # Minimum score (out of 63pts)
+TRADE_SCORE = 1             # Minimum score (out of 63pts)
 ENTRY_WEIGHTS = [1.0, 1.0, 0.0, 0.0]
 MARKET_OPEN = dt_time(9, 15)
 MARKET_CLOSE = dt_time(15, 30)
@@ -72,6 +72,7 @@ OPTION_EXPIRY = 'monthly'
 OPTION_INSTRUMENT = 'OPTSTK'
 HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
+#VERBOSE_LOGS = True
 VERBOSE_LOGS = False
 SCORE_CAP_ORB_PCT = 0.10
 SCORE_CAP_EMA_PCT = 0.10

@@ -8,6 +8,7 @@ import time
 import pytz
 import filters
 from config.config import VERBOSE_LOGS
+import math
 
 # Add to TOP:
 import importlib.util
@@ -129,7 +130,9 @@ class OrbiterHelper:
             if not scores:
                 total = 0
             else:
-                total = sum(w * s for w, s in zip(self.config['ENTRY_WEIGHTS'], scores))
+                valid_scores = [(w, s) for w, s in zip(self.config['ENTRY_WEIGHTS'], scores) 
+                                if not (isinstance(s, float) and math.isnan(s))]
+                total = sum(w * s for w, s in valid_scores) if valid_scores else 0
             if not has_live_data:
                 total = 0
 
@@ -325,6 +328,7 @@ class OrbiterHelper:
                         price_type=self.config.get('OPTION_PRICE_TYPE', 'MKT'),
                         instrument=self.config.get('OPTION_INSTRUMENT', 'OPTSTK')
                     )
+                    print(f"🔍 SPREAD DEBUG {symbol}: {spread}")  # ⭐ CRITICAL
                     strategy = 'PUT_CREDIT_SPREAD'
                 else:
                     spread = self.client.place_call_credit_spread(
@@ -337,6 +341,7 @@ class OrbiterHelper:
                         price_type=self.config.get('OPTION_PRICE_TYPE', 'MKT'),
                         instrument=self.config.get('OPTION_INSTRUMENT', 'OPTSTK')
                     )
+                    print(f"🔍 SPREAD DEBUG {symbol}: {spread}")  # ⭐ CRITICAL
                     strategy = 'CALL_CREDIT_SPREAD'
 
                 if not spread.get('ok'):
