@@ -3,6 +3,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import os
 import json
+import math
 
 SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
@@ -308,7 +309,19 @@ def log_scan_metrics(metrics):
             "F4 Score": f4.get('score', 0)
         }
 
-        row = [values.get(col, "") for col in header]
+        def safe_float(val):
+            if val is None:
+                return ''
+            if isinstance(val, float) and math.isnan(val):
+                return 0.0  # Or '' or 'N/A'
+            return val
+
+        # After building values dict, clean it:
+        clean_values = {k: safe_float(v) for k, v in values.items()}
+        row = [clean_values.get(col, '') for col in header]
+
+
+        #row = [values.get(col, "") for col in header]
 
         token = item.get('token')
         row_indexes = [idx + 1 for idx, value in enumerate(token_rows) if idx >= 1 and value == token]
