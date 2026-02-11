@@ -68,7 +68,8 @@ def supertrend_filter(data, candle_data, token, weight=20):
 
     cap = SCORE_CAP_ST_PCT if SCORE_CAP_ST_PCT and SCORE_CAP_ST_PCT > 0 else 0.10
     dist = (ltp - latest_st) / ltp
-    score = 100.0 * max(-1.0, min(1.0, dist / cap))
+    #score = 100.0 * max(-1.0, min(1.0, dist / cap))
+    score = abs(dist / cap)
 
     if VERBOSE_LOGS:
         print(f"📊 ST {token} LTP={ltp:.2f} ST={latest_st:.2f} score={score:.1f}")
