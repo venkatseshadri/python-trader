@@ -1,6 +1,7 @@
 # orbiter/utils.py - Shoonya utilities
 import datetime
 import pytz
+import numpy as np
 
 def safe_ltp(data, token=None):
     try:
@@ -57,3 +58,36 @@ def get_today_orb_times(simulation: bool = False):
     end_time = trading_day.replace(hour=9, minute=30, second=0, microsecond=0)
 
     return start_time, end_time
+
+def safe_float(value, default=0.0):
+    """🔒 BULLETPROOF float conversion"""
+    if value is None:
+        return default
+    try:
+        # Handle string → strip → float
+        if isinstance(value, str):
+            cleaned = value.strip().replace(',', '')
+            return float(cleaned)
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+# REPLACE ALL float(candle['intc']) → safe_float(candle['intc'])
+
+def safe_price_array(candle_data, min_len=5):
+    """🔥 RETURNS np.float64 OR None - NO object dtype EVER"""
+    prices = []
+    for candle in candle_data or []:
+        if isinstance(candle, dict) and candle.get('stat') == 'Ok':
+            price = safe_float(candle.get('intc') or candle.get('c'))
+            if price > 0:
+                prices.append(price)
+    
+    if len(prices) < min_len:
+        return None
+    
+    # 🔥 FORCE np.float64 - TALIB SAFE
+    arr = np.array(prices)
+    if arr.dtype != np.float64:
+        arr = arr.astype(np.float64)
+    return arr

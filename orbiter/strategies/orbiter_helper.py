@@ -9,19 +9,29 @@ import pytz
 import filters
 from config.config import VERBOSE_LOGS
 import math
+import numpy as np
 
+import traceback
 # Add to TOP:
 import importlib.util
 import os
+from utils.utils import safe_float
 
 # Load sheets.py dynamically from bot/ folder
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("sheets", base_dir+"/bot/sheets.py")
-sheets = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(sheets)
-log_buy_signals = sheets.log_buy_signals  # ✅ WORKS EVERYWHERE
-log_square_off = getattr(sheets, 'log_square_off', None)
-log_scan_metrics = getattr(sheets, 'log_scan_metrics', None)
+sheets_path = os.path.join(base_dir, "bot", "sheets.py")
+try:
+    spec = importlib.util.spec_from_file_location("sheets", sheets_path)
+    sheets = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sheets)
+    log_buy_signals = sheets.log_buy_signals  # ✅ WORKS EVERYWHERE
+    log_square_off = getattr(sheets, 'log_square_off', None)
+    log_scan_metrics = getattr(sheets, 'log_scan_metrics', None)
+except Exception as e:
+    print(f"⚠️ Warning: Could not load sheets.py: {e}")
+    log_buy_signals = lambda x: print(f"📝 [Mock] Buy Signal: {x}")
+    log_square_off = lambda x: None
+    log_scan_metrics = lambda x: None
 
 # SL filters - generic registry from filters package
 SL_FILTERS = getattr(filters, 'get_filters', lambda _: [])('sl')
@@ -94,17 +104,17 @@ class OrbiterHelper:
                 ordered = [pair[0] for pair in sorted(with_time, key=lambda x: x[1])] if with_time else list(reversed(ok))
                 first = ordered[0]
                 last = ordered[-1]
-                opens = [float(c.get('into')) for c in ok if c.get('into') is not None]
-                highs = [float(c.get('inth')) for c in ok if c.get('inth') is not None]
-                lows = [float(c.get('intl')) for c in ok if c.get('intl') is not None]
-                closes = [float(c.get('intc')) for c in ok if c.get('intc') is not None]
-                open_val = float(first.get('into') or first.get('intc') or 0) if first else None
-                close_val = float(last.get('intc') or last.get('into') or 0) if last else None
-                high_val = max(highs) if highs else None
-                low_val = min(lows) if lows else None
-                if open_val is None and opens:
+                opens = np.array([safe_float(c.get('into')) for c in ok if c.get('into') is not None], dtype=np.float64)
+                highs = np.array([safe_float(c.get('inth')) for c in ok if c.get('inth') is not None], dtype=np.float64)
+                lows = np.array([safe_float(c.get('intl')) for c in ok if c.get('intl') is not None], dtype=np.float64)
+                closes = np.array([safe_float(c.get('intc')) for c in ok if c.get('intc') is not None], dtype=np.float64)
+                open_val = safe_float(first.get('into') or first.get('intc') or 0) if first else None
+                close_val = safe_float(last.get('intc') or last.get('into') or 0) if last else None
+                high_val = max(highs) if len(highs) > 0 else None
+                low_val = min(lows) if len(lows) > 0 else None
+                if open_val is None and len(opens) > 0:
                     open_val = opens[0]
-                if close_val is None and closes:
+                if close_val is None and len(closes) > 0:
                     close_val = closes[-1]
                 return open_val, high_val, low_val, close_val
 
@@ -114,7 +124,7 @@ class OrbiterHelper:
 
             if not candle_data or len(candle_data) < 5:
                 if self.verbose_logs:
-                    print(f"🔴 FILTERS {token}: Insufficient candle data ({len(candle_data)})")
+                    print(f"🔴 FILTERS {token}: Insufficient candle data ({len(candle_data or [])})")
                 for entry_filter in entry_filters:
                     filter_results[entry_filter.key] = {'score': 0}
                     scores.append(0)
@@ -123,16 +133,23 @@ class OrbiterHelper:
                 for entry_filter in entry_filters:
                     result = entry_filter.evaluate(data, candle_data, token=websocket_token)
                     if not isinstance(result, dict):
-                        result = {'score': result}
+                        if isinstance(result, (int, float)):
+                            result = {'score': result}
+                        else:
+                            # Handle non-numeric results (e.g. tuples) gracefully
+                            result = {'score': 0, 'raw': result}
+
                     filter_results[entry_filter.key] = result
-                    scores.append(result.get('score', 0))
+                    
+                    s = result.get('score', 0)
+                    scores.append(s if isinstance(s, (int, float)) else 0)
 
             if not scores:
                 total = 0
             else:
                 valid_scores = [(w, s) for w, s in zip(self.config['ENTRY_WEIGHTS'], scores) 
                                 if not (isinstance(s, float) and math.isnan(s))]
-                total = sum(w * s for w, s in valid_scores) if valid_scores else 0
+                total = round(sum(w * s for w, s in valid_scores), 2) if valid_scores else 0
             if not has_live_data:
                 total = 0
 
@@ -148,10 +165,10 @@ class OrbiterHelper:
             day_low = data.get('l') or data.get('low')
             day_close = data.get('c') or data.get('close')
 
-            ltp = float(data.get('ltp', data.get('lp', 0)) or 0)
+            ltp = safe_float(data.get('ltp', data.get('lp', 0)) or 0)
             candle_open, candle_high, candle_low, candle_close = _candle_stats(candle_data)
             if ltp == 0 and candle_close is not None:
-                ltp = float(candle_close)
+                ltp = safe_float(candle_close)
                 data['lp'] = ltp
                 data['ltp'] = ltp
             if day_open is None:
@@ -236,10 +253,10 @@ class OrbiterHelper:
                 'token': token,
                 'symbol': symbol_out,
                 'company_name': company_out,
-                'day_open': float(day_open) if day_open is not None else None,
-                'day_high': float(day_high) if day_high is not None else None,
-                'day_low': float(day_low) if day_low is not None else None,
-                'day_close': float(day_close) if day_close is not None else None,
+                'day_open': safe_float(day_open) if day_open is not None else None,
+                'day_high': safe_float(day_high) if day_high is not None else None,
+                'day_low': safe_float(day_low) if day_low is not None else None,
+                'day_close': safe_float(day_close) if day_close is not None else None,
                 'span_pe': span_pe.get('span') if span_pe.get('ok') else None,
                 'expo_pe': span_pe.get('expo') if span_pe.get('ok') else None,
                 'total_margin_pe': span_pe.get('total_margin') if span_pe.get('ok') else None,
@@ -268,6 +285,8 @@ class OrbiterHelper:
 
         except Exception as e:
             print(f"❌ FILTER EVAL ERROR {token}: {e}")
+            if self.verbose_logs:
+                traceback.print_exc()
             return 0
 
     def evaluate_all(self):

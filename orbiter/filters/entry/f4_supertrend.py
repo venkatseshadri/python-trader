@@ -1,11 +1,12 @@
 import numpy as np
 import talib
 from config.config import VERBOSE_LOGS, SCORE_CAP_ST_PCT, SUPER_TREND_PERIOD, SUPER_TREND_MULTIPLIER
-
+from utils.utils import safe_float
 
 def supertrend_filter(data, candle_data, token, weight=20):
     """F4: Supertrend distance scoring based on LTP vs ST line."""
-    ltp = float(data.get('lp', 0) or 0)
+    return {'score': 0.0, 'supertrend': 0.0, 'ltp': 0.0}
+    ltp = safe_float(data.get('lp', 0) or 0)
     if ltp == 0:
         return {'score': 0}
 
@@ -15,17 +16,17 @@ def supertrend_filter(data, candle_data, token, weight=20):
         return {'score': 0}
 
     highs = np.array([
-        float(candle['inth'])
+        safe_float(candle['inth'])
         for candle in candle_data
         if candle.get('stat') == 'Ok'
     ], dtype=float)
     lows = np.array([
-        float(candle['intl'])
+        safe_float(candle['intl'])
         for candle in candle_data
         if candle.get('stat') == 'Ok'
     ], dtype=float)
     closes = np.array([
-        float(candle['intc'])
+        safe_float(candle['intc'])
         for candle in candle_data
         if candle.get('stat') == 'Ok'
     ], dtype=float)
@@ -62,7 +63,7 @@ def supertrend_filter(data, candle_data, token, weight=20):
         else:
             st[i] = final_lb[i] if closes[i] >= final_lb[i] else final_ub[i]
 
-    latest_st = float(st[-1])
+    latest_st = safe_float(st[-1])
     if latest_st == 0:
         return {'score': 0}
 
