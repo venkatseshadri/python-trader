@@ -34,10 +34,12 @@ def ema5_above_9ema_filter(data, candle_data, token, weight=18):
         return {'score': 0.00, 'ema5': 0.00, 'ema9': 0.00}
     
     # 🔥 Calculate both EMAs
-    talib.set_compatibility(1)
-    ema5_values = talib.EMA(closes, timeperiod=5)
-    ema9_values = talib.EMA(closes, timeperiod=9)
-    talib.set_compatibility(0)
+    try:
+        talib.set_compatibility(1)
+        ema5_values = talib.EMA(closes, timeperiod=5)
+        ema9_values = talib.EMA(closes, timeperiod=9)
+    finally:
+        talib.set_compatibility(0)
     
     latest_ema5 = round(ema5_values[-1], 2)
     latest_ema9 = round(ema9_values[-1], 2)

@@ -34,6 +34,12 @@ class Orbiter:
             'OPTION_INSTRUMENT': config.OPTION_INSTRUMENT,
             'HEDGE_STEPS': config.HEDGE_STEPS,
             'VERBOSE_LOGS': config.VERBOSE_LOGS,
+            'TARGET_PROFIT_RS': config.TARGET_PROFIT_RS,
+            'STOP_LOSS_RS': config.STOP_LOSS_RS,
+            'TOTAL_TARGET_PROFIT_RS': config.TOTAL_TARGET_PROFIT_RS,
+            'TOTAL_STOP_LOSS_RS': config.TOTAL_STOP_LOSS_RS,
+            'TSL_RETREACEMENT_PCT': config.TSL_RETREACEMENT_PCT,
+            'TSL_ACTIVATION_RS': config.TSL_ACTIVATION_RS,
             'SIMULATION': simulation
         }
         
@@ -44,7 +50,7 @@ class Orbiter:
         """Load all components"""
         print("✅ Modular filters + config loaded!")
         
-        symbols = config.SYMBOLS_UNIVERSE
+        symbols = config.SYMBOLS_FUTURE_UNIVERSE
         self.client = BrokerClient("../ShoonyaApi-py/cred.yml")
         self.helper = OrbiterHelper(self.client, symbols, filters, self.config)
 
@@ -66,12 +72,16 @@ class Orbiter:
     def is_eod_reset_time(self):
         """⭐ EOD RESET: Clear positions at 3:25PM"""
         now = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-        eod_reset = dt_time(15, 25)  # 3:25PM
+        eod_reset = dt_time(15, 15)  # 3:15PM
         return now >= eod_reset
 
     def run(self):
         """Main orchestrator"""
         try:
+            # ✅ Give connection time to stabilize
+            print("⏳ Stabilizing connection (2s)...")
+            time.sleep(2)
+            
             last_sl_check = 0
             while True:
                 now_ts = time.time()
@@ -81,19 +91,19 @@ class Orbiter:
                 #     time.sleep(60)
                 #     continue
 
-                # # ⭐ EOD AUTO-RESET
-                # if self.is_eod_reset_time():
-                #     self.helper.active_positions.clear()
-                #     print("🔄 EOD 3:25PM: All positions RESET")
+                # ⭐ EOD AUTO-RESET
+                if not self.config['SIMULATION'] and self.is_eod_reset_time() and self.helper.active_positions:
+                    squared = self.helper.square_off_all(reason="EOD 3:15PM")
+                    print(f"🔄 EOD 3:15PM: {len(squared)} positions SQUARED OFF (Reverse Trade)")
                 
                 scores = self.helper.evaluate_all()
                 entry_signals = self.helper.rank_signals(scores)
 
                 # Periodically check SLs every 60 seconds
                 if now_ts - last_sl_check >= 60:
-                    sl_hits = self.helper.check_sl()
-                    if sl_hits:
-                        print(f"🔔 SL Hits: {len(sl_hits)} positions squared off")
+                    exit_hits = self.helper.check_sl()
+                    if exit_hits:
+                        print(f"🔔 SL/TP Hits: {len(exit_hits)} positions squared off")
                     last_sl_check = now_ts
                 
                 if entry_signals:

@@ -73,8 +73,20 @@ OPTION_EXPIRY = 'monthly'
 OPTION_INSTRUMENT = 'OPTSTK'
 HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
-VERBOSE_LOGS = True
-#VERBOSE_LOGS = False
+VERBOSE_LOGS = False
+
+# 🔥 ABSOLUTE PNL TARGETS (Optional: Set to 0 to disable)
+TARGET_PROFIT_RS = 0         # Exit if Total PnL >= this amount (e.g. 5000)
+STOP_LOSS_RS = 0             # Exit if Total PnL <= -this amount (e.g. 2500)
+
+# 🔥 PORTFOLIO-WIDE TARGETS (Master Kill-switch)
+TOTAL_TARGET_PROFIT_RS = 0   # Exit ALL if Total Session PnL >= this
+TOTAL_STOP_LOSS_RS = 0       # Exit ALL if Total Session PnL <= -this
+
+# 🔥 TRAILING SL CONFIG
+TSL_RETREACEMENT_PCT = 50    # Exit if Profit falls 50% from peak (Max PnL)
+TSL_ACTIVATION_RS = 1000     # Only start retracement trail after ₹1000 profit
+
 SCORE_CAP_ORB_PCT = 0.10
 SCORE_CAP_EMA_PCT = 0.10
 SCORE_CAP_EMA_CROSS_PCT = 0.10
@@ -88,3 +100,57 @@ SCORE_CAP_ST_PCT = 0.10
 SUPER_TREND_PERIOD = 10
 SUPER_TREND_MULTIPLIER = 3.0
 
+
+
+SYMBOLS_FUTURE_UNIVERSE = [
+    'NFO|59194',  # ADANIENT
+    'NFO|59202',  # ADANIPORTS
+    'NFO|59208',  # APOLLOHOSP
+    'NFO|59210',  # ASIANPAINT
+    'NFO|59215',  # AXISBANK
+    'NFO|59216',  # BAJAJ-AUTO
+    'NFO|59255',  # BAJFINANCE
+    'NFO|59254',  # BAJAJFINSV
+    'NFO|59260',  # BEL
+    'NFO|59264',  # BHARTIARTL
+    'NFO|59289',  # CIPLA
+    'NFO|59290',  # COALINDIA
+    'NFO|59309',  # DRREDDY
+    'NFO|59310',  # EICHERMOT
+    'NFO|59311',  # ETERNAL
+    'NFO|59340',  # GRASIM
+    'NFO|59343',  # HCLTECH
+    'NFO|59345',  # HDFCBANK
+    'NFO|59346',  # HDFCLIFE
+    'NFO|59348',  # HINDALCO
+    'NFO|59350',  # HINDUNILVR
+    'NFO|59353',  # ICICIBANK
+    'NFO|59383',  # ITC
+    'NFO|59375',  # INFY
+    'NFO|59372',  # INDIGO
+    'NFO|59391',  # JSWSTEEL
+    'NFO|59389',  # JIOFIN
+    'NFO|59397',  # KOTAKBANK
+    'NFO|59403',  # LT
+    'NFO|59415',  # M&M
+    'NFO|59419',  # MARUTI
+    'NFO|59420',  # MAXHEALTH
+    'NFO|59433',  # NTPC
+    'NFO|59430',  # NESTLEIND
+    'NFO|59439',  # ONGC
+    'NFO|59454',  # POWERGRID
+    'NFO|59460',  # RELIANCE
+    'NFO|59465',  # SBILIFE
+    'NFO|59468',  # SHRIRAMFIN
+    'NFO|59466',  # SBIN
+    'NFO|59473',  # SUNPHARMA
+    'NFO|59489',  # TCS
+    'NFO|59481',  # TATACONSUM
+    'NFO|59493',  # TMPV
+    'NFO|59484',  # TATASTEEL
+    'NFO|59490',  # TECHM
+    'NFO|59492',  # TITAN
+    'NFO|59496',  # TRENT
+    'NFO|59498',  # ULTRACEMCO
+    'NFO|59519',  # WIPRO
+]

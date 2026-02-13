@@ -4,6 +4,9 @@ from .entry.f2_price_above_5ema import price_above_5ema_filter
 from .entry.f3_5ema_above_9ema import ema5_above_9ema_filter
 from .entry.f4_supertrend import supertrend_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
+from .tp.f1_premium_decay_10 import check_tp as tp_premium_decay_10
+from .tp.f2_trailing_sl import check_trailing_sl as tp_trailing_sl
+from .tp.f3_retracement_sl import check_retracement_sl as tp_retracement_sl
 from .sl.f1_below_5ema import sl_below_5ema
 from .sl.f2_5ema_below_9ema import sl_5ema_below_9ema
 from .sl.f3_below_orb_low import sl_below_orb_low
@@ -36,8 +39,11 @@ FILTERS = [
     Filter('ef2_price_above_5ema', 'entry', price_above_5ema_filter),
     Filter('ef3_5ema_above_9ema', 'entry', ema5_above_9ema_filter),
     Filter('ef4_supertrend', 'entry', supertrend_filter),
-    # Only keep the 10% premium SL; all other SL filters are disabled.
-    Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp)),
+    # Only keep the 10% premium SL/TP; all other SL filters are disabled.
+    Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
+    Filter('tf1_premium_decay_10', 'tp', lambda position, ltp, data: tp_premium_decay_10(position, ltp, data)),
+    Filter('tf2_trailing_sl', 'tp', lambda position, ltp, data: tp_trailing_sl(position, ltp, data)),
+    Filter('tf3_retracement_sl', 'tp', lambda position, ltp, data: tp_retracement_sl(position, ltp, data)),
 ]
 
 

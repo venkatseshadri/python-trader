@@ -16,7 +16,7 @@ api = ShoonyaApiPy()
 
 #inputs
 base_dir = os.path.dirname(__file__)
-input_path = os.path.join(base_dir, 'ntpc_credit_spread.json')
+input_path = os.path.join(base_dir, 'sbin_credit_spread.json')
 with open(input_path) as f:
     inputs = json.load(f)
 
@@ -95,9 +95,7 @@ def _nearest_strike(rows, expiry, option_type, target):
 def _format_strike(raw):
     try:
         value = float(raw)
-        if value.is_integer():
-            return str(int(value))
-        return str(value)
+        return f"{value:.2f}"
     except Exception:
         return str(raw).strip()
 
@@ -105,10 +103,25 @@ cred_path = os.path.join(base_dir, inputs.get('credentials_path', '../cred.yml')
 with open(cred_path) as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
+# ✅ Add interactive 2FA prompt and persist to cred.yml
+current_otp = cred.get('factor2', '')
+factor2 = input(f"🔐 Enter 2FA (current: {current_otp}) or press Enter to keep: ").strip()
+
+if factor2:
+    cred['factor2'] = factor2
+    try:
+        with open(cred_path, 'w') as f:
+            yaml.dump(cred, f)
+        print(f"🔒 Updated 2FA in {cred_path}")
+    except Exception as e:
+        print(f"⚠️ Failed to save credentials: {e}")
+else:
+    factor2 = current_otp
+
 ret = api.login(
     userid=cred['user'],
     password=cred['pwd'],
-    twoFA=cred['factor2'],
+    twoFA=factor2,
     vendor_code=cred['vc'],
     api_secret=cred['apikey'],
     imei=cred['imei'],
@@ -133,12 +146,14 @@ symbol_map = _load_symbol_map(symbol_map_path) if use_symbol_map else []
 today = datetime.now().date()
 
 for leg in inputs.get('positions', []):
-    pos = position()
-    pos.prd = leg['prd']
-    pos.exch = leg['exch']
-    pos.instname = leg['instname']
-    pos.symname = leg['symname']
-    pos.optt = leg['optt']
+    # ✅ Use a dictionary instead of the 'position' class to bypass type enforcement
+    pos = {
+        "prd": leg['prd'],
+        "exch": leg['exch'],
+        "instname": leg['instname'],
+        "symname": leg['symname'],
+        "optt": leg['optt']
+    }
 
     exd = leg.get("exd")
     strprc = leg.get("strprc")
@@ -148,7 +163,7 @@ for leg in inputs.get('positions', []):
         rows = [
             row
             for row in symbol_map
-            if row.get("symbol") == pos.symname and row.get("instrument") == pos.instname
+            if row.get("symbol") == pos["symname"] and row.get("instrument") == pos["instname"]
         ]
         expiry = None
         if force_expiry:
@@ -159,13 +174,14 @@ for leg in inputs.get('positions', []):
             expiry = _select_current_expiry(rows, today)
         if expiry:
             exd = _format_span_expiry(expiry)
-            strprc = _nearest_strike(rows, expiry, pos.optt, strprc)
+            strprc = _nearest_strike(rows, expiry, pos["optt"], strprc)
 
-    pos.exd = exd
-    pos.strprc = _format_strike(strprc)
-    pos.buyqty = int(leg['buyqty'])
-    pos.sellqty = int(leg['sellqty'])
-    pos.netqty = int(leg['netqty'])
+    pos["exd"] = exd.upper()
+    pos["strprc"] = _format_strike(strprc)
+    # ✅ Ensure quantities are strings - bypassing class enforcement
+    pos["buyqty"] = str(int(leg['buyqty']))
+    pos["sellqty"] = str(int(leg['sellqty']))
+    pos["netqty"] = str(int(leg['netqty']))
     positionlist.append(pos)
 
 actid = inputs.get('actid') or cred['user']

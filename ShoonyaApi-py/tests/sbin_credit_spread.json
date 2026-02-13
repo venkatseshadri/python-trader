@@ -9,26 +9,26 @@
     {
       "prd": "M",
       "exch": "NFO",
-      "instname": "OPTIDX",
-      "symname": "NIFTY",
+      "instname": "OPTSTK",
+      "symname": "SBIN",
       "exd": "24-FEB-2026",
-      "optt": "CE",
-      "strprc": "26000",
+      "optt": "PE",
+      "strprc": "1190",
       "buyqty": "0",
-      "sellqty": "50",
-      "netqty": "-50"
+      "sellqty": "1500",
+      "netqty": "-1500"
     },
     {
       "prd": "M",
       "exch": "NFO",
-      "instname": "OPTIDX",
-      "symname": "NIFTY",
+      "instname": "OPTSTK",
+      "symname": "SBIN",
       "exd": "24-FEB-2026",
       "optt": "PE",
-      "strprc": "26000",
-      "buyqty": "50",
+      "strprc": "1170",
+      "buyqty": "1500",
       "sellqty": "0",
-      "netqty": "50"
+      "netqty": "1500"
     }
   ]
 }

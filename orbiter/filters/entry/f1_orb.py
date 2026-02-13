@@ -18,36 +18,53 @@ def calculate_orb_range(ret, token):
         return None, None, None
     
     ok = [c for c in ret if c.get('stat') == 'Ok']
-    highs = [safe_float(c.get('inth')) for c in ok if c.get('inth') is not None]
-    lows = [safe_float(c.get('intl')) for c in ok if c.get('intl') is not None]
+
+    def time_key(candle):
+        raw = candle.get('time') or candle.get('tm') or candle.get('intt') or candle.get('t')
+        if not raw: return None
+        text = str(raw).strip()
+        if " " in text:
+            text = text.split(" ")[-1]
+        parts = text.split(":")
+        if len(parts) >= 2:
+            try:
+                hour = int(parts[0])
+                minute = int(parts[1])
+                return hour * 60 + minute
+            except ValueError:
+                return None
+        return None
+
+    # Filter for 9:15-9:30 (555-570 mins)
+    orb_cutoff = 9 * 60 + 30
+    orb_start = 9 * 60 + 15
+    
+    orb_ok = []
+    for c in ok:
+        t = time_key(c)
+        if t is not None and orb_start <= t <= orb_cutoff:
+            orb_ok.append(c)
+
+    # Fallback: if no candles in 9:15-9:30, take the first 15 candles of the day
+    if not orb_ok and ok:
+        if VERBOSE_LOGS:
+            print(f"⚠️ No 9:15-9:30 candles for {token}, taking first 15 available")
+        orb_ok = ok[:15]
+
+    highs = [safe_float(c.get('inth') or c.get('h')) for c in orb_ok if (c.get('inth') or c.get('h')) is not None]
+    lows = [safe_float(c.get('intl') or c.get('l')) for c in orb_ok if (c.get('intl') or c.get('l')) is not None]
     
     orb_open = None
-    if ok:
-        def time_key(candle):
-            raw = candle.get('time') or candle.get('tm') or candle.get('intt') or candle.get('t')
-            if not raw: return None
-            text = str(raw).strip()
-            if " " in text:
-                text = text.split(" ")[-1]
-            parts = text.split(":")
-            if len(parts) >= 2:
-                try:
-                    hour = int(parts[0])
-                    minute = int(parts[1])
-                    return hour * 60 + minute
-                except ValueError:
-                    return None
-            return None
-        
-        keyed = [(c, time_key(c)) for c in ok]
-        with_time = [pair for pair in keyed if pair[1] is not None]
-        first = min(with_time, key=lambda x: x[1]) if with_time else ok[0]
-        orb_open = safe_float(first[0].get('into') or first[0].get('o') or 0) or None
+    if orb_ok:
+        first = orb_ok[0]
+        orb_open = safe_float(first.get('into') or first.get('o') or first.get('intc') or first.get('c') or 0) or None
     
     if highs and lows:
+        h_val = max(highs)
+        l_val = min(lows)
         if VERBOSE_LOGS:
-            print(f"📊 ORB {token}: ₹{min(lows):.2f} - ₹{max(highs):.2f}")
-        return max(highs), min(lows), orb_open
+            print(f"📊 ORB {token}: ₹{l_val:.2f} - ₹{h_val:.2f} (Open: ₹{orb_open or 0:.2f})")
+        return h_val, l_val, orb_open
     return None, None, None
 
 def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
@@ -101,6 +118,7 @@ def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
         'score': f1_score,
         'orb_high': round(orb_high, 2),
         'orb_low': round(orb_low, 2),
+        'orb_open': round(orb_open or 0, 2),
         'orb_size': round(orbsize, 2)
     }
 

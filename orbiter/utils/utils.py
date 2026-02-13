@@ -9,11 +9,12 @@ def safe_ltp(data, token=None):
         ltp = float(ltp_raw) if ltp_raw else 0.0
         ltp_display = f"₹{ltp:.2f}"
         
+        fallback_token = token if token and "|" in str(token) else f"NSE|{token}"
         # PRIORITY: Company name → Formatted → Token → Fallback
         symbol = (data.get('t') or                    # 'RELIANCE' ⭐ BEST
                   data.get('symbol') or              # 'RELIANCE.NS'
                   data.get('name') or               # 'RELIANCE'
-                  f"NSE|{token}" or                 # 'NSE|2885'
+                  fallback_token or                 # 'NSE|2885' or 'NFO|...'
                   data.get('tk', 'UNKNOWN') or       # '2885'
                   'UNKNOWN')
         
@@ -55,7 +56,19 @@ def get_today_orb_times(simulation: bool = False):
         trading_day = trading_day - datetime.timedelta(days=1)
 
     start_time = trading_day.replace(hour=9, minute=15, second=0, microsecond=0)
-    end_time = trading_day.replace(hour=9, minute=30, second=0, microsecond=0)
+    
+    # End time is current time (capped at 15:30) to support all filters
+    market_close = trading_day.replace(hour=15, minute=30, second=0, microsecond=0)
+    
+    if simulation:
+        end_time = market_close
+    else:
+        if now_ist < start_time:
+            end_time = start_time
+        elif now_ist > market_close:
+            end_time = market_close
+        else:
+            end_time = now_ist
 
     return start_time, end_time
 

@@ -40,10 +40,12 @@ def price_above_5ema_filter(data, candle_data, token, weight=20):
         return {'score': 0.00, 'ema5': 0.00}
     
     # 🔥 Calculate EMA5
-    talib.set_compatibility(1)
-    ema5_values = talib.EMA(closes, timeperiod=5)
-    latest_ema5 = round(ema5_values[-1], 2)
-    talib.set_compatibility(0)
+    try:
+        talib.set_compatibility(1)
+        ema5_values = talib.EMA(closes, timeperiod=5)
+        latest_ema5 = round(ema5_values[-1], 2)
+    finally:
+        talib.set_compatibility(0)
     
     # 🎯 ORB-STYLE SIMPLE MATH (NO complex ratio)
     dist_pct = safe_float((ltp - latest_ema5) / ltp)

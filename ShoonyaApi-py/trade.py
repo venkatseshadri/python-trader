@@ -9,14 +9,14 @@ import logging
 from api_helper import ShoonyaApiPy  # comes from ShoonyaApi-Py package
 
 # Enable debug logs if you want to see request/response details
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def main():
     # TODO: replace these with your real details
     user_id = "FA333160"
-    password = "Taknev80$$$"          # plain password; ShoonyaApiPy will handle hashing as per library
-    factor2 = "186215"      # e.g. DOB (DD-MM-YYYY) or PAN as configured
+    password = "Taknev80$$"          # plain password; ShoonyaApiPy will handle hashing as per library
+    factor2 = "445391"      # e.g. DOB (DD-MM-YYYY) or PAN as configured
     vendor_code = "FA333160_U"    # provided by Shoonya/Finvasia
     api_secret = "cb4299f4cd849a4983d5ad50322d8e2d"      # app key / secret key
     imei = "C0FJFG7WW7"      # any unique string for your machine
@@ -41,27 +41,29 @@ def main():
 
     # ---- Dummy trade parameters ----
     # Very small market order on NSE; change symbol/exchange/product as needed
-    exchange = "NSE"
-    tradingsymbol = "INFY-EQ"   # example equity symbol on NSE [file:2]
-    quantity = 1                # dummy small quantity
-    product_type = "C"          # delivery/cash product as per prarr [file:2]
-    price_type = "MKT"          # market order [file:2]
+    # exchange = "NSE"
+    # tradingsymbol = "INFY-EQ"   # example equity symbol on NSE [file:2]
+    # quantity = 1                # dummy small quantity
+    # product_type = "C"          # delivery/cash product as per prarr [file:2]
+    # price_type = "MKT"          # market order [file:2]
+    #
+    # # Place market BUY order
+    # order_resp = api.place_order(
+    #     buy_or_sell="B",          # B -> BUY [file:2]
+    #     product_type=product_type,
+    #     exchange=exchange,
+    #     tradingsymbol=tradingsymbol,
+    #     quantity=quantity,
+    #     discloseqty=0,
+    #     price_type=price_type,
+    #     price=0,                  # 0 for MKT [file:2]
+    #     trigger_price=None,
+    #     retention="DAY",          # DAY / IOC / EOS [file:2]
+    #     amo="NO",
+    #     remarks="dummy_order_001",
+    # )
 
-    # Place market BUY order
-    order_resp = api.place_order(
-        buy_or_sell="B",          # B -> BUY [file:2]
-        product_type=product_type,
-        exchange=exchange,
-        tradingsymbol=tradingsymbol,
-        quantity=quantity,
-        discloseqty=0,
-        price_type=price_type,
-        price=0,                  # 0 for MKT [file:2]
-        trigger_price=None,
-        retention="DAY",          # DAY / IOC / EOS [file:2]
-        amo="NO",
-        remarks="dummy_order_001",
-    )
+    order_resp = api.searchscrip(exchange='NFO', searchtext='REL')
 
     print("Order response:", order_resp)
 

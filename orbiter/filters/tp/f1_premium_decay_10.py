@@ -1,11 +1,11 @@
-"""SL filter: premium rises >= 10% from entry price"""
+"""TP filter: premium drops >= 10% from entry price (Profit Taking)"""
 from typing import Dict, Any
 
-def check_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] = None) -> Dict[str, Any]:
+def check_tp(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] = None) -> Dict[str, Any]:
     """Return dict with {'hit': bool, 'pct': float, 'reason': str}"""
     result = {'hit': False, 'pct': 0.0, 'reason': ''}
     try:
-        # ✅ Priority: Short-Premium based SL
+        # ✅ Priority: Short-Premium based TP
         entry_net = position.get('entry_net_premium')
         current_net = data.get('current_net_premium') if data else None
         basis = position.get('atm_premium_entry') # ✅ Using Short Leg as Basis
@@ -17,30 +17,30 @@ def check_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] 
             result['pct'] = pct
             
             # 1️⃣ Fixed Percentage Check (10% of Short Leg)
-            if pct <= -10.0:
+            if pct >= 10.0:
                 result['hit'] = True
-                result['reason'] = f"Stop Loss hit: Net Spread rose {abs(pct):.2f}% of short premium"
+                result['reason'] = f"Profit Target hit: Net Spread decayed {pct:.2f}% of short premium"
             
-            # 2️⃣ Total Cash Check (STOP_LOSS_RS)
+            # 2️⃣ Total Cash Check (TARGET_PROFIT_RS)
             total_pnl = (entry_net - current_net) * lot_size
-            stop_loss_rs = position.get('config', {}).get('STOP_LOSS_RS', 0)
-            if not result['hit'] and stop_loss_rs > 0 and total_pnl <= -stop_loss_rs:
+            target_profit_rs = position.get('config', {}).get('TARGET_PROFIT_RS', 0)
+            if not result['hit'] and target_profit_rs > 0 and total_pnl >= target_profit_rs:
                 result['hit'] = True
-                result['reason'] = f"Stop Loss hit: Total PnL -₹{abs(total_pnl):.2f} <= -₹{stop_loss_rs}"
+                result['reason'] = f"Profit Target hit: Total PnL ₹{total_pnl:.2f} >= ₹{target_profit_rs}"
                 
             return result
 
-        # Fallback: Underlying-based SL
+        # Fallback: Underlying-based TP (for short positions, underlying dropping is usually good)
         entry = float(position.get('entry_price', 0))
         if entry <= 0 or current_ltp is None:
             return result
 
         pct = (current_ltp - entry) / entry * 100.0
         result['pct'] = pct
-        # Premium-based SL: trigger when price rises by 10% or more
-        if pct >= 10.0:
+        # For simplicity, assuming short bias for TP if underlying drops
+        if pct <= -10.0:
             result['hit'] = True
-            result['reason'] = f"Underlying rose {pct:.2f}% >= +10% SL"
+            result['reason'] = f"Underlying dropped {abs(pct):.2f}% >= 10%"
 
     except Exception as e:
         result['reason'] = f"error:{e}"

@@ -159,7 +159,7 @@ class BrokerClient:
                             continue
 
                         instrument = parts[inst_i].strip() if inst_i is not None else ''
-                        if instrument not in ("OPTSTK", "OPTIDX"):
+                        if instrument not in ("OPTSTK", "OPTIDX", "FUTSTK", "FUTIDX"):
                             continue
 
                         symbol = parts[sym_i].strip() if sym_i is not None else ''
@@ -176,7 +176,9 @@ class BrokerClient:
                         except ValueError:
                             continue
 
-                        if not symbol or not tsym or not expiry or strike <= 0 or opt_type not in ("PE", "CE"):
+                        if not symbol or not tsym or not expiry:
+                            continue
+                        if instrument.startswith("OPT") and (strike <= 0 or opt_type not in ("PE", "CE")):
                             continue
 
                         options.append({
@@ -236,9 +238,57 @@ class BrokerClient:
 
         if expiry_type == "monthly":
             monthly = [d for d in valid if self._is_last_thursday(d)]
-            return monthly[0] if monthly else valid[0]
+            if monthly:
+                return monthly[0]
+            # Fallback to nearest if no monthly found
+            return valid[0]
 
         return valid[0]
+
+    def get_near_future(self, symbol: str) -> Optional[str]:
+        """Get the token for the nearest expiry Future contract."""
+        # 1. Try searchscrip API first (Live data)
+        try:
+            ret = self.api.searchscrip(exchange='NFO', searchtext=symbol)
+            if ret and ret.get('stat') == 'Ok' and 'values' in ret:
+                candidates = []
+                today = datetime.date.today()
+                for scrip in ret['values']:
+                    if scrip.get('instname') in ('FUTSTK', 'FUTIDX') and scrip.get('symname') == symbol:
+                        exp_str = scrip.get('exp') or scrip.get('exd')  # e.g. '27-MAR-2025'
+                        exp = self._parse_expiry_date(exp_str)
+                        if exp and exp >= today:
+                            candidates.append((exp, scrip['token']))
+                
+                if candidates:
+                    candidates.sort(key=lambda x: x[0])
+                    return f"NFO|{candidates[0][1]}"
+        except Exception:
+            pass  # Fallback to master file if search fails or not logged in
+
+        # 2. Fallback to cached NFO master
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+        
+        today = datetime.date.today()
+        # Filter for Futures of this symbol
+        futures = [
+            row for row in self.NFO_OPTIONS
+            if row.get('symbol') == symbol and row.get('instrument') in ('FUTSTK', 'FUTIDX')
+        ]
+        
+        valid = []
+        for f in futures:
+            exp = self._parse_expiry_date(f.get('expiry'))
+            if exp and exp >= today:
+                valid.append((exp, f))
+        
+        if valid:
+            # Sort by expiry (nearest first)
+            valid.sort(key=lambda x: x[0])
+            return f"NFO|{valid[0][1]['token']}"
+            
+        return None
 
     def _get_atm_strike(self, symbol: str, expiry: datetime.date, ltp: float, instrument: str = "OPTSTK") -> Optional[float]:
         rows = self._get_option_rows(symbol, expiry, instrument=instrument)
@@ -255,10 +305,25 @@ class BrokerClient:
 
     def _find_option_symbol(self, symbol: str, expiry: datetime.date, strike: float, option_type: str, instrument: str = "OPTSTK"):
         rows = self._get_option_rows(symbol, expiry, instrument=instrument)
+        if not rows:
+            return None
+            
+        # Try exact match first
         for row in rows:
             if row.get('strike') == strike and row.get('option_type') == option_type:
                 return row
-        return None
+        
+        # Fallback: Find closest strike of the same option type
+        typed_rows = [r for r in rows if r.get('option_type') == option_type]
+        if not typed_rows:
+            return None
+            
+        best_row = min(typed_rows, key=lambda r: abs(float(r.get('strike', 0)) - strike))
+        # Only accept if it's reasonably close (e.g. within 5% of strike)
+        if abs(float(best_row.get('strike', 0)) - strike) / (strike or 1) > 0.05:
+            return None
+            
+        return best_row
 
     def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str,
                                     hedge_steps: int = 4, expiry_type: str = "monthly",
@@ -347,30 +412,24 @@ class BrokerClient:
                 return ""
             try:
                 strike = float(raw)
-                if strike.is_integer():
-                    return str(int(strike))
-                return str(strike)
+                return f"{strike:.2f}"
             except Exception:
                 return str(raw).strip()
 
-        def _pos_from_row(row: Dict[str, Any], side: str) -> position:
-            pos = position()
-            pos.prd = "M" if product_type == "I" else product_type
-            pos.exch = "NFO"
-            pos.instname = row.get('instrument') or "OPTSTK"
-            pos.symname = row.get('symbol')
-            pos.exd = _format_span_expiry(row.get('expiry'))
-            pos.optt = row.get('option_type')
-            pos.strprc = _format_span_strike(row.get('strike'))
+        def _pos_from_row(row: Dict[str, Any], side: str) -> Dict[str, Any]:
             qty = int(lot_size)
-            if side == "B":
-                pos.buyqty = qty
-                pos.sellqty = 0
-                pos.netqty = qty
-            else:
-                pos.buyqty = 0
-                pos.sellqty = qty
-                pos.netqty = -qty
+            pos = {
+                "prd": "M" if product_type == "I" else product_type,
+                "exch": "NFO",
+                "instname": row.get('instrument') or "OPTSTK",
+                "symname": row.get('symbol'),
+                "exd": _format_span_expiry(row.get('expiry')),
+                "optt": row.get('option_type'),
+                "strprc": _format_span_strike(row.get('strike')),
+                "buyqty": str(qty) if side == "B" else "0",
+                "sellqty": str(qty) if side == "S" else "0",
+                "netqty": str(qty) if side == "B" else str(-qty)
+            }
             return pos
 
         positionlist = [
@@ -402,7 +461,19 @@ class BrokerClient:
             'expo': expo,
             'total_margin': total_margin,
             'haircut': haircut,
-            'pledged_required': pledged_required
+            'pledged_required': pledged_required,
+            # ✅ Extra fields from API
+            'span_trade': float(ret.get('span_trade', 0.0) or 0.0),
+            'expo_trade': float(ret.get('expo_trade', 0.0) or 0.0),
+            'pre_trade': float(ret.get('pre_trade', 0.0) or 0.0),
+            'add': float(ret.get('add', 0.0) or 0.0),
+            'add_trade': float(ret.get('add_trade', 0.0) or 0.0),
+            'ten': float(ret.get('ten', 0.0) or 0.0),
+            'ten_trade': float(ret.get('ten_trade', 0.0) or 0.0),
+            'del': float(ret.get('del', 0.0) or 0.0),
+            'del_trade': float(ret.get('del_trade', 0.0) or 0.0),
+            'spl': float(ret.get('spl', 0.0) or 0.0),
+            'spl_trade': float(ret.get('spl_trade', 0.0) or 0.0)
         }
 
     def place_put_credit_spread(self, symbol: str, ltp: float, hedge_steps: int = 4,
@@ -681,18 +752,26 @@ class BrokerClient:
         print(f"🚀 Starting WS for {len(symbols)} symbols...")
         self.symbols = symbols  # 🔥 FIXED: Store symbols
         
+        # ✅ Track which exchange each token belongs to
+        token_to_exch = {}
+        for s in symbols:
+            if '|' in s:
+                ex, tk = s.split('|')
+                token_to_exch[tk] = ex
+
         def on_tick(message):
             if 'lp' not in message: return
             token = str(message.get('tk', ''))
-            exch = message.get('e', 'NSE')
+            # Use tracked exchange, fallback to message 'e', then 'NSE'
+            exch = token_to_exch.get(token) or message.get('e', 'NSE')
             key = f"{exch}|{token}"
             
-            symbol = self.get_symbol(token)
+            symbol = self.get_symbol(token, exchange=exch)
             self.SYMBOLDICT[key] = {
                 **message,
                 'symbol': symbol,
                 't': symbol,  # ✅ Add 't' field for company name (used by safe_ltp)
-                'company_name': self.get_company_name(token),  # ✅ Full company name
+                'company_name': self.get_company_name(token, exchange=exch),  # ✅ Full company name
                 'token': token,
                 'exchange': exch,
                 'ltp': float(message['lp']),
@@ -701,7 +780,6 @@ class BrokerClient:
                 'volume': int(message.get('v', 0))
             }
             
-            symbol = self.get_symbol(token)
             if self.verbose_logs:
                 print(f"📊 LIVE: {symbol} ({token}): ₹{message['lp']}")
         
@@ -756,6 +834,78 @@ class BrokerClient:
             print("🔌 Connection closed")
 
     # 🔥 SYMBOL MAPPING (unchanged - perfect)
+    def load_nfo_futures_map(self):
+        """Load NFO Futures from specialized mapping file"""
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        fut_map_file = os.path.join(base_dir, 'data', 'nfo_futures_map.json')
+        
+        should_update = False
+        if os.path.exists(fut_map_file):
+            try:
+                with open(fut_map_file, 'r') as f:
+                    fut_data = json.load(f)
+                
+                if not fut_data:
+                    should_update = True
+                else:
+                    # ✅ Check if symbols are expired
+                    # Format usually: SYMBOL + DD + MMM + YY + F
+                    # Example: ADANIENT26FEB26F
+                    import re
+                    from datetime import datetime
+                    
+                    # Take the first available symbol to check
+                    sample_tsym = next(iter(fut_data.values()))[1] if fut_data else None
+                    if sample_tsym:
+                        match = re.search(r'(\d{2})([A-Z]{3})(\d{2})[FC]$', sample_tsym)
+                        if match:
+                            dd, mmm, yy = match.groups()
+                            expiry_str = f"{dd}-{mmm}-20{yy}"
+                            try:
+                                expiry_date = datetime.strptime(expiry_str, "%d-%b-%Y").date()
+                                if datetime.now().date() > expiry_date:
+                                    print(f"📅 Futures expired ({expiry_date}), triggering update...")
+                                    should_update = True
+                            except Exception:
+                                pass
+            except Exception as e:
+                print(f"⚠️ Error checking futures map: {e}")
+                should_update = True
+        else:
+            should_update = True
+
+        if should_update:
+            try:
+                print("🔄 Refreshing NFO Futures mapping...")
+                import importlib.util
+                util_path = os.path.join(base_dir, 'utils', 'update_futures_config.py')
+                spec = importlib.util.spec_from_file_location("update_futures", util_path)
+                update_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(update_module)
+                # We need to pass the current client or let it login again
+                update_module.main()
+                
+                # Reload the data after update
+                with open(fut_map_file, 'r') as f:
+                    fut_data = json.load(f)
+            except Exception as e:
+                print(f"❌ Auto-update of futures failed: {e}")
+                return
+
+        try:
+            for tok, info in fut_data.items():
+                if isinstance(info, list) and len(info) >= 2:
+                    # Swap: Symbol gets full TSYM, Company gets base Symbol
+                    self.TOKEN_TO_SYMBOL[tok] = info[1]     # WIPRO30MAR26F
+                    self.TOKEN_TO_COMPANY[tok] = info[0]    # WIPRO
+                else:
+                    # Fallback for old mapping format
+                    self.TOKEN_TO_SYMBOL[tok] = f"{info} FUT"
+                    self.TOKEN_TO_COMPANY[tok] = info
+            print(f"✅ Loaded {len(fut_data)} NFO futures from mapping")
+        except Exception as e:
+            print(f"⚠️ Failed to process futures map: {e}")
+
     def load_symbol_mapping(self):
         # ✅ Use absolute path based on script location
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -777,12 +927,14 @@ class BrokerClient:
                             print(f"   NSE|{token} → {symbol} ({company})")
                     
                     print(f"✅ Loaded {len(self.TOKEN_TO_SYMBOL):,} symbols")
+                    self.load_nfo_futures_map()
                     return
             except Exception as e:
                 print(f"⚠️ Cache invalid: {e}")
         
         print("📥 DOWNLOADING FRESH SYMBOLS...")
         self.download_scrip_master()
+        self.load_nfo_futures_map()
     
     def download_scrip_master(self):
         """🔥 FIXED: Handle Shoonya NSE_symbols.txt CSV format (comma-separated, not pipes!)"""
@@ -851,6 +1003,7 @@ class BrokerClient:
         except Exception as e:
             print(f"⚠️ Download failed: {e}, using fallback mapping...")
             self.TOKEN_TO_SYMBOL = self.get_fallback_mapping()
+
   
     def get_fallback_mapping(self) -> Dict[str, str]:
         """✅ Comprehensive fallback with company names - from login watchlist data"""
@@ -898,12 +1051,16 @@ class BrokerClient:
         self.SYMBOL_TO_TOKEN.update({v: k for k, v in fallback.items()})
         return fallback
     
-    def get_symbol(self, token: str) -> str:
-        return self.TOKEN_TO_SYMBOL.get(token, f"NSE|{token}")
+    def get_symbol(self, token: str, exchange: str = 'NSE') -> str:
+        # Check if we have a mapping for this token ID
+        if token in self.TOKEN_TO_SYMBOL:
+            return self.TOKEN_TO_SYMBOL[token]
+        # Fallback with correct exchange prefix
+        return f"{exchange}|{token}"
     
-    def get_company_name(self, token: str) -> str:
+    def get_company_name(self, token: str, exchange: str = 'NSE') -> str:
         """✅ Get company name for token, fallback to symbol"""
-        return self.TOKEN_TO_COMPANY.get(token, self.get_symbol(token))
+        return self.TOKEN_TO_COMPANY.get(token, self.get_symbol(token, exchange=exchange))
     
     def get_token(self, symbol: str) -> str:
         return self.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
