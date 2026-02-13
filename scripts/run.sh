@@ -14,4 +14,4 @@ if [[ "${1:-}" == "--simulation" ]]; then
   SIM_FLAG="--simulation"
 fi
 
-"$VENV_DIR/bin/python" "$ROOT_DIR/orbiter/strategies/orbiter.py" $SIM_FLAG
+"$VENV_DIR/bin/python" "$ROOT_DIR/orbiter/main.py" $SIM_FLAG

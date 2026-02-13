@@ -10,7 +10,7 @@ import re
 import time
 
 # Ensure we can import from project root (orbiter/)
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from core.client import BrokerClient
 import config.config as config
@@ -35,11 +35,13 @@ def main():
         print("❌ Login failed. Please check credentials/TOTP.")
         return
 
-    print(f"📊 Scanning {len(config.SYMBOLS_UNIVERSE)} symbols from SYMBOLS_UNIVERSE...")
+    # Use NFO specific config
+    import config.nfo.config as nfo_config
+    print(f"📊 Scanning {len(nfo_config.SYMBOLS_UNIVERSE)} symbols from SYMBOLS_UNIVERSE...")
     
     futures_list = []
     
-    for token in config.SYMBOLS_UNIVERSE:
+    for token in nfo_config.SYMBOLS_UNIVERSE:
         # token format: 'NSE|2885'
         token_id = token.split("|")[-1]
         
@@ -56,25 +58,10 @@ def main():
             print(f"⚠️ Could not resolve symbol for {token}")
             continue
             
-    # Find Future using searchscrip
-        ret = client.api.searchscrip(exchange='NFO', searchtext=symbol)
-        fut_token = None
-        tsym = None
-        if ret and ret.get('stat') == 'Ok' and 'values' in ret:
-            candidates = []
-            import datetime
-            today = datetime.date.today()
-            for scrip in ret['values']:
-                if scrip.get('instname') in ('FUTSTK', 'FUTIDX') and scrip.get('symname') == symbol:
-                    exp_str = scrip.get('exp') or scrip.get('exd')
-                    exp = client._parse_expiry_date(exp_str)
-                    if exp and exp >= today:
-                        candidates.append((exp, scrip['token'], scrip.get('tsym')))
-            
-            if candidates:
-                candidates.sort(key=lambda x: x[0])
-                fut_token = f"NFO|{candidates[0][1]}"
-                tsym = candidates[0][2]
+        # Find Future using searchscrip
+        res = client.get_near_future(symbol, exchange='NFO')
+        fut_token = res['token'] if res else None
+        tsym = res['tsym'] if res else None
         
         if fut_token:
             print(f"✅ {symbol:<15} -> {fut_token} ({tsym})")
@@ -92,7 +79,7 @@ def main():
     # ✅ Save NFO Futures mapping for BrokerClient to use
     # Map token_id -> [symbol, tsym]
     nfo_map = {tok.split("|")[-1]: [sym, tsym] for sym, tok, tsym in futures_list}
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     map_path = os.path.join(base_dir, 'data', 'nfo_futures_map.json')
     import json
     with open(map_path, 'w') as f:
@@ -106,21 +93,15 @@ def main():
     new_config_lines.append("]")
     new_config_str = "\n".join(new_config_lines)
 
-    # Update config.py
-    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config', 'config.py')
+    # Update config/nfo/config.py
+    config_path = os.path.join(base_dir, 'config', 'nfo', 'config.py')
     
     with open(config_path, 'r') as f:
         content = f.read()
 
-    # Regex to replace existing SYMBOLS_FUTURE_UNIVERSE or append
+    # Regex to replace existing SYMBOLS_FUTURE_UNIVERSE
     pattern = r"SYMBOLS_FUTURE_UNIVERSE\s*=\s*\[.*?\]"
-    
-    if re.search(pattern, content, re.DOTALL):
-        print("\n🔄 Updating existing SYMBOLS_FUTURE_UNIVERSE in config.py...")
-        new_content = re.sub(pattern, new_config_str, content, flags=re.DOTALL)
-    else:
-        print("\n➕ Appending SYMBOLS_FUTURE_UNIVERSE to config.py...")
-        new_content = content + "\n\n" + new_config_str + "\n"
+    new_content = re.sub(pattern, new_config_str, content, flags=re.DOTALL)
 
     with open(config_path, 'w') as f:
         f.write(new_content)

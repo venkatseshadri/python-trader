@@ -3,9 +3,15 @@ import time
 import pytz
 import re
 from utils.utils import safe_ltp
-from .base import OrbiterState, log_buy_signals, log_closed_positions, SL_FILTERS, TP_FILTERS
+from .state import OrbiterState
 
 class Executor:
+    def __init__(self, log_buy_signals, log_closed_positions, sl_filters, tp_filters):
+        self.log_buy_signals = log_buy_signals
+        self.log_closed_positions = log_closed_positions
+        self.sl_filters = sl_filters
+        self.tp_filters = tp_filters
+
     def rank_signals(self, state: OrbiterState, scores, syncer):
         """Process signals and place orders"""
         buy_signals = []
@@ -68,7 +74,7 @@ class Executor:
                 print(f"✅ POSITION ADDED: {token} @ {ltp}")
         
         if buy_signals:
-            log_buy_signals(buy_signals)
+            self.log_buy_signals(buy_signals)
             syncer.sync_active_positions_to_sheets(state)
         return buy_signals
 
@@ -107,8 +113,8 @@ class Executor:
             })
 
         state.active_positions.clear()
-        if to_square and log_closed_positions:
-            log_closed_positions(to_square)
+        if to_square and self.log_closed_positions:
+            self.log_closed_positions(to_square)
         return to_square
 
     def check_sl(self, state: OrbiterState, syncer):
@@ -148,7 +154,7 @@ class Executor:
 
         for token, info, ltp, data, atm_exit, hdg_exit in evaluated:
             res = None
-            for f in (SL_FILTERS + TP_FILTERS):
+            for f in (self.sl_filters + self.tp_filters):
                 try: cand = f.evaluate(info, float(ltp), data)
                 except Exception as e: cand = {'hit': False, 'reason': f"err:{e}"}
                 if cand and cand.get('hit'):
@@ -179,6 +185,6 @@ class Executor:
                 if token in state.active_positions: del state.active_positions[token]
 
         if to_square:
-            if log_closed_positions: log_closed_positions(to_square)
+            if self.log_closed_positions: self.log_closed_positions(to_square)
             syncer.sync_active_positions_to_sheets(state)
         return to_square

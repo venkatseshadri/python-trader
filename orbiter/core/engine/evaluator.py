@@ -4,7 +4,7 @@ import numpy as np
 import re
 import traceback
 from utils.utils import safe_float, get_today_orb_times
-from .base import OrbiterState
+from .state import OrbiterState
 
 class Evaluator:
     @staticmethod
@@ -81,7 +81,7 @@ class Evaluator:
 
             candle_open, candle_high, candle_low, candle_close = self._candle_stats(candle_data, self._time_key)
 
-            # 🔥 STEP 1: Resolve Prices & Stats BEFORE filters
+            # Resolve Prices & Stats BEFORE filters
             day_open = data.get('o') or data.get('open')
             day_high = data.get('h') or data.get('high')
             day_low = data.get('l') or data.get('low')
@@ -100,7 +100,7 @@ class Evaluator:
             if token not in state.client.SYMBOLDICT or not state.client.SYMBOLDICT[token].get('lp'):
                 state.client.SYMBOLDICT[token] = data
 
-            # 🔥 STEP 2: Evaluate Filters
+            # Evaluate Filters
             entry_filters = getattr(state.filters, 'get_filters', lambda _: [])('entry')
             filter_results = {}
             scores = []
@@ -121,7 +121,7 @@ class Evaluator:
             if not has_live_data and ltp == 0: total = 0
             state.filter_results_cache[token] = {**filter_results, 'total': total}
 
-            # ✅ Symbol/Company resolution
+            # Symbol/Company resolution
             mapped_symbol = state.client.get_symbol(token_id, exchange=exchange)
             mapped_company = state.client.get_company_name(token_id, exchange=exchange)
             symbol_out = data.get('t') or data.get('symbol') or mapped_symbol
@@ -139,7 +139,7 @@ class Evaluator:
                 symbol_out = company_out if company_out and '|' not in str(company_out) else token_id
             if isinstance(company_out, str) and '|' in company_out: company_out = symbol_out
 
-            # 💰 MARGIN CALCULATION
+            # MARGIN CALCULATION
             span_pe, span_ce = {'ok': False}, {'ok': False}
             span_key = f"{base_symbol_res}|{state.config.get('OPTION_EXPIRY')}|{state.config.get('OPTION_INSTRUMENT')}|{state.config.get('HEDGE_STEPS')}"
             
@@ -168,7 +168,7 @@ class Evaluator:
                 'token': token, 'symbol': symbol_out, 'company_name': company_out,
                 'day_open': day_open, 'day_high': day_high, 'day_low': day_low, 'day_close': day_close,
                 'ltp': ltp, 'filters': filter_results,
-                'span_pe': span_pe, 'span_ce': span_ce  # Store full objects for syncer
+                'span_pe': span_pe, 'span_ce': span_ce
             })
 
             if state.verbose_logs:
@@ -178,6 +178,6 @@ class Evaluator:
             return total
 
         except Exception as e:
-            print(f"❌ FILTER EVAL ERROR {token}: {e}")
+            print(f"❌ EVAL ERROR {token}: {e}")
             if state.verbose_logs: traceback.print_exc()
             return 0

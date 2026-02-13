@@ -1,9 +1,12 @@
-from .base import OrbiterState, update_active_positions
+from .state import OrbiterState
 
 class Syncer:
+    def __init__(self, update_active_positions):
+        self.update_active_positions = update_active_positions
+
     def sync_active_positions_to_sheets(self, state: OrbiterState):
         """Push current active positions to Google Sheets"""
-        if not update_active_positions: return
+        if not self.update_active_positions: return
 
         payload = []
         for token, info in state.active_positions.items():
@@ -35,4 +38,4 @@ class Syncer:
                 'hedge_symbol': info.get('hedge_symbol'), 'total_margin': total_margin
             })
         
-        update_active_positions(payload)
+        self.update_active_positions(payload)
