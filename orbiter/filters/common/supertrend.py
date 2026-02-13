@@ -1,11 +1,11 @@
 import numpy as np
 import talib
-from config.config import VERBOSE_LOGS, SCORE_CAP_ST_PCT, SUPER_TREND_PERIOD, SUPER_TREND_MULTIPLIER
+from config.main_config import VERBOSE_LOGS, SCORE_CAP_ST_PCT, SUPER_TREND_PERIOD, SUPER_TREND_MULTIPLIER
 from utils.utils import safe_float
 
-def supertrend_filter(data, candle_data, token, weight=20):
+def supertrend_filter(data, candle_data, token, weight=20, config=None):
     """F4: Supertrend distance scoring based on LTP vs ST line."""
-    return {'score': 0.0, 'supertrend': 0.0, 'ltp': 0.0}
+    # return {'score': 0.0, 'supertrend': 0.0, 'ltp': 0.0} # REMOVED BAIL OUT
     ltp = safe_float(data.get('lp', 0) or 0)
     if ltp == 0:
         return {'score': 0}

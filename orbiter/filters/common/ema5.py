@@ -7,10 +7,10 @@ Drop-in replacement for existing orbiter
 
 import talib
 import numpy as np
-from config.config import VERBOSE_LOGS
+from config.main_config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def price_above_5ema_filter(data, candle_data, token, weight=20):
+def price_above_5ema_filter(data, candle_data, token, weight=20, config=None):
     """
     🎯 F2_5EMA SIMPLIFIED: (LTP - EMA5) / LTP × 100
     ORB-STYLE %pts - consistent with F1_ORB_SIMPLE

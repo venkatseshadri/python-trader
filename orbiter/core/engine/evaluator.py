@@ -62,7 +62,11 @@ class Evaluator:
                     state.client.SYMBOLDICT[token] = data
             except Exception: pass
 
-        start_time, end_time = get_today_orb_times(simulation=state.config.get('SIMULATION', False))
+        start_time, end_time = get_today_orb_times(
+            market_open=state.config.get('MARKET_OPEN'),
+            market_close=state.config.get('MARKET_CLOSE'),
+            simulation=state.config.get('SIMULATION', False)
+        )
         start_ts, end_ts = int(start_time.timestamp()), int(end_time.timestamp())
         exchange = token.split("|")[0] if "|" in token else 'NSE'
         
@@ -101,7 +105,9 @@ class Evaluator:
                 state.client.SYMBOLDICT[token] = data
 
             # Evaluate Filters
-            entry_filters = getattr(state.filters, 'get_filters', lambda _: [])('entry')
+            # ✅ Factory: Resolve filters based on segment
+            seg_name = state.config.get('segment_name', 'nfo')
+            entry_filters = state.filters.get_filters('entry', segment_name=seg_name)
             filter_results = {}
             scores = []
 
@@ -110,7 +116,8 @@ class Evaluator:
                 total = 0
             else:
                 for f in entry_filters:
-                    res = f.evaluate(data, candle_data, token=websocket_token)
+                    # ✅ Pass config so filters can use segment params (ORB times)
+                    res = f.evaluate(data, candle_data, token=websocket_token, config=state.config)
                     if not isinstance(res, dict): res = {'score': res if isinstance(res, (int, float)) else 0}
                     filter_results[f.key] = res
                     scores.append(res.get('score', 0))
@@ -140,35 +147,63 @@ class Evaluator:
             if isinstance(company_out, str) and '|' in company_out: company_out = symbol_out
 
             # MARGIN CALCULATION
+            exec_mode = state.config.get('EXECUTION_MODE', 'CREDIT_SPREAD')
             span_pe, span_ce = {'ok': False}, {'ok': False}
-            span_key = f"{base_symbol_res}|{state.config.get('OPTION_EXPIRY')}|{state.config.get('OPTION_INSTRUMENT')}|{state.config.get('HEDGE_STEPS')}"
+            span_fut = {'ok': False}
             
-            cached = state.client.span_cache.get(span_key) if state.client.span_cache else None
-            if cached:
-                if cached.get('pe', {}).get('ok'): span_pe = cached['pe']
-                if cached.get('ce', {}).get('ok'): span_ce = cached['ce']
+            if exec_mode == 'CREDIT_SPREAD':
+                span_key = f"{base_symbol_res}|{state.config.get('OPTION_EXPIRY')}|{state.config.get('OPTION_INSTRUMENT')}|{state.config.get('HEDGE_STEPS')}"
+                cached = state.client.span_cache.get(span_key) if state.client.span_cache else None
+                if cached:
+                    if cached.get('pe', {}).get('ok'): span_pe = cached['pe']
+                    if cached.get('ce', {}).get('ok'): span_ce = cached['ce']
 
-            if ltp > 0 and (not span_pe.get('ok') or not span_ce.get('ok')):
-                for side, store in [('PUT', span_pe), ('CALL', span_ce)]:
-                    if store.get('ok'): continue
-                    spread = state.client.get_credit_spread_contracts(base_symbol_res, ltp, side=side, 
-                                                                    hedge_steps=state.config.get('HEDGE_STEPS', 4),
-                                                                    expiry_type=state.config.get('OPTION_EXPIRY'),
-                                                                    instrument=state.config.get('OPTION_INSTRUMENT'))
-                    if spread.get('ok'):
-                        margin = state.client.calculate_span_for_spread(spread, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
-                        if side == 'PUT': span_pe = margin
-                        else: span_ce = margin
+                if ltp > 0 and (not span_pe.get('ok') or not span_ce.get('ok')):
+                    for side, store in [('PUT', span_pe), ('CALL', span_ce)]:
+                        if store.get('ok'): continue
+                        spread = state.client.get_credit_spread_contracts(base_symbol_res, ltp, side=side, 
+                                                                        hedge_steps=state.config.get('HEDGE_STEPS', 4),
+                                                                        expiry_type=state.config.get('OPTION_EXPIRY'),
+                                                                        instrument=state.config.get('OPTION_INSTRUMENT'))
+                        if spread.get('ok'):
+                            margin = state.client.calculate_span_for_spread(spread, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
+                            if side == 'PUT': span_pe = margin
+                            else: span_ce = margin
 
-                if state.client.span_cache is not None:
-                    state.client.span_cache[span_key] = {'pe': span_pe, 'ce': span_ce}
-                    state.client.save_span_cache()
+                    if state.client.span_cache is not None:
+                        state.client.span_cache[span_key] = {'pe': span_pe, 'ce': span_ce}
+                        state.client.save_span_cache()
+            else: # FUTURES MODE
+                span_key = f"{base_symbol_res}|FUT"
+                cached = state.client.span_cache.get(span_key) if state.client.span_cache else None
+                if cached and cached.get('ok'):
+                    span_fut = cached
+                
+                if ltp > 0 and not span_fut.get('ok'):
+                    # Resolve future first
+                    f_res = state.client.get_near_future(base_symbol_res, exchange=exchange)
+                    if f_res:
+                        # Find lot size
+                        lot_size = 0
+                        for r in state.client.DERIVATIVE_OPTIONS:
+                            if r.get('tradingsymbol') == f_res['tsym']:
+                                lot_size = int(r.get('lot_size', 0))
+                                break
+                        
+                        if lot_size > 0:
+                            f_details = {'tsym': f_res['tsym'], 'lot_size': lot_size}
+                            span_fut = state.client.calculate_future_margin(f_details, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
+                            
+                            if span_fut.get('ok') and state.client.span_cache is not None:
+                                state.client.span_cache[span_key] = span_fut
+                                state.client.save_span_cache()
 
             state.last_scan_metrics.append({
                 'token': token, 'symbol': symbol_out, 'company_name': company_out,
                 'day_open': day_open, 'day_high': day_high, 'day_low': day_low, 'day_close': day_close,
                 'ltp': ltp, 'filters': filter_results,
-                'span_pe': span_pe, 'span_ce': span_ce
+                'span_pe': span_pe, 'span_ce': span_ce,
+                'span_fut': span_fut # ✅ Include for logging
             })
 
             if state.verbose_logs:

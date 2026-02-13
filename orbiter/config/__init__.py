@@ -2,4 +2,4 @@
 import logging
 logging.getLogger(__name__).info("Config package loaded")
 
-from .config import *
+from .main_config import *

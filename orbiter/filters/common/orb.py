@@ -6,11 +6,11 @@
 
 from datetime import datetime, timedelta
 import math
-from config.config import VERBOSE_LOGS
+from config.main_config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def calculate_orb_range(ret, token):
-    """KEEP EXISTING ORB RANGE CALC (9:15-9:30 1min candles)"""
+def calculate_orb_range(ret, token, start_time, end_time):
+    """Refactored to take dynamic start/end times"""
     if VERBOSE_LOGS:
         print(f"🔍 API Response={len(ret) if ret else 0} candles")
     
@@ -35,20 +35,20 @@ def calculate_orb_range(ret, token):
                 return None
         return None
 
-    # Filter for 9:15-9:30 (555-570 mins)
-    orb_cutoff = 9 * 60 + 30
-    orb_start = 9 * 60 + 15
+    # Use parameters from config
+    orb_start_min = start_time.hour * 60 + start_time.minute
+    orb_end_min = end_time.hour * 60 + end_time.minute
     
     orb_ok = []
     for c in ok:
         t = time_key(c)
-        if t is not None and orb_start <= t <= orb_cutoff:
+        if t is not None and orb_start_min <= t <= orb_end_min:
             orb_ok.append(c)
 
-    # Fallback: if no candles in 9:15-9:30, take the first 15 candles of the day
+    # Fallback: if no candles in window, take the first 15 candles of the day
     if not orb_ok and ok:
         if VERBOSE_LOGS:
-            print(f"⚠️ No 9:15-9:30 candles for {token}, taking first 15 available")
+            print(f"⚠️ No window candles for {token}, taking first 15 available")
         orb_ok = ok[:15]
 
     highs = [safe_float(c.get('inth') or c.get('h')) for c in orb_ok if (c.get('inth') or c.get('h')) is not None]
@@ -67,18 +67,20 @@ def calculate_orb_range(ret, token):
         return h_val, l_val, orb_open
     return None, None, None
 
-def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
+def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2, config=None):
     """
-    🎯 SIMPLIFIED F1_ORB: 2/3 MOMENTUM + 1/3 DISTANCE (2 DECIMAL PLACES)
+    🎯 MODULAR F1_ORB: Uses segment-specific parameters
     """
     ltp = safe_float(data.get('lp', 0) or 0)
     day_open = safe_float(data.get('o', 0) or data.get('pc', 0) or 0)
     
-    if not token or ltp == 0:
+    if not token or ltp == 0 or not config:
         return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
     
-    # GET ORB RANGE
-    orb_high, orb_low, orb_open = calculate_orb_range(ret, token)
+    # GET ORB RANGE with dynamic config
+    start = config.get('ORB_START_TIME')
+    end = config.get('ORB_END_TIME')
+    orb_high, orb_low, orb_open = calculate_orb_range(ret, token, start, end)
     if not orb_high or not orb_low:
         return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
     

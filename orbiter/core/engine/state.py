@@ -23,7 +23,9 @@ class OrbiterState:
         
         self.verbose_logs = self.config.get('VERBOSE_LOGS', False)
         
-        # Initialize margin cache path
+        # Initialize segment-specific margin cache path
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        self.client.set_span_cache_path(os.path.join(base_dir, 'data', 'span', 'cache.json'))
+        seg_name = self.config.get('segment_name', 'nfo').lower()
+        cache_file = f"{seg_name}_span_cache.json"
+        self.client.set_span_cache_path(os.path.join(base_dir, 'data', 'span', cache_file))
         self.client.load_span_cache()

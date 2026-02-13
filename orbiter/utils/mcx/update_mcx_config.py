@@ -1,50 +1,80 @@
 #!/usr/bin/env python3
 """
 🛠️ Utility: Update MCX Config
-Scans common MCX commodities for current month Futures and updates config.py
+Scans common MCX commodities for current month Futures and updates config.py.
+Extracts lot sizes directly from scrip search for maximum reliability.
 """
 import sys
 import os
 import re
 import time
+import json
 
 # Ensure we can import from project root (orbiter/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from core.client import BrokerClient
-import config.config as config
+import config.main_config as config
 import logging
 
-# Common MCX symbols
-import config.mcx.config as mcx_config
+# Common MCX symbols including Mini variations
+MCX_SYMBOLS = [
+    'CRUDEOIL', 'CRUDEOILM', 
+    'NATURALGAS', 'NATURALGASM', 
+    'GOLD', 'GOLDM', 'GOLDPETAL',
+    'SILVER', 'SILVERM', 'SILVERMIC',
+    'COPPER', 'ZINC', 'ZINCM',
+    'LEAD', 'LEADM',
+    'ALUMINIUM', 'ALUMINIUMM'
+]
 
 def main():
     print("🚀 Starting MCX Configuration Update...")
     
-    # Initialize BrokerClient
+    # Initialize BrokerClient forced to MCX
     try:
-        client = BrokerClient("../ShoonyaApi-py/cred.yml")
+        client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name='mcx')
     except Exception:
-        client = BrokerClient()
+        client = BrokerClient(segment_name='mcx')
     
     if not client.login():
         print("❌ Login failed. Please check credentials/TOTP.")
         return
 
-    print(f"📊 Scanning {len(mcx_config.SYMBOLS_UNIVERSE)} symbols for MCX Futures...")
+    print(f"📊 Scanning {len(MCX_SYMBOLS)} symbols for MCX Futures...")
     
     futures_list = []
     
-    for symbol in mcx_config.SYMBOLS_UNIVERSE:
-        res = client.get_near_future(symbol, exchange='MCX')
-        fut_token = res['token'] if res else None
-        tsym = res['tsym'] if res else None
-        
-        if fut_token:
-            print(f"✅ {symbol:<15} -> {fut_token} ({tsym})")
-            futures_list.append((symbol, fut_token, tsym))
-        else:
-            print(f"❌ {symbol:<15} -> NO FUTURE FOUND")
+    for symbol in MCX_SYMBOLS:
+        # Resolve Future via searchscrip
+        try:
+            ret = client.api.searchscrip(exchange='MCX', searchtext=symbol)
+            if ret and ret.get('stat') == 'Ok' and 'values' in ret:
+                candidates = []
+                import datetime
+                today = datetime.date.today()
+                for scrip in ret['values']:
+                    # Look for FUTCOM only
+                    if scrip.get('instname') == 'FUTCOM' and scrip.get('symname') == symbol:
+                        exp_str = scrip.get('exp') or scrip.get('exd')
+                        exp = client.master._parse_expiry_date(exp_str)
+                        if exp and exp >= today:
+                            candidates.append((exp, scrip['token'], scrip.get('tsym'), int(scrip.get('ls', 0))))
+                
+                if candidates:
+                    candidates.sort(key=lambda x: x[0])
+                    best = candidates[0]
+                    fut_token = f"MCX|{best[1]}"
+                    tsym = best[2]
+                    lot_size = best[3]
+                    
+                    print(f"✅ {symbol:<15} -> {fut_token} ({tsym}) Lot: {lot_size}")
+                    futures_list.append((symbol, fut_token, tsym, lot_size))
+                else:
+                    if config.VERBOSE_LOGS:
+                        print(f"❌ {symbol:<15} -> NO CANDIDATES FOUND")
+        except Exception as e:
+            print(f"⚠️ Error scanning {symbol}: {e}")
             
         time.sleep(0.1)
 
@@ -52,21 +82,20 @@ def main():
         print("❌ No MCX futures found. Exiting.")
         return
 
-    # ✅ Save MCX Futures mapping for BrokerClient to use
-    nfo_map = {tok.split("|")[-1]: [sym, tsym] for sym, tok, tsym in futures_list}
+    # ✅ Save MCX Futures mapping [BaseSym, TSym, LotSize]
+    mcx_map = {tok.split("|")[-1]: [sym, tsym, lot] for sym, tok, tsym, lot in futures_list}
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     map_path = os.path.join(base_dir, 'data', 'mcx_futures_map.json')
-    import json
+    
     with open(map_path, 'w') as f:
-        json.dump(nfo_map, f, indent=4)
+        json.dump(mcx_map, f, indent=4)
     print(f"💾 Saved MCX Futures mapping to {map_path}")
 
-    # Update config/mcx/config.py
-    config_path = os.path.join(base_dir, 'config', 'mcx', 'config.py')
+    # Update config/mcx/exchange_config.py
+    config_path = os.path.join(base_dir, 'config', 'mcx', 'exchange_config.py')
     
-    # Prepare the new list string
     new_config_lines = ["SYMBOLS_FUTURE_UNIVERSE = ["]
-    for sym, tok, tsym in futures_list:
+    for sym, tok, tsym, lot in futures_list:
         new_config_lines.append(f"    '{tok}',  # {sym}")
     new_config_lines.append("]")
     new_config_str = "\n".join(new_config_lines)

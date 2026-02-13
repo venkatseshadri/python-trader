@@ -21,11 +21,12 @@ from core.engine.evaluator import Evaluator
 from core.engine.executor import Executor
 from core.engine.syncer import Syncer
 import filters
-import config.config as global_config
+import config.main_config as main_config
 
 class Orbiter:
-    def __init__(self, simulation: bool = False):
+    def __init__(self, exchange_override: str = None, simulation: bool = False):
         self.simulation = simulation
+        self.exchange_override = exchange_override.lower() if exchange_override else None
         self.client = None
         self.state = None
         self.evaluator = Evaluator()
@@ -33,21 +34,33 @@ class Orbiter:
         self.syncer = None
 
     def _get_active_segment(self):
-        """Auto-detect if we should run NFO or MCX"""
+        """Detect or override the active segment (NFO or MCX)"""
         ist = pytz.timezone('Asia/Kolkata')
         now = datetime.now(ist)
         current_time = now.time()
         
-        # 1. Initial Segment Selection (based on time)
-        import config.nfo.config as nfo
-        import config.mcx.config as mcx
+        # Import configs
+        import config.nfo.exchange_config as nfo
+        import config.mcx.exchange_config as mcx
         
-        if current_time > nfo.MARKET_CLOSE:
-            print("🌙 Evening session: Detected MCX time window")
-            segment = mcx
+        # 1. Determine Segment
+        if self.exchange_override:
+            if self.exchange_override == 'nfo':
+                print("☀️ Manual override: Loading NFO Segment")
+                segment = nfo
+            elif self.exchange_override == 'mcx':
+                print("🌙 Manual override: Loading MCX Segment")
+                segment = mcx
+            else:
+                raise ValueError(f"❌ Invalid exchange '{self.exchange_override}'. Must be 'nfo' or 'mcx'.")
         else:
-            print("☀️ Day session: Detected NFO time window")
-            segment = nfo
+            # Time-based detection
+            if current_time > nfo.MARKET_CLOSE:
+                print("🌙 Evening session: Detected MCX time window")
+                segment = mcx
+            else:
+                print("☀️ Day session: Detected NFO time window")
+                segment = nfo
 
         # 2. Segment-Specific Holiday/Off-Hours Check
         is_weekend = now.weekday() >= 5
@@ -60,26 +73,33 @@ class Orbiter:
                 print(f"😴 {reason} for active segment! Soft-enabling SIMULATION mode.")
                 self.simulation = True
             else:
-                seg_name = "MCX" if current_time > nfo.MARKET_CLOSE else "NFO"
+                seg_name = "MCX" if segment == mcx else "NFO"
                 print(f"🟢 Market is LIVE for {seg_name}")
 
         return segment
 
     def setup(self):
         print("✅ Initializing Engine...")
-        segment = self._get_active_segment()
+        try:
+            segment = self._get_active_segment()
+        except ValueError as e:
+            print(e)
+            sys.exit(1)
+
+        # Extract segment name (nfo or mcx) from config module name
+        seg_name = segment.__name__.split('.')[-2]
         
-        # Build merged configuration
-        full_config = {
-            **vars(global_config),
-            'MARKET_OPEN': segment.MARKET_OPEN,
-            'MARKET_CLOSE': segment.MARKET_CLOSE,
-            'OPTION_INSTRUMENT': segment.OPTION_INSTRUMENT,
-            'SIMULATION': self.simulation
-        }
+        # ✅ Build merged configuration (Strategy + Full Segment Overrides)
+        full_config = vars(main_config).copy()
+        segment_vars = {k: v for k, v in vars(segment).items() if not k.startswith('__')}
+        full_config.update(segment_vars)
+        
+        # Add runtime context
+        full_config['segment_name'] = seg_name
+        full_config['SIMULATION'] = self.simulation
         
         # Initialize Agnostic Components
-        self.client = BrokerClient("../ShoonyaApi-py/cred.yml")
+        self.client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name=seg_name)
         self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config)
         
         # Inject agnostic sheets logic
@@ -145,7 +165,8 @@ class Orbiter:
                 from bot.sheets import log_scan_metrics
                 if log_scan_metrics and self.state.last_scan_metrics:
                     if now_ts - self.state.last_scan_log_ts >= 60:
-                        log_scan_metrics(self.state.last_scan_metrics)
+                        seg_name = self.state.config.get('segment_name', 'nfo')
+                        log_scan_metrics(self.state.last_scan_metrics, segment_name=seg_name)
                         self.state.last_scan_log_ts = now_ts
                         self.syncer.sync_active_positions_to_sheets(self.state)
 
@@ -157,9 +178,15 @@ class Orbiter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--simulation", action="store_true")
+    parser.add_argument("--exchange", type=str, help="Exchange to trade (nfo/mcx)")
     args = parser.parse_args()
 
-    bot = Orbiter(simulation=args.simulation)
+    # Logic: if --exchange="" then throw error
+    if args.exchange is not None and args.exchange.strip() == "":
+        print("❌ Error: --exchange cannot be empty. Please pass 'nfo' or 'mcx'.")
+        sys.exit(1)
+
+    bot = Orbiter(exchange_override=args.exchange, simulation=args.simulation)
     bot.setup()
     if bot.login():
         bot.run()

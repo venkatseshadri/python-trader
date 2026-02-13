@@ -7,10 +7,10 @@ Drop-in replacement - F1/F2/F3 PERFECTLY consistent
 
 import talib
 import numpy as np
-from config.config import VERBOSE_LOGS
+from config.main_config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def ema5_above_9ema_filter(data, candle_data, token, weight=18):
+def ema5_above_9ema_filter(data, candle_data, token, weight=18, config=None):
     """
     🎯 F3_5EMA_ABOVE_9EMA SIMPLIFIED: (EMA5 - EMA9) / EMA5 × 100
     ORB-STYLE %pts - matches F1_ORB + F2_EMA5 exactly

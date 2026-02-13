@@ -2,6 +2,7 @@
 import datetime
 import pytz
 import numpy as np
+import math
 
 def safe_ltp(data, token=None):
     try:
@@ -42,9 +43,8 @@ def format_score(score):
     if score >= 25:   return f" 🟢 ENTRY {int(score)}"
     return f" 🔴 HOLD{int(score)}"
 
-def get_today_orb_times(simulation: bool = False):
-    """Dynamic ORB: current or previous trading day 9:15-9:30 IST."""
-    # Fetch 1min candles for ORB between 9:15 and 9:30 IST.
+def get_today_orb_times(market_open, market_close, simulation: bool = False):
+    """Dynamic ORB window based on segment hours."""
     ist = pytz.timezone('Asia/Kolkata')
     now_ist = datetime.datetime.now(tz=ist)
 
@@ -55,33 +55,36 @@ def get_today_orb_times(simulation: bool = False):
     while trading_day.weekday() >= 5:
         trading_day = trading_day - datetime.timedelta(days=1)
 
-    start_time = trading_day.replace(hour=9, minute=15, second=0, microsecond=0)
-    
-    # End time is current time (capped at 15:30) to support all filters
-    market_close = trading_day.replace(hour=15, minute=30, second=0, microsecond=0)
+    start_time = trading_day.replace(hour=market_open.hour, minute=market_open.minute, second=0, microsecond=0)
+    market_close_dt = trading_day.replace(hour=market_close.hour, minute=market_close.minute, second=0, microsecond=0)
     
     if simulation:
-        end_time = market_close
+        end_time = market_close_dt
     else:
         if now_ist < start_time:
             end_time = start_time
-        elif now_ist > market_close:
-            end_time = market_close
+        elif now_ist > market_close_dt:
+            end_time = market_close_dt
         else:
             end_time = now_ist
 
     return start_time, end_time
 
 def safe_float(value, default=0.0):
-    """🔒 BULLETPROOF float conversion"""
+    """🔒 BULLETPROOF float conversion (JSON Compliant)"""
     if value is None:
         return default
     try:
-        # Handle string → strip → float
         if isinstance(value, str):
             cleaned = value.strip().replace(',', '')
-            return float(cleaned)
-        return float(value)
+            num = float(cleaned)
+        else:
+            num = float(value)
+        
+        # ✅ Check for JSON non-compliant floats
+        if math.isnan(num) or math.isinf(num):
+            return default
+        return num
     except (ValueError, TypeError):
         return default
 

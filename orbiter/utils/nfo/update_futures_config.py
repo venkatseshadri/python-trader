@@ -13,15 +13,15 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from core.client import BrokerClient
-import config.config as config
+import config.main_config as config
 import logging
 
 def main():
     print("🚀 Starting Futures Configuration Update...")
     
-    logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger("urllib3").setLevel(logging.DEBUG)
-    logging.getLogger("websocket").setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger("urllib3").setLevel(logging.INFO)
+    logging.getLogger("websocket").setLevel(logging.INFO)
 
     # Initialize BrokerClient
     # Path to cred.yml relative to orbiter root
@@ -36,7 +36,7 @@ def main():
         return
 
     # Use NFO specific config
-    import config.nfo.config as nfo_config
+    import config.nfo.exchange_config as nfo_config
     print(f"📊 Scanning {len(nfo_config.SYMBOLS_UNIVERSE)} symbols from SYMBOLS_UNIVERSE...")
     
     futures_list = []
@@ -93,8 +93,8 @@ def main():
     new_config_lines.append("]")
     new_config_str = "\n".join(new_config_lines)
 
-    # Update config/nfo/config.py
-    config_path = os.path.join(base_dir, 'config', 'nfo', 'config.py')
+    # Update config/nfo/exchange_config.py
+    config_path = os.path.join(base_dir, 'config', 'nfo', 'exchange_config.py')
     
     with open(config_path, 'r') as f:
         content = f.read()
