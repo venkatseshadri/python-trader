@@ -41,13 +41,16 @@ A robust, low-level Python wrapper for the Shoonya REST and WebSocket APIs.
 
 ```text
 .
-├── python-trader/
+├── python-trader/        # Main project (Orbiter + Shoonya API)
 │   ├── orbiter/          # The core trading bot engine
 │   ├── ShoonyaApi-py/    # Low-level API client library
 │   ├── scripts/          # Deployment and run scripts
-│   └── RASPI_SETUP.md    # Guide for Raspberry Pi deployment
-├── docs/                 # Documentation Hub (Roadmaps & Designs)
+│   └── ...
+├── docs/                 # Documentation Hub
+│   ├── setup/            # Setup guides (RPi, Cloud, etc.)
+│   └── ...
 └── .venv/                # Python virtual environment
+```
 
 ---
 
