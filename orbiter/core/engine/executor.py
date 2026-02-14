@@ -161,6 +161,15 @@ class Executor:
 
         for token, info, ltp, data, atm_exit, hdg_exit in evaluated:
             res = None
+            # Inject candles into data for technical SL filters
+            data['candles'] = state.client.api.get_time_price_series(
+                exchange=token.split("|")[0] if "|" in token else 'NSE',
+                token=token.split("|")[-1],
+                starttime=int(info['entry_time'].timestamp()) - 3600, # 1 hour buffer
+                endtime=int(datetime.now(pytz.timezone('Asia/Kolkata')).timestamp()),
+                interval=1
+            )
+            
             for f in (self.sl_filters + self.tp_filters):
                 try: cand = f.evaluate(info, float(ltp), data)
                 except Exception as e: cand = {'hit': False, 'reason': f"err:{e}"}

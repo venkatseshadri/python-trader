@@ -30,11 +30,14 @@ def ema_scope_filter(data, candle_data, token, weight=10):
 
     # Calculate Scope (Raw %pts over 5 mins)
     scope_raw = (ema5_now - ema5_prev) / ltp
-    f5_score = round(scope_raw * 100, 2)
+    f5_score = round(scope_raw * 100 * 5, 2)  # Scale by 5 to match ST weight
 
-    # 🚦 THRESHOLD: Ignore noise/weak momentum (abs < 0.02)
-    if abs(f5_score) < 0.02:
+    # 🚦 THRESHOLD: Ignore noise/weak momentum (abs < 0.05 after scaling)
+    if abs(f5_score) < 0.05:
         f5_score = 0.00
+    
+    # Cap at 0.20 to maintain balance
+    f5_score = max(-0.20, min(0.20, f5_score))
 
     if VERBOSE_LOGS:
         print(f"📊 F5_SCOPE {token}: EMA5_Now={ema5_now:.2f} Prev={ema5_prev:.2f} F5={f5_score:>+5.2f}")

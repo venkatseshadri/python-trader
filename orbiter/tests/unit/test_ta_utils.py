@@ -70,10 +70,14 @@ def test_indicators_against_golden_values(snapshot, mocker):
     f5_result = ema_scope_filter(tick_data, candle_data, token='26000')
     # F6: EMA Gap
     f6_result = ema_gap_expansion_filter(tick_data, candle_data, token='26000')
+    # F7: ATR Momentum
+    from filters.entry.f7_atr_relative import atr_momentum_filter
+    f7_result = atr_momentum_filter(tick_data, candle_data, token='26000')
 
     print(f"ST:   Calc={st_result['supertrend']:.2f}, Golden={snapshot['supertrend_10_3']} (diff={abs(st_result['supertrend']-snapshot['supertrend_10_3']):.2f})")
     print(f"F5 (Scope): {f5_result['score']:>+5.2f} pts")
     print(f"F6 (Gap):   {f6_result['score']:>+5.2f} pts")
+    print(f"F7 (ATR):   {f7_result['score']:>+5.2f} pts (Rel Vol: {f7_result['rel_vol']})")
     
     assert abs(st_result['supertrend'] - snapshot['supertrend_10_3']) <= 1.0
     

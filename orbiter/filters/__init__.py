@@ -5,7 +5,10 @@ from .entry.f3_5ema_above_9ema import ema5_above_9ema_filter
 from .entry.f4_supertrend import supertrend_filter
 from .entry.f5_ema_scope import ema_scope_filter
 from .entry.f6_ema_gap import ema_gap_expansion_filter
+from .entry.f7_atr_relative import atr_momentum_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
+from .sl.f2_5ema_below_9ema import sl_5ema_below_9ema
+from .sl.sl_supertrend_reversal import sl_supertrend_reversal
 from .tp.f1_premium_decay_10 import check_tp as tp_premium_decay_10
 from .tp.f2_trailing_sl import check_trailing_sl as tp_trailing_sl
 from .tp.f3_retracement_sl import check_retracement_sl as tp_retracement_sl
@@ -43,8 +46,12 @@ FILTERS = [
     Filter('ef4_supertrend', 'entry', supertrend_filter),
     Filter('ef5_ema_scope', 'entry', ema_scope_filter),
     Filter('ef6_ema_gap', 'entry', ema_gap_expansion_filter),
-    # Only keep the 10% premium SL/TP; all other SL filters are disabled.
+    Filter('ef7_atr_relative', 'entry', atr_momentum_filter),
+    # Stop Loss Filters
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
+    Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),
+    Filter('sf3_st_reversal', 'sl', sl_supertrend_reversal),
+    # Take Profit Filters
     Filter('tf1_premium_decay_10', 'tp', lambda position, ltp, data: tp_premium_decay_10(position, ltp, data)),
     Filter('tf2_trailing_sl', 'tp', lambda position, ltp, data: tp_trailing_sl(position, ltp, data)),
     Filter('tf3_retracement_sl', 'tp', lambda position, ltp, data: tp_retracement_sl(position, ltp, data)),

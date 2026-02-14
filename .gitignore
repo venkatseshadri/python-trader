@@ -54,6 +54,12 @@ logs/
 orbiter/data/nse_token_map.json
 orbiter/logs/
 
+# Backtest Lab Artifacts
+backtest_lab/scenarios/master_suite/
+backtest_lab/scenarios_best/
+backtest_lab/reports/
+backtest_lab/data/
+
 # Testing
 .pytest_cache/
 .coverage

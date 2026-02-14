@@ -1,4 +1,6 @@
 import time
+from datetime import datetime, time as dt_time
+import pytz
 import math
 import numpy as np
 import re
@@ -115,7 +117,19 @@ class Evaluator:
                     filter_results[f.key] = res
                     scores.append(res.get('score', 0))
                 
-                valid_scores = [(w, s) for w, s in zip(state.config['ENTRY_WEIGHTS'], scores) if not math.isnan(s)]
+                # 🧠 DYNAMIC WEIGHTING LOGIC
+                # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR]
+                base_weights = [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0] 
+                
+                # Time-based decay for ORB (F1)
+                now_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+                if now_time < dt_time(11, 0): orb_w = 1.5    # Morning: High importance
+                elif now_time < dt_time(13, 0): orb_w = 0.8 # Mid-day: Fading
+                else: orb_w = 0.3                           # Afternoon: Noise
+                
+                base_weights[0] = orb_w
+                
+                valid_scores = [(w, s) for w, s in zip(base_weights, scores) if not math.isnan(s)]
                 total = round(sum(w * s for w, s in valid_scores), 2) if valid_scores else 0
 
             if not has_live_data and ltp == 0: total = 0
