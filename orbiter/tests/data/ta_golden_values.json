@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "source": "NIFTY 50 SPOT",
+    "date": "2025-07-21",
+    "timestamp": "12:00:00",
+    "verified_by": "User (Manual Chart Verification - 1min Timeframe)",
+    "description": "Golden TA values used to calibrate and verify the bot's technical indicators using morning-only history"
+  },
+  "golden_values": {
+    "close": 25042.30,
+    "ema_5": 25039.57,
+    "ema_9": 25036.40,
+    "supertrend_10_3": 25024.40
+  }
+}
