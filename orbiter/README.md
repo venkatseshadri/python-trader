@@ -33,12 +33,23 @@ orbiter/
 │   └── engine/         # The Trading Brain (State, Evaluator, Executor)
 ├── data/               # Local JSON mappings & Holiday lists
 ├── filters/            # Technical Strategy Modules
-│   ├── common/         # Agnostic filters (ORB, EMA, Supertrend)
-│   ├── sl/             # Stop-Loss logic
-│   └── tp/             # Take-Profit & Trailing SL logic
 ├── logs/               # Segment-specific trade call history
 ├── utils/              # Market refresh & contract update utilities
 └── main.py             # Unified Segment-Aware Application Runner
+```
+
+## 🚀 Quick Start
+
+```bash
+# 1. Update your contract tokens (Do this daily)
+python3 utils/nfo/update_futures_config.py
+python3 utils/mcx/update_mcx_config.py
+
+# 2. Run in simulation mode to verify data feeds
+python3 main.py --simulation
+
+# 3. Run live
+python3 main.py
 ```
 
 ## 🎯 How It Works
@@ -50,6 +61,19 @@ orbiter/
     -   **Execution**: The `Executor` ranks signals and places either 2-leg Credit Spreads (NFO) or single-leg Futures (MCX).
     -   **Monitoring**: Continuous SL/TP/TSL monitoring with websocket price feeds.
 4.  **Logging**: All activity is batch-synced to Google Sheets for real-time portfolio tracking.
+
+## 📊 Monitoring
+
+ORBITER is designed for "Set and Forget" operation, with all tracking offloaded to **Google Sheets**:
+
+-   **Live Dashboard**: Shows active positions, current MTM, and exit floors.
+-   **Trade Logs**: Permanent record of every entry and exit with reasons and percentage P&L.
+-   **Scan Metrics**: Real-time view of technical scores for the entire universe, updated every minute.
+
+To set up:
+1.  Enable Google Sheets API in GCP.
+2.  Download the Service Account `json` key and save it as `bot/credentials.json`.
+3.  Configure the `SPREADSHEET_ID` in `config/main_config.py`.
 
 ## 🛠 Setup & Usage
 
