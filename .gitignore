@@ -61,3 +61,4 @@ htmlcov/
 
 # Misc
 .ipynb_checkpoints/
+*.pyc
