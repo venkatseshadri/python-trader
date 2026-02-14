@@ -2,14 +2,27 @@
   "metadata": {
     "source": "NIFTY 50 SPOT",
     "date": "2025-07-21",
-    "timestamp": "12:00:00",
     "verified_by": "User (Manual Chart Verification - 1min Timeframe)",
-    "description": "Golden TA values used to calibrate and verify the bot's technical indicators using morning-only history"
+    "chart_settings": {
+      "ema_smoothing": "SMA",
+      "smoothing_length": 9
+    },
+    "description": "Multi-point golden TA values for rigorous validation"
   },
-  "golden_values": {
-    "close": 25042.30,
-    "ema_5": 25039.57,
-    "ema_9": 25036.40,
-    "supertrend_10_3": 25024.40
-  }
+  "snapshots": [
+    {
+      "timestamp": "10:54:00",
+      "close": 25049.75,
+      "ema_5": 25046.25,
+      "ema_9": 25047.28,
+      "supertrend_10_3": 25060.40
+    },
+    {
+      "timestamp": "12:00:00",
+      "close": 25042.30,
+      "ema_5": 25039.57,
+      "ema_9": 25036.40,
+      "supertrend_10_3": 25024.40
+    }
+  ]
 }
