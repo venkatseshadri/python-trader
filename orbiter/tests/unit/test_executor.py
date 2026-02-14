@@ -33,8 +33,8 @@ def test_executor_logging_on_signal():
     }
     mock_state.active_positions = {}
     mock_state.filter_results_cache = {}
+    mock_state.verbose_logs = True
     
-    # Mock LTP in client SYMBOLDICT
     mock_state.client.SYMBOLDICT = {
         '26000': {'lp': '25000.0', 'company_name': 'NIFTY'}
     }

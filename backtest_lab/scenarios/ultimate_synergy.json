@@ -1,0 +1,21 @@
+{
+  "name": "💎 Orbiter Ultimate Synergy (F1+F4+F5+F6)",
+  "config": {
+    "entry_start_time": "09:30",
+    "entry_end_time": "14:30",
+    "trade_threshold": 0.25,
+    "weights": [
+      0.6, 
+      0.0, 
+      0.0, 
+      0.4, 
+      0.8, 
+      1.2, 
+      0.0
+    ],
+    "sl_pct": 10.0,
+    "tsl_activation_rs": 1000,
+    "tsl_retracement_pct": 40,
+    "soft_sl_atr": false
+  }
+}

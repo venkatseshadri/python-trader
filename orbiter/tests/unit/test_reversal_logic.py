@@ -1,64 +1,49 @@
 import pytest
-import math
+import json
+import os
 from core.engine.evaluator import Evaluator
 from unittest.mock import MagicMock
+
+def load_reversal_scenarios():
+    path = os.path.join(os.path.dirname(__file__), '../data/reversal_scenarios.json')
+    with open(path) as f:
+        return json.load(f)
+
+SCENARIOS = load_reversal_scenarios()
 
 @pytest.fixture
 def evaluator_setup():
     state = MagicMock()
-    # Balanced weights for all 6 filters
     state.config = {
-        'ENTRY_WEIGHTS': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        'SIMULATION': True
+        'ENTRY_WEIGHTS': [1.0, 1.2, 1.2, 0.6, 1.2, 1.2],
+        'TRADE_SCORE': 0.20
     }
-    state.filters.get_filters = MagicMock()
-    state.client.SYMBOLDICT = {}
-    state.filter_results_cache = {}
-    state.last_scan_metrics = []
-    state.verbose_logs = True
     return state, Evaluator()
 
-def test_reversal_with_momentum_stack(evaluator_setup):
+@pytest.mark.parametrize("scenario_name", SCENARIOS.keys())
+def test_reversal_score_collapse_generic(scenario_name, evaluator_setup):
     """
-    STRESS TEST: Verifies that the new F5/F6 filters accelerate the 
-    exit signal during a market reversal.
+    Generic Stress Test: Verifies score collapse for any reversal 
+    event defined in reversal_scenarios.json.
     """
     state, evaluator = evaluator_setup
+    data_points = SCENARIOS[scenario_name]
     
-    # 4-minute crash scenario
-    scenarios = [
-        {
-            "time": "12:27", "desc": "Peak",
-            "f1": 0.40, "f2": 0.02, "f3": 0.01, "f4": 0.20,
-            "f5": 0.05, "f6": 0.02, # F5 (Scope) and F6 (Gap) are strongly positive
-            "expected_conviction": "STRONG BULL"
-        },
-        {
-            "time": "12:28", "desc": "Stall",
-            "f1": 0.35, "f2": 0.00, "f3": 0.00, "f4": 0.10,
-            "f5": -0.02, "f6": -0.01, # F5 and F6 ALREADY turned negative!
-            "expected_conviction": "WEAKENING"
-        },
-        {
-            "time": "12:29", "desc": "Trend Flip",
-            "f1": 0.30, "f2": -0.01, "f3": -0.01, "f4": -0.10,
-            "f5": -0.08, "f6": -0.05, # Momentum is crashing
-            "expected_conviction": "EXIT"
-        }
-    ]
-
-    print("\n--- MOMENTUM STACK REPLAY (F1-F6) ---")
+    print(f"\n--- REPLAY: {scenario_name} ---")
     
-    for s in scenarios:
+    total_scores = []
+    for p in data_points:
         weights = state.config['ENTRY_WEIGHTS']
-        scores = [s['f1'], s['f2'], s['f3'], s['f4'], s['f5'], s['f6']]
-        total = round(sum(w * sc for w, sc in zip(weights, scores)), 2)
-        
-        print(f"Time: {s['time']} | Score: {total:>+5.2f} | Momentum (F5+F6): {s['f5']+s['f6']:>+5.2f} | State: {s['desc']}")
+        # We assume 6 filters for this momentum test
+        scores = [p['f1'], p['f2'], p['f3'], p['f4'], p['f5'], p['f6']]
+        total = round(sum(w * s for w, s in zip(weights, scores)), 2)
+        total_scores.append(total)
+        print(f"Time: {p['time']} | Score: {total:>+5.2f} | State: {p['desc']}")
 
-        if s['time'] == "12:28":
-            # In the 4-filter logic, this score was +0.45.
-            # In the 6-filter logic, it should be lower because F5/F6 caught the slowing pace.
-            assert total < 0.45 
-
-    print("\n✅ Momentum verification: F5/F6 provided an earlier warning.")
+    # ASSERTIONS (Universal for Reversals)
+    # 1. Conviction must drop between start and middle
+    assert total_scores[1] < total_scores[0]
+    # 2. Reversal point must be below threshold
+    assert total_scores[2] < state.config['TRADE_SCORE']
+    # 3. Final point must be bearish
+    assert total_scores[-1] < 0

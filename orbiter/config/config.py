@@ -3,7 +3,7 @@ from datetime import time as dt_time
 # 🔥 SHARED CONFIGURATION
 TOP_N = 10                    # Execute TOP 10 highest scoring
 TRADE_SCORE = 0.20            # Minimum total score (sum of %pts) to trigger trade
-ENTRY_WEIGHTS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+ENTRY_WEIGHTS = [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0]
 
 OPTION_EXECUTE = False
 OPTION_PRODUCT_TYPE = 'I'

@@ -34,11 +34,14 @@ def ema_gap_expansion_filter(data, candle_data, token, weight=10):
     # Expansion Logic: (Difference of Gaps over 5 mins)
     # We use raw difference to see direction and acceleration
     expansion_raw = (gap_now - gap_prev) / ltp
-    f6_score = round(expansion_raw * 100, 2)
+    f6_score = round(expansion_raw * 100 * 20, 2)  # Scale by 20 to match ST weight
 
-    # 🚦 THRESHOLD: Ignore noise (abs < 0.01)
-    if abs(f6_score) < 0.01:
+    # 🚦 THRESHOLD: Ignore noise (abs < 0.05 after scaling)
+    if abs(f6_score) < 0.05:
         f6_score = 0.00
+    
+    # Cap at 0.20 to maintain balance
+    f6_score = max(-0.20, min(0.20, f6_score))
 
     if VERBOSE_LOGS:
         print(f"📊 F6_GAP {token}: Gap_Now={gap_now:.2f} Gap_Prev={gap_prev:.2f} F6={f6_score:>+5.2f}")
