@@ -71,14 +71,3 @@ Pure functions that define *when* to trade.
 ### 4. Configuration Layer (`config/`)
 - **`main_config.py`**: Global strategy settings (Weights, Risk limits).
 - **`exchange_config.py`**: Segment-specific rules (Market hours, Instruments).
-
-## 📱 Remote Control & Monitoring (Planned)
-To ensure 24/7 reliability on remote hardware (RPi/Cloud), the system uses a tiered management approach:
-
-- **Tier 1: Process Management (PM2)**: Ensures the bot restarts automatically on crashes or reboots.
-- **Tier 2: Command & Control (Telegram)**: Provides a mobile "Kill-switch" and status heartbeats.
-- **Tier 3: Dynamic Config (Google Sheets)**: Allows tuning parameters (e.g., SL %, Lot size) without restarting the code.
-
-**Key Integration Components:**
-- `orbiter_remote.py`: The interface for Telegram/External commands.
-- `data/current_state.json`: Persistent state for recovery after restarts.
