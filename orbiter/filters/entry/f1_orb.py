@@ -88,24 +88,24 @@ def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
 
     orbsize = orb_high - orb_low
     
-    # 1️⃣ DISTANCE SCORE (1/3 weight = 33.33pts max)
+    # 1️⃣ DISTANCE SCORE (Raw %pts)
     if ltp > orb_high:
         dist_pct = safe_float((ltp - orb_high) / ltp)
-        distance_score = round(dist_pct * 33.33, 2)  # 2 decimals
+        distance_score = round(dist_pct * 100, 2)  # Raw %pts
         direction = "🟢 ORB BULL"
     elif ltp < orb_low:
         dist_pct = safe_float((orb_low - ltp) / ltp)
-        distance_score = round(-dist_pct * 33.33, 2)  # 2 decimals
+        distance_score = round(-dist_pct * 100, 2)  # Raw %pts
         direction = "🔴 ORB BEAR"
     else:
         distance_score = 0.00
         direction = "➖ INSIDE"
     
-    # 2️⃣ MOMENTUM SCORE (2/3 weight = 66.67pts max)
-    mom_pct = abs(day_open - ltp) / ltp
-    momentum_score = round(mom_pct * 66.67, 2)  # 2 decimals
+    # 2️⃣ MOMENTUM SCORE (Raw %pts from Day Open)
+    mom_pct = (ltp - day_open) / ltp
+    momentum_score = round(mom_pct * 100, 2)  # Raw %pts
     
-    # 3️⃣ TOTAL F1 (2 decimals)
+    # 3️⃣ TOTAL F1 (Sum of %pts)
     f1_score = round(distance_score + momentum_score, 2)
     
     if VERBOSE_LOGS:

@@ -48,7 +48,7 @@ def test_indicators_against_golden_values(snapshot, mocker):
     assert abs(ema5_calc - snapshot['ema_5']) <= 0.5
     assert abs(ema9_calc - snapshot['ema_9']) <= 1.0
 
-    # 3. Verify SuperTrend
+    # 3. Verify SuperTrend and Score Logic
     # Convert filtered DF to Bot's expected Candle List format
     candle_data = []
     for _, row in df_filtered.iterrows():
@@ -63,11 +63,14 @@ def test_indicators_against_golden_values(snapshot, mocker):
     # Setup Mocks for Config (ensure standard params)
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_PERIOD', 10)
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_MULTIPLIER', 3)
-    mocker.patch('filters.entry.f4_supertrend.SCORE_CAP_ST_PCT', 0.10)
+    mocker.patch('config.config.VERBOSE_LOGS', False)
 
     tick_data = {'lp': str(snapshot['close'])}
     st_result = supertrend_filter(tick_data, candle_data, token='26000')
 
     print(f"ST:   Calc={st_result['supertrend']:.2f}, Golden={snapshot['supertrend_10_3']} (diff={abs(st_result['supertrend']-snapshot['supertrend_10_3']):.2f})")
+    print(f"Score: {st_result['score']:.2f} (Bias: {st_result['direction']})")
     
     assert abs(st_result['supertrend'] - snapshot['supertrend_10_3']) <= 1.0
+    # Score should be a valid increment of 0.05
+    assert round(abs(st_result['score'] * 100)) % 5 == 0
