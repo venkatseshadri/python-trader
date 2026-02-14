@@ -7,6 +7,7 @@ This directory serves as the central repository for all future project specifica
 ### 🏗 Technical
 - **[System Architecture](./technical/architecture.md)**: High-level design and data flow diagrams.
 - **[API Reference](./technical/api_reference.md)**: Detailed class and method documentation for the Engine and Broker layers.
+- **[Testing Guide](./technical/testing.md)**: Details on the pytest framework and data-driven market scenarios.
 
 ### ⚡ Functional
 - **[Features & Strategy](./functional/features.md)**: Explanation of Day/Evening modes, trading logic, and risk management.
