@@ -3,6 +3,8 @@ from .entry.f1_orb import orb_filter
 from .entry.f2_price_above_5ema import price_above_5ema_filter
 from .entry.f3_5ema_above_9ema import ema5_above_9ema_filter
 from .entry.f4_supertrend import supertrend_filter
+from .entry.f5_ema_scope import ema_scope_filter
+from .entry.f6_ema_gap import ema_gap_expansion_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
 from .tp.f1_premium_decay_10 import check_tp as tp_premium_decay_10
 from .tp.f2_trailing_sl import check_trailing_sl as tp_trailing_sl
@@ -39,6 +41,8 @@ FILTERS = [
     Filter('ef2_price_above_5ema', 'entry', price_above_5ema_filter),
     Filter('ef3_5ema_above_9ema', 'entry', ema5_above_9ema_filter),
     Filter('ef4_supertrend', 'entry', supertrend_filter),
+    Filter('ef5_ema_scope', 'entry', ema_scope_filter),
+    Filter('ef6_ema_gap', 'entry', ema_gap_expansion_filter),
     # Only keep the 10% premium SL/TP; all other SL filters are disabled.
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
     Filter('tf1_premium_decay_10', 'tp', lambda position, ltp, data: tp_premium_decay_10(position, ltp, data)),

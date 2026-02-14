@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "description": "Real-world trade verification from Friday, 13 Feb 2026",
+    "market": "NIFTY 50",
+    "expiry": "2026-02-17 (Tuesday Weekly)",
+    "strategy": "PUT_CREDIT_SPREAD"
+  },
+  "trade_data": {
+    "entry": {
+      "timestamp": "10:30:00",
+      "spot_ltp": 25460.55,
+      "sold_leg": {
+        "strike": 25450,
+        "premium": 116.65
+      },
+      "bought_leg": {
+        "strike": 25250,
+        "premium": 22.35
+      },
+      "net_credit": 94.30,
+      "indicators": {
+        "ema5": 25549.63,
+        "ema9": 25545.51,
+        "supertrend": 25527.76
+      }
+    },
+    "peak_profit": {
+      "timestamp": "12:34:00",
+      "spot_ltp": 25606.05,
+      "description": "High point of the morning session before reversal"
+    },
+    "exit_signal": {
+      "timestamp": "10:50:00",
+      "reason": "SuperTrend Flip (ST RED)",
+      "spot_ltp": 25570.0,
+      "sold_leg_premium": 56.35,
+      "bought_leg_premium": 21.30,
+      "net_premium_at_exit": 35.05,
+      "total_profit_pts": 59.25,
+      "profit_percentage": 62.8,
+      "indicators": {
+        "supertrend_level": 25578.19,
+        "bias": "BEAR"
+      }
+    }
+  }
+}
