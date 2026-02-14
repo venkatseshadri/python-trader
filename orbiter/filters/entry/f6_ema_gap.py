@@ -36,6 +36,10 @@ def ema_gap_expansion_filter(data, candle_data, token, weight=10):
     expansion_raw = (gap_now - gap_prev) / ltp
     f6_score = round(expansion_raw * 100, 2)
 
+    # 🚦 THRESHOLD: Ignore noise (abs < 0.01)
+    if abs(f6_score) < 0.01:
+        f6_score = 0.00
+
     if VERBOSE_LOGS:
         print(f"📊 F6_GAP {token}: Gap_Now={gap_now:.2f} Gap_Prev={gap_prev:.2f} F6={f6_score:>+5.2f}")
 

@@ -7,6 +7,8 @@ class Syncer:
     def sync_active_positions_to_sheets(self, state: OrbiterState):
         """Push current active positions to Google Sheets"""
         if not self.update_active_positions: return
+        if state.verbose_logs:
+            print(f"🔄 Syncing {len(state.active_positions)} positions to Google Sheets...")
 
         payload = []
         for token, info in state.active_positions.items():

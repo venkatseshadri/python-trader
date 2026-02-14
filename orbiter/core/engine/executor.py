@@ -17,6 +17,9 @@ class Executor:
         buy_signals = []
         ranked = sorted(scores.items(), key=lambda x: abs(x[1]), reverse=True)[:state.config['TOP_N']]
         
+        if state.verbose_logs and scores:
+            print(f"🔍 Evaluated {len(scores)} symbols. Top Signal: {ranked[0][0] if ranked else 'None'} Score: {ranked[0][1] if ranked else 0}")
+
         for token, score in ranked:
             if token in state.active_positions: continue
 
@@ -139,9 +142,13 @@ class Executor:
                     pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
                     info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
                     port_pnl += pos_pnl
+                    if state.verbose_logs:
+                        print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
             evaluated.append((token, info, ltp, data, atm_ltp, hdg_ltp))
 
         target_t, sl_t = state.config.get('TOTAL_TARGET_PROFIT_RS', 0), state.config.get('TOTAL_STOP_LOSS_RS', 0)
+        if state.verbose_logs and state.active_positions:
+            print(f"📊 Portfolio PnL: ₹{port_pnl:.2f} (Target: ₹{target_t} SL: -₹{sl_t})")
         mass_reason = None
         if target_t > 0 and port_pnl >= target_t: mass_reason = f"Portfolio Target: ₹{port_pnl:.2f} >= ₹{target_t}"
         elif sl_t > 0 and port_pnl <= -sl_t: mass_reason = f"Portfolio SL: ₹{port_pnl:.2f} <= -₹{sl_t}"
