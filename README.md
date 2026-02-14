@@ -21,15 +21,15 @@ A robust, low-level Python wrapper for the Shoonya REST and WebSocket APIs.
 
 Choose the method that best fits your environment:
 
-### 1. [🐋 Docker (Recommended for Cloud/Desktop)](./docker/)
+### 1. [🐋 Docker (Recommended for Cloud/Desktop)](./install/docker/)
 -   Containerized environment with all dependencies pre-configured.
 -   Ideal for Railway, DigitalOcean, or stable background execution.
--   [View Docker Setup Guide](./docker/README.md)
+-   [View Docker Setup Guide](./install/docker/README.md)
 
-### 2. [🍓 Raspberry Pi (Low-power Autonomous)](./docs/setup/RASPI_SETUP.md)
+### 2. [🍓 Raspberry Pi (Low-power Autonomous)](./install/rpi/)
 -   Bare-metal installation optimized for 24/7 ARM-based operation.
 -   Includes bootstrap scripts for easy deployment.
--   [View Raspberry Pi Guide](./docs/setup/RASPI_SETUP.md)
+-   [View Raspberry Pi Guide](./install/rpi/RASPI_SETUP.md)
 
 ### 3. [🐍 Manual Virtualenv](./python-trader/README.md)
 -   Standard Python setup using `pip` and `.venv`.
@@ -42,11 +42,11 @@ Choose the method that best fits your environment:
 ├── python-trader/        # Main project (Orbiter + Shoonya API)
 │   ├── orbiter/          # The core trading bot engine
 │   ├── ShoonyaApi-py/    # Low-level API client library
-│   ├── scripts/          # Deployment and run scripts
 │   └── ...
-├── docs/                 # Documentation Hub
-│   ├── setup/            # Setup guides (RPi, Cloud, etc.)
-│   └── ...
+├── install/              # Installation Hub
+│   ├── docker/           # Docker setup & Compose
+│   └── rpi/              # Raspberry Pi setup scripts & docs
+├── docs/                 # Documentation Hub (Design & Specs)
 └── .venv/                # Python virtual environment
 ```
 
