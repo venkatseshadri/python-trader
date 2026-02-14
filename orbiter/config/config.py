@@ -2,8 +2,8 @@ from datetime import time as dt_time
 
 # 🔥 SHARED CONFIGURATION
 TOP_N = 10                    # Execute TOP 10 highest scoring
-TRADE_SCORE = 0.20            # Minimum total score (sum of %pts) to trigger trade
-ENTRY_WEIGHTS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+TRADE_SCORE = 0.35            # Minimum total score (sum of %pts) to trigger trade
+ENTRY_WEIGHTS = [0.5, 1.0, 0.5, 0.5, 0.8, 1.2, 0.7]
 
 OPTION_EXECUTE = False
 OPTION_PRODUCT_TYPE = 'I'
@@ -22,7 +22,7 @@ TOTAL_TARGET_PROFIT_RS = 0
 TOTAL_STOP_LOSS_RS = 0       
 
 # 🔥 TRAILING SL CONFIG
-TSL_RETREACEMENT_PCT = 50    
+TSL_RETREACEMENT_PCT = 40    
 TSL_ACTIVATION_RS = 1000     
 
 SCORE_CAP_ORB_PCT = 0.10
