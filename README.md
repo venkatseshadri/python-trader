@@ -46,7 +46,13 @@ A robust, low-level Python wrapper for the Shoonya REST and WebSocket APIs.
 │   ├── ShoonyaApi-py/    # Low-level API client library
 │   ├── scripts/          # Deployment and run scripts
 │   └── RASPI_SETUP.md    # Guide for Raspberry Pi deployment
+├── docs/                 # Documentation Hub (Roadmaps & Designs)
 └── .venv/                # Python virtual environment
+
+---
+
+### 📚 [Documentation Hub](./docs/)
+Explore future project roadmaps, technical designs, and the [Modern Cloud Migration Strategy](./docs/CLOUD_MIGRATION.md).
 ```
 
 ## ⚖️ License
