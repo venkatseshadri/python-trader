@@ -2,15 +2,22 @@
 
 This directory serves as the central repository for all future project specifications, architectural blueprints, and technical designs.
 
-## 📂 Structure
+## 📂 Documentation Structure
 
-- **`roadmaps/`**: High-level strategy and migration paths (e.g., [Cloud Migration](./CLOUD_MIGRATION.md)).
-- **`technical-designs/`**: (Future) Detailed system architectures and logic flows.
-- **`specs/`**: (Future) Feature specifications and API definitions.
+### 🏗 Technical
+- **[System Architecture](./technical/architecture.md)**: High-level design and data flow diagrams.
+- **[API Reference](./technical/api_reference.md)**: Detailed class and method documentation for the Engine and Broker layers.
 
-## 🚀 Current Roadmaps
+### ⚡ Functional
+- **[Features & Strategy](./functional/features.md)**: Explanation of Day/Evening modes, trading logic, and risk management.
 
-1. **[Modern Orbiter Cloud Stack Migration](./CLOUD_MIGRATION.md)**: A detailed plan to move the trading bot from local execution to Railway, Supabase, and Vercel.
+### 🔌 Integrations
+- **[Shoonya API](./integrations/shoonya.md)**: Details on authentication, WebSockets, and Master contract handling.
+- **[Google Sheets](./integrations/google_sheets.md)**: Setup guide for the logging dashboard.
+
+### 🚀 Roadmaps
+- **[Modern Orbiter Cloud Stack Migration](./CLOUD_MIGRATION.md)**: Plan to move to Railway/Supabase.
+- **[Raspberry Pi Setup](./setup/RASPI_SETUP.md)**: Guide for bare-metal ARM deployment.
 
 ---
 *Organizing future innovation | 2026*
