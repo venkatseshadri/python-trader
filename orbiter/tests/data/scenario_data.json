@@ -1,0 +1,28 @@
+{
+  "test_metadata": {
+    "generated_date": "2026-02-14",
+    "description": "Actual market scenarios from NIFTY 50 SPOT archive (2025-07-21)"
+  },
+  "scenarios": [
+    {
+      "id": "SCENARIO_001_BULLISH_ORB",
+      "description": "Nifty breaks 15m high at 09:55",
+      "inputs": {
+        "instrument": "NIFTY 50",
+        "orb_15m_high": 25037.2,
+        "orb_15m_low": 24894.55,
+        "breakout_candle_1m": {
+          "open": 25025.4,
+          "high": 25049.1,
+          "low": 25025.4,
+          "close": 25047.9,
+          "volume": 0
+        }
+      },
+      "expected_behavior": {
+        "is_breakout": true,
+        "action": "ENTER_LONG"
+      }
+    }
+  ]
+}
