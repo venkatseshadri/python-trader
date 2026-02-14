@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  orbiter-sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: orbiter:latest
+    container_name: orbiter-simulation
+    command: python python-trader/orbiter/main.py --simulation
+    env_file:
+      - .env
+    volumes:
+      - ../python-trader/orbiter/logs:/app/python-trader/orbiter/logs
+
+  orbiter-live:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: orbiter:latest
+    container_name: orbiter-live
+    command: python python-trader/orbiter/main.py
+    env_file:
+      - .env
+    volumes:
+      - ../python-trader/orbiter/logs:/app/python-trader/orbiter/logs

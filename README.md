@@ -17,25 +17,23 @@ A robust, low-level Python wrapper for the Shoonya REST and WebSocket APIs.
 - Integrated SPAN margin and Option Greek calculators.
 - Used as the backbone for the Orbiter trading engine.
 
-## 🛠 Quick Start
+## 🛠 Installation Methods
 
-1. **Environment Setup**:
-   ```bash
-   # Create and activate virtual environment
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r python-trader/orbiter/requirements.txt
-   ```
+Choose the method that best fits your environment:
 
-2. **Configuration**:
-   - Update `python-trader/ShoonyaApi-py/cred.yml` with your API credentials.
-   - Update `python-trader/orbiter/bot/credentials.json` for Google Sheets integration.
+### 1. [🐋 Docker (Recommended for Cloud/Desktop)](./docker/)
+-   Containerized environment with all dependencies pre-configured.
+-   Ideal for Railway, DigitalOcean, or stable background execution.
+-   [View Docker Setup Guide](./docker/README.md)
 
-3. **Execution**:
-   ```bash
-   cd python-trader/orbiter
-   python3 main.py --simulation
-   ```
+### 2. [🍓 Raspberry Pi (Low-power Autonomous)](./docs/setup/RASPI_SETUP.md)
+-   Bare-metal installation optimized for 24/7 ARM-based operation.
+-   Includes bootstrap scripts for easy deployment.
+-   [View Raspberry Pi Guide](./docs/setup/RASPI_SETUP.md)
+
+### 3. [🐍 Manual Virtualenv](./python-trader/README.md)
+-   Standard Python setup using `pip` and `.venv`.
+-   Best for local development and debugging.
 
 ## 📂 Repository Structure
 

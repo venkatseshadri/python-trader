@@ -1,0 +1,10 @@
+.venv/
+shoonya_env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.DS_Store
+python-trader/orbiter/logs/
+docs/
