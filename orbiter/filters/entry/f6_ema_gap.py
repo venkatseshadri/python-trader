@@ -28,9 +28,10 @@ def ema_gap_expansion_filter(data, candle_data, token, weight=10):
         talib.set_compatibility(0)
 
     gap_now = ema5[-1] - ema9[-1]
-    gap_prev = ema5[-2] - ema9[-2]
+    # Use 5-minute window for stable expansion (acceleration)
+    gap_prev = (ema5[-6] - ema9[-6]) if len(ema5) >= 6 else (ema5[0] - ema9[0])
 
-    # Expansion Logic: (Difference of Gaps)
+    # Expansion Logic: (Difference of Gaps over 5 mins)
     # We use raw difference to see direction and acceleration
     expansion_raw = (gap_now - gap_prev) / ltp
     f6_score = round(expansion_raw * 100, 2)

@@ -25,9 +25,10 @@ def ema_scope_filter(data, candle_data, token, weight=10):
         talib.set_compatibility(0)
 
     ema5_now = ema5_series[-1]
-    ema5_prev = ema5_series[-2] if len(ema5_series) > 1 else ema5_now
+    # Use 5-minute window for stable scope (velocity)
+    ema5_prev = ema5_series[-6] if len(ema5_series) >= 6 else ema5_series[0]
 
-    # Calculate Scope (Raw %pts)
+    # Calculate Scope (Raw %pts over 5 mins)
     scope_raw = (ema5_now - ema5_prev) / ltp
     f5_score = round(scope_raw * 100, 2)
 

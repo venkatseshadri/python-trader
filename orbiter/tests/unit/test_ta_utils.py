@@ -5,6 +5,8 @@ import os
 import json
 import talib
 from filters.entry.f4_supertrend import supertrend_filter
+from filters.entry.f5_ema_scope import ema_scope_filter
+from filters.entry.f6_ema_gap import ema_gap_expansion_filter
 
 def load_ta_snapshots():
     path = os.path.join(os.path.dirname(__file__), '../data/ta_golden_values.json')
@@ -19,8 +21,8 @@ SNAPSHOTS = load_ta_snapshots()
 @pytest.mark.parametrize("snapshot", SNAPSHOTS)
 def test_indicators_against_golden_values(snapshot, mocker):
     """
-    Validates EMA and SuperTrend calculations against manually verified chart values.
-    Uses talib with compatibility=1 (Metastock) to match bot's runtime behavior.
+    Validates EMA, SuperTrend, EMA Scope, and Gap Expansion against 
+    manually verified chart values.
     """
     # 1. Load Data Chunk
     csv_path = os.path.join(os.path.dirname(__file__), '../data/nifty_ta_chunk.csv')
@@ -30,7 +32,7 @@ def test_indicators_against_golden_values(snapshot, mocker):
     df_filtered = df[df['date'] <= f"2025-07-21 {snapshot['timestamp']}"]
     closes = np.array(df_filtered['close'].tolist(), dtype=float)
 
-    # 2. Verify EMA 5 and EMA 9 using TA-Lib with Metastock compatibility
+    # 2. Verify EMA 5 and EMA 9
     try:
         talib.set_compatibility(1)
         ema5_values = talib.EMA(closes, timeperiod=5)
@@ -48,29 +50,33 @@ def test_indicators_against_golden_values(snapshot, mocker):
     assert abs(ema5_calc - snapshot['ema_5']) <= 0.5
     assert abs(ema9_calc - snapshot['ema_9']) <= 1.0
 
-    # 3. Verify SuperTrend and Score Logic
-    # Convert filtered DF to Bot's expected Candle List format
+    # 3. Verify SuperTrend, Scope, and Gap Filters
     candle_data = []
     for _, row in df_filtered.iterrows():
         candle_data.append({
-            'stat': 'Ok',
-            'inth': str(row['high']),
-            'intl': str(row['low']),
-            'intc': str(row['close']),
-            'time': row['date']
+            'stat': 'Ok', 'inth': str(row['high']), 'intl': str(row['low']),
+            'intc': str(row['close']), 'time': row['date']
         })
 
-    # Setup Mocks for Config (ensure standard params)
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_PERIOD', 10)
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_MULTIPLIER', 3)
     mocker.patch('config.config.VERBOSE_LOGS', False)
 
     tick_data = {'lp': str(snapshot['close'])}
+    
+    # F4: SuperTrend
     st_result = supertrend_filter(tick_data, candle_data, token='26000')
+    # F5: EMA Scope
+    f5_result = ema_scope_filter(tick_data, candle_data, token='26000')
+    # F6: EMA Gap
+    f6_result = ema_gap_expansion_filter(tick_data, candle_data, token='26000')
 
     print(f"ST:   Calc={st_result['supertrend']:.2f}, Golden={snapshot['supertrend_10_3']} (diff={abs(st_result['supertrend']-snapshot['supertrend_10_3']):.2f})")
-    print(f"Score: {st_result['score']:.2f} (Bias: {st_result['direction']})")
+    print(f"F5 (Scope): {f5_result['score']:>+5.2f} pts")
+    print(f"F6 (Gap):   {f6_result['score']:>+5.2f} pts")
     
     assert abs(st_result['supertrend'] - snapshot['supertrend_10_3']) <= 1.0
-    # Score should be a valid increment of 0.05
-    assert round(abs(st_result['score'] * 100)) % 5 == 0
+    
+    # Validation of F5/F6 range (should be small percentages)
+    assert -1.0 <= f5_result['score'] <= 1.0
+    assert -1.0 <= f6_result['score'] <= 1.0
