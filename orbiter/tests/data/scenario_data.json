@@ -23,6 +23,35 @@
         "is_breakout": true,
         "action": "ENTER_LONG"
       }
+    },
+    {
+      "id": "SCENARIO_002_STOP_LOSS_HIT",
+      "description": "Price drops to 25032.55, hitting 0.05% SL from 25047.9 entry",
+      "inputs": {
+        "exec_mode": "FUTURES",
+        "entry_price": 25047.9,
+        "current_ltp": 25032.55,
+        "sl_percentage": 0.05
+      },
+      "expected_behavior": {
+        "action": "SQUARE_OFF",
+        "reason": "STOP_LOSS_HIT"
+      }
+    },
+    {
+      "id": "SCENARIO_003_TRAILING_SL_HOLD",
+      "description": "Price peaks at 25079.5 (0.12%), drops to 25061.5. Trailing active > 0.1%",
+      "inputs": {
+        "entry_price": 25047.9,
+        "peak_price_reached": 25079.5,
+        "current_ltp": 25061.5,
+        "initial_sl": 25035.4,
+        "trailing_activation_pct": 0.1
+      },
+      "expected_behavior": {
+        "new_sl_price": 25057.9,
+        "action": "HOLD"
+      }
     }
   ]
 }
