@@ -6,8 +6,8 @@ import pandas as pd
 import json
 
 # Path fix
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 from backtest_lab.core.generator import ScenarioGenerator
 from backtest_lab.core.mass_engine import MassOptimizer

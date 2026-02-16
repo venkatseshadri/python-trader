@@ -3,8 +3,8 @@ import sys
 import os
 
 # Path fix
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 from backtest_lab.core.loader import DataLoader
 from backtest_lab.core.runner import ScenarioRunner

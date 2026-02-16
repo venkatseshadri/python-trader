@@ -1,59 +1,57 @@
-# 🔬 Orbiter Backtest Lab v2.0
+# 🛡️ Backtest Lab
 
-A high-performance research module for optimizing the ORBITER trading bot using historical NIFTY 50 1-minute data. Optimized for "Big Data" grid searches over 10+ years of history.
+The central hub for strategy development, optimization, and high-fidelity reporting.
 
-## 📂 Project Structure
+## 🚀 Primary Tools
 
-- **`core/`**: The Simulation Engine.
-  - `engine.py`: Row-by-row simulator for detailed P&L and Tradetron-style reports.
-  - `mass_engine.py`: **Vectorized Numpy Matrix Engine** for 10-year simulations in < 1 second.
-  - `loader.py`: Fast CSV loading with memory-efficient tail-reading.
-  - `generator.py`: Logic for the **+6% / -1% weight-shift** grid generation.
-- **`scenarios/`**: The Strategy Bank.
-  - `master_suite/`: Library of **5,531 JSON scenarios** (All filter & weight permutations).
-  - `all_weight_scenarios.csv`: Searchable catalog of every generated configuration.
-- **`tools/`**: Development Utilities.
-  - `generate_master_suite.py`: Re-generates the scenario library.
-  - `csv_exporter.py`: Updates the summary CSV list.
-- **`reports/`**: Visual HTML performance reports.
+### `tools/backtest_cli.py`
+**The Gold Standard.** Use this for all standard backtesting. It integrates multi-timeframe data (1m, 5m, 15m) and generates the "Orbitron" High-Fidelity PDF report.
+- **Features**: Institutional Sniper logic, Trailing SL, 70% Profit Retention, and Tradetron-replica PDF output.
+- **Usage**: `python tools/backtest_cli.py --stocks RELIANCE --start 2025-01-01 --end 2025-12-31`
 
-## 🧪 Optimization Methodology
+### `runners/batch_runner.py`
+Automates the execution of `backtest_cli` across multiple stock lists or date ranges defined in the script. Ideal for overnight runs.
 
-### **The "Logical Weight" Model**
-Instead of separate "on/off" flags, we treat **Weight = 0.0** as disabled. The suite explores every possible combination of filters (F1-F7), and for each combination, it performs a systematic shift.
+### `runners/vector_main.py`
+A high-performance, vectorized implementation of backtesting logic using NumPy. Used for rapid research and preliminary strategy screening where per-candle loops are too slow.
 
-### **Key Strategy Scenarios**
+### `runners/mass_optimizer_run.py`
+A wrapper script designed to manage long-running optimization jobs, providing progress logging and crash recovery.
 
-- **💎 Super-Alpha (Champion)**: The result of extensive grid-search optimization. Combines the core Trend logic (F2, F4) with explosive Momentum (F5, F6) and the F7 Volatility Shield.
-  - *Metrics*: Profit Factor > 10.0, Win Rate ~66%, High ROI.
-- **🚀 Alpha V2 + Shield**: A high-conviction momentum strategy using a surgical F7 filter to block trades during low-volatility "dead" markets.
-- **🛡️ Triple Confirmation**: A "Sniper" style strategy (F2+F4+F7) that prioritizes trade quality over quantity. Very high profit factor but lower trade frequency.
-- **🎯 Synergy Sweet Spot**: A balanced "Machine Gun" strategy (F2+F4) that maximizes trade volume while maintaining profitability.
+---
 
-### **Simulation Modes**
-- **Detailed (Backtest Main)**: Used for single-scenario deep dives. Generates interactive Equity curves and Monthly heatmaps.
-- **Mass (Batch Runner)**: Runs a folder of scenarios and ranks them in a leaderboard.
-- **Ultra-Fast (Vector Runner)**: Uses Matrix multiplication to run the entire 19,000+ library over 10 years in seconds.
+## 📈 Optimization Suite (`optimization/`)
 
-## 📊 Analytics Coverage
+### `optimization/mega_stock_optimizer.py`
+Iterates through hundreds of stocks and parameter combinations to find the "Sweet Spot" for the current market regime. Results are often saved to `mega_optimization_results.csv`.
 
-- **Equity Curve**: Net cumulative growth.
-- **Profit Factor**: Gross Profit / Gross Loss (Primary quality metric).
-- **Sharpe Ratio**: Risk-adjusted return calculation.
-- **Win Rate**: Percentage of profitable trades.
-- **Drawdown Plot**: Max risk and recovery duration.
+### `optimization/risk_optimizer.py`
+Focuses on the survival aspect. It takes a baseline strategy and iterates through Stop-Loss and Take-Profit (SL/TP) configurations to maximize the Sharpe Ratio and minimize Drawdown.
 
-## 🚀 Commands
+### `optimization/weight_optimizer.py`
+Determines the optimal capital allocation across a basket of stocks. It uses equity curve correlation to ensure the portfolio is not overly exposed to a single sector or move.
 
-### **1. Run 1-Year Optimization Suite**
-```bash
-python3 backtest_lab/batch_runner.py --csv [path_to_nifty_csv] --days 250
-```
+---
 
-### **2. Run 10-Year Full History (Vectorized)**
-```bash
-python3 backtest_lab/vector_main.py --csv [path_to_nifty_csv] --days 2500
-```
+## 🏗️ Core Architecture (`core/`)
 
-### **3. Review Scenarios in CSV**
-Open `backtest_lab/scenarios/all_weight_scenarios.csv` in Excel to find a configuration you like, then run it specifically.
+- **`engine.py`**: The underlying simulation logic.
+- **`loader.py`**: Optimized data loading and technical indicator (TA-Lib) injection.
+- **`pdf_generator.py`**: The "Orbitron" reporting engine (ReportLab/FPDF + Seaborn).
+- **`reporter.py`**: Mathematical library for calculating advanced risk metrics like Drawdown recovery days and Rolling Sharpe.
+- **`excel_generator.py`**: Generates the transaction ledger for audit purposes.
+
+---
+
+## 🧪 Validation (`tests/`)
+
+- **`tests/test_suites.py`**: Developer-focused tests to ensure engine logic remains consistent during updates.
+
+---
+
+## 📁 Workspace Structure
+
+- **`data/stocks/`**: Local CSV repository for minute-level OHLCV data.
+- **`scenarios/`**: JSON configuration files for strategy parameters.
+- **`reports/`**: Output directory for PDFs and Excel files (Cleaned regularly).
+- **`archives/`**: Legacy scripts, one-off studies, and deprecated report generators.

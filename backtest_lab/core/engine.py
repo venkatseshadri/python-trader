@@ -17,8 +17,8 @@ class BacktestEngine:
         
         # Risk Defaults
         self.config = {
-            'weights': [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0],
-            'trade_threshold': 0.30,
+            'weights': [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0],
+            'trade_threshold': 0.35,
             'sl_pct': 10.0,
             'tsl_activation_rs': 1000,
             'tsl_retracement_pct': 50,
@@ -55,6 +55,7 @@ class BacktestEngine:
         ema9 = talib.EMA(closes, timeperiod=9)
         st = calculate_st_values(highs, lows, closes, 10, 3.0)
         atr = talib.ATR(highs, lows, closes, timeperiod=14)
+        adx = talib.ADX(highs, lows, closes, timeperiod=14)
         
         position = None
         
@@ -76,7 +77,7 @@ class BacktestEngine:
 
             if not (self.start_t <= row['date'].time() <= self.end_t): continue
             
-            score = self._calculate_score(row, ltp, ema5[i], ema9[i], st[i], ema5[i-6], ema9[i-6], atr[i], np.mean(atr[i-20:i]))
+            score = self._calculate_score(row, ltp, ema5[i], ema9[i], st[i], ema5[i-6], ema9[i-6], atr[i], np.mean(atr[i-20:i]), adx[i])
             if abs(score) >= self.config['trade_threshold']:
                 position = {
                     'entry_time': row['date'], 'entry_spot': ltp, 
@@ -88,7 +89,7 @@ class BacktestEngine:
         pts = (ltp - pos['entry_spot']) if pos['type'] == 'LONG' else (pos['entry_spot'] - ltp)
         return pts * 0.5 * pos['lot_size'] # Synthetic Delta 0.5
 
-    def _calculate_score(self, row, ltp, ema5, ema9, st, e5p5, e9p5, atr, atr_avg):
+    def _calculate_score(self, row, ltp, ema5, ema9, st, e5p5, e9p5, atr, atr_avg, adx=0):
         w = list(self.config['weights']) # Copy weights
         
         # Respect enabled_filters: If provided, zero out weights for filters NOT in the list
@@ -120,7 +121,13 @@ class BacktestEngine:
         rel_vol = atr / atr_avg if atr_avg > 0 else 1.0
         f7 = (0.10 if rel_vol > 1.10 else (-0.10 if rel_vol < 0.75 else 0.0))
         
-        raw_scores = [f1, f2, f3, f4, f5, f6, f7]
+        # F8: Trend Sniper (ADX > 25)
+        f8 = 0
+        if adx > 25:
+            if ema5 > ema9: f8 = 0.25
+            elif ema5 < ema9: f8 = -0.25
+        
+        raw_scores = [f1, f2, f3, f4, f5, f6, f7, f8]
         
         # Weighted sum: Weight of 0.0 effectively disables the filter
         return sum(s * weight for s, weight in zip(raw_scores, w))
