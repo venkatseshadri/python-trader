@@ -2,6 +2,17 @@
 
 All notable changes to the ORBITER project will be documented in this file.
 
+## [3.0.1] - 2026-02-16
+### Added
+- **F8 Trend Sniper**: New entry filter based on ADX strength (>25) and EMA direction.
+- **Orbitron Backtest Utility**: High-fidelity reporting engine with PDF and Excel generation.
+- **Enhanced Analytics**: Added Sharpe Ratio, Profit Factor, and Drawdown recovery analysis.
+
+### Changed
+- **Backtest Lab Overhaul**: Restructured into modular `core/`, `optimization/`, `runners/`, and `tools/` directories.
+- **Documentation**: Updated `BACKTEST_AND_TESTING.md` with Orbitron utility details.
+- **Project Structure**: Cleaned up legacy scripts and synced `orbiter` implementation across directories.
+
 ## [3.0.0] - 2026-02-14
 ### Added
 - **Modular Engine**: Decoupled Evaluator, Executor, and State management.
