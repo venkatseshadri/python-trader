@@ -118,8 +118,8 @@ class Evaluator:
                     scores.append(res.get('score', 0))
                 
                 # 🧠 DYNAMIC WEIGHTING LOGIC
-                # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR]
-                base_weights = [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0] 
+                # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR, F8_SNIPER]
+                base_weights = [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0] 
                 
                 # Time-based decay for ORB (F1)
                 now_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()

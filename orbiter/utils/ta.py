@@ -58,3 +58,23 @@ def calculate_atr(highs, lows, closes, period=14):
     
     atr = sum(trs[-period:]) / period
     return round(atr, 2)
+
+def calculate_adx(highs, lows, closes, period=14):
+    """ADX for Entry filter F8"""
+    import numpy as np
+    import talib
+    
+    if len(closes) < period * 2: # ADX needs more warmup
+        return 0.0
+        
+    # Convert to numpy for talib
+    h = np.array(highs, dtype=float)
+    l = np.array(lows, dtype=float)
+    c = np.array(closes, dtype=float)
+    
+    adx_values = talib.ADX(h, l, c, timeperiod=period)
+    
+    if len(adx_values) == 0 or np.isnan(adx_values[-1]):
+        return 0.0
+        
+    return round(float(adx_values[-1]), 2)
