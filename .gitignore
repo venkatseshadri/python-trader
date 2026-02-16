@@ -1,70 +1,63 @@
-# Credentials and secrets
-credentials.json
-cred.yml
-*.key
-*.pem
+
+__pycache__/
+.coverage
+.DS_Store
+.eggs/
 .env
 .env.local
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+.idea/
+.installed.cfg
+.ipynb_checkpoints/
+.pytest_cache/
 .Python
+.vscode/
+*.egg
+*.egg-info/
+*.key
+*.log
+*.log.*
+*.pem
+*.py[cod]
+*.pyc
+*.so
+*.swo
+*.swp
+*~
+*$py.class
+# Backtest Lab Artifacts
+# Credentials and secrets
+# Data cache (local, not shared)
+# IDE
+# Logs
+# Misc
+# OS
+# Python
+# Testing
+# Virtual environments
+backtest_lab/data/
+backtest_lab/reports/
+backtest_lab/reports/*.html
+backtest_lab/scenarios_best/
+backtest_lab/scenarios/master_suite/
 build/
+cred.yml
+credentials.json
 develop-eggs/
 dist/
 downloads/
 eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-venv/
 env/
 ENV/
-shoonya_env/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
+htmlcov/
+lib/
+lib64/
 logs/
-*.log
-*.log.*
-
-# Data cache (local, not shared)
 orbiter/data/nse_token_map.json
 orbiter/logs/
-
-# Backtest Lab Artifacts
-backtest_lab/scenarios/master_suite/
-backtest_lab/scenarios_best/
-backtest_lab/reports/
-backtest_lab/data/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Misc
-.ipynb_checkpoints/
-*.pyc
+parts/
+sdist/
+shoonya_env/
+Thumbs.db
+var/
+venv/
+wheels/
