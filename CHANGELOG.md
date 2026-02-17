@@ -1,5 +1,9 @@
 # 📜 Changelog
 
+## [3.1.0-20260217-440cb55] - 2026-02-17
+### Changed
+- Auto-versioned release update.
+
 All notable changes to the ORBITER project will be documented in this file.
 
 ## [3.1.0-20260217-9a5be34] - 2026-02-17

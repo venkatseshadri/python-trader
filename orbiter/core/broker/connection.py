@@ -11,6 +11,11 @@ sys.path.insert(0, shoonya_path)
 
 from api_helper import ShoonyaApiPy
 
+try:
+    import pyotp
+except ImportError:
+    pyotp = None
+
 class ConnectionManager:
     def __init__(self, config_path: str = '../cred.yml'):
         self.api = ShoonyaApiPy()
@@ -29,17 +34,45 @@ class ConnectionManager:
 
     def login(self, factor2_override: Optional[str] = None) -> bool:
         print("🔐 Authenticating...")
-        try:
-            current = self.cred.get('factor2', '')
-            new2 = (factor2_override or "").strip()
-            if not new2:
-                new2 = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
-            if new2:
-                self.cred['factor2'] = new2
+        
+        two_fa = ""
+        # 1. Priority: Manual override
+        if factor2_override:
+            two_fa = factor2_override.strip()
+        
+        # 2. Priority: Automated TOTP (Best for Service/Daemon)
+        elif self.cred.get('totp_key'):
+            if pyotp:
+                try:
+                    totp = pyotp.TOTP(self.cred['totp_key'].replace(" ", ""))
+                    two_fa = totp.now()
+                    print(f"🤖 Automated TOTP generated")
+                except Exception as e:
+                    print(f"⚠️ TOTP generation failed: {e}")
+            else:
+                print("⚠️ 'pyotp' not installed. Cannot generate TOTP.")
+
+        # 3. Priority: Interactive Input (Fallback)
+        if not two_fa:
+            try:
+                current = self.cred.get('factor2', '')
+                two_fa = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
+                if not two_fa:
+                    two_fa = current
+            except (EOFError, RuntimeError):
+                # Running in non-interactive environment (service)
+                two_fa = self.cred.get('factor2', '')
+                if not two_fa:
+                    print("❌ No 2FA provided and environment is non-interactive.")
+                    return False
+
+        if two_fa:
+            self.cred['factor2'] = two_fa
+            # Update local credentials file if it changed
+            try:
                 with open(self.config_file, 'w') as f:
                     yaml.dump(self.cred, f)
-                print(f"🔒 Updated 2FA in {self.config_file}")
-        except Exception: pass
+            except Exception: pass
 
         ret = self.api.login(
             userid=self.cred['user'],

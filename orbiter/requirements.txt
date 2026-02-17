@@ -5,3 +5,4 @@ TA-Lib>=0.4.28
 pytz>=2024.1
 gspread>=6.1.2
 google-auth>=2.29.0
+pyotp>=2.9.0

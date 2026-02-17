@@ -28,6 +28,8 @@ cp ShoonyaApi-py/cred.yml ShoonyaApi-py/cred.yml.bak
 # edit ShoonyaApi-py/cred.yml with your credentials
 ```
 
+**Note for Daemon Mode:** To avoid manual 2FA prompts, add `totp_key: "YOUR_SECRET"` to your `cred.yml`. See [Shoonya Integration](../../docs/integrations/shoonya.md) for details.
+
 ## 4) Run as a Background Daemon (Recommended)
 
 To run Orbiter 24/7 with automatic crash recovery and auto-switching between NFO and MCX sessions:

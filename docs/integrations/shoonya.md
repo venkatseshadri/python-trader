@@ -6,7 +6,21 @@ ORBITER uses the **Finvasia Shoonya** API for all market data and order executio
 ## Authentication
 - **Endpoint**: `NorenApi.login()`
 - **Credentials**: Stored in `ShoonyaApi-py/cred.yml`.
-- **2FA**: The bot supports TOTP. If `factor2` is missing or invalid, it will prompt for interactive input on the CLI.
+- **2FA**: The bot supports manual `factor2` input and **Automated TOTP**.
+
+### Automated 2FA (Recommended for Service)
+To allow the bot to run as a background service without prompting for a 2FA code, add your TOTP secret key to `cred.yml`:
+
+```yaml
+user: YOUR_USER_ID
+pwd: YOUR_PASSWORD
+vc: YOUR_VENDOR_CODE
+apikey: YOUR_API_KEY
+imei: YOUR_IMEI
+totp_key: "YOUR_TOTP_SECRET_HERE"  # Add this line
+```
+
+The bot will use the `pyotp` library to generate a fresh code every time it starts or restarts.
 
 ## Market Data (WebSocket)
 We use a **Persistent WebSocket** connection.

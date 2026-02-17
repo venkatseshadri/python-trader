@@ -71,13 +71,11 @@
 04932d9e47dcab24df71caa3610c5fa11b54da74e759a104481564b214e25ea6  ./python-trader/shoonya_env/lib/python3.11/site-packages/setuptools/compat/py39.py
 04b798f010f4e70d48d84bf9cac1e21730199e49eed71a17c59e5ccbefeb5b9d  ./orbiter/bot/sheets.py
 04b798f010f4e70d48d84bf9cac1e21730199e49eed71a17c59e5ccbefeb5b9d  ./python-trader/orbiter/bot/sheets.py
-04c5ad57f9d743e845605e64350d5452849b4a5aaa3317d7b6d601a0e0d4ae7d  ./orbiter/core/broker/connection.py
 04c5ad57f9d743e845605e64350d5452849b4a5aaa3317d7b6d601a0e0d4ae7d  ./python-trader/orbiter/core/broker/connection.py
 04ca5a008786389e441075aea330627cdf25dc0bf944eea31a868f81dcd38aa4  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/matrixlib/tests/test_interaction.py
 04fd0dde54bcff65f1d86ad2193e6555100714c35f914d604efe55188d7dc28e  ./python-trader/shoonya_env/lib/python3.11/site-packages/oauthlib/oauth2/rfc6749/errors.py
 0502a5057382e0bb177bb793d822b9991191ff6e60f6a63291067aa23a068db1  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/tslibs/test_fields.py
 0511fd3c1bc25500abafdd1fd53fccf56db1fa14bbe68121ea2092bad1a4590a  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/compat/numpy/__init__.py
-051be43e481770577d4eff21a6c2adbfe6b0fa4a34fcc4065aa4b30a5295dfc6  ./CHANGELOG.md
 05268344833004b2139ff9b499344b3ea304e6afaab8675232e60ca587982707  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_vendor/rich/_win32_console.py
 053eca2855be626d22639611c6cdc82d3484c77916969e5580ab82a2c5abc7cb  ./python-trader/shoonya_env/lib/python3.11/site-packages/oauthlib/oauth2/rfc8628/endpoints/pre_configured.py
 053ff84f3574bf8186ccc64969a00fa0724a84bb06198b0c08c2ac7ed2026553  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/groupby/aggregate/test_aggregate.py
@@ -1101,6 +1099,7 @@
 4f65243ae740935f227136a0d52f1fe0c3a220541f39bf01584876b97092d572  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/frame/indexing/test_take.py
 4f869ae715dabfd9ed7f0e589b33e2abf614921d76c06938d17c812d03c21335  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/lib/recfunctions.py
 4f8b18ea8d952d53e767db38c89f0fcdf540f18eb49defb529c54db70e72b7eb  ./python-trader/shoonya_env/lib/python3.11/site-packages/pyasn1_modules/rfc8360.py
+4f8c422604d96fd27f9445a94168b80e4809742cb24a6743488fdbdb33128c23  ./orbiter/main.py
 4fb4e3a7e592a0df3cd5a75ebf7475c335c23e79031ea6c2d8c83294dd728d2f  ./python-trader/shoonya_env/lib/python3.11/site-packages/setuptools/_core_metadata.py
 4fb740c90e2cac7d5792a9d1a00c6c44783262595cd389c43380d2a83906dfb4  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/core/config_init.py
 4fcf07660143e550ae5d109278b6cfa23f7d9ca512760cb0f315b27fa7aa8714  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/core/_multiarray_umath.py
@@ -2159,7 +2158,6 @@
 9a145a789bbb324bc175d70801c8c8bf2b9e2d7a8165131b0a903783c9ef64a4  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/_core/tests/test_strings.py
 9a1eac4c4b319cf26146cb450ce4ed147964c98582f7099d789234f64a6a0ce8  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/lib/tests/test__datasource.py
 9a2e43ea6d0393c954e6008c38a9582f1b44a6e563775559b39b2becabfe8f35  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/_testing/_warnings.py
-9a5a4aad3fc9520092b93496979df23b6a61ada66b37638c63aabbf503dcb9d0  ./install/rpi/RASPI_SETUP.md
 9a6f6f97352c785ad7c5b3028d2709b3efb45f6849a202bc1d5390fa8a2896ac  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/_core/tests/test_scalar_methods.py
 9abc4c9ef757002babfcb59e81b51f879839cac599addeb75099fcf74c2f18d9  ./python-trader/shoonya_env/lib/python3.11/site-packages/setuptools/_vendor/wheel/__init__.py
 9ad86e52b4dde0544e0a9518ad322a863cfab3a4fd763019ad5ee7675a0c9b6a  ./python-trader/shoonya_env/lib/python3.11/site-packages/cryptography/__init__.py
@@ -2229,7 +2227,6 @@
 9e7024a9b8406a43a217be6bcfb5b4b9d677f047a1fee0fc7e357be0def71442  ./python-trader/shoonya_env/lib/python3.11/site-packages/urllib3/http2/probe.py
 9e9274789853eee28d2b96b49423067e226ff91e23c8d86220f7996c970d5c1b  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/lib/format.py
 9eaf05e700de3b8f45a01195403c7c8afbe0fc6b2e6dd59ad5ba5933fe344e6b  ./python-trader/shoonya_env/lib/python3.11/site-packages/pyasn1_modules/rfc6664.py
-9eb6d35582093a57f951146c8d8c78a34f367e89ec8cf1e2f390d21727456110  ./orbiter/main.py
 9ed78ac9329c230565821d6a525fbc904eb790a1be2a05ad2eb7c5f764d6cb24  ./python-trader/shoonya_env/lib/python3.11/site-packages/pyasn1_modules/rfc8410.py
 9ee556ff0fe7b55c69136e842c4be780c634374e2c14bb228d747265944e146f  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_vendor/dependency_groups/_pip_wrapper.py
 9ee6618860c2dfc3cb0d77b18cc3382089081f5f45b888b06218b2150eca8e84  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/arrays/interval/test_overlaps.py
@@ -2441,7 +2438,6 @@ b023dd630e8bc5c2e00ea52f2b282675cac81b36451865e801145823e07367f5  ./python-trade
 b0414751a5096eabfc880acbdc702d733b5666618e157d358537ac4b2b43121d  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/cli/status_codes.py
 b0431adfca9aaa3bf1d5989ddce0805236b7d4138153e512b9230f06f537ca3a  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/utils/filetypes.py
 b0487c44924b612751bd3a803b84c754f3c0f9848354b0f8488f52a3e6f15f55  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/utils/glibc.py
-b04e2e1aa3b5f0888b66e5aa4a13d035df8f3ebf0c9abbd51275c2e5eaddc4ca  ./orbiter/README.md
 b07bc2e46c72824527a78a3eaf4e630b6e19a95649bf6f3cfc63c065e1866fb7  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/base/test_fillna.py
 b07ebc69609a6c8daacb975b8314025de4dfbe7d4d4200df335393e288c599a5  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/indexes/categorical/test_fillna.py
 b081866696377263293308896186181c6da27d9264bc9804a2d445b62ba55752  ./python-trader/shoonya_env/lib/python3.11/site-packages/setuptools/tests/config/downloads/preload.py
@@ -2542,6 +2538,7 @@ b6d200f74f41adb4d4cf092a11efd3cd9561e0938e8fb83ad58b1e8b69abc068  ./python-trade
 b6d2afe06314aa54703cfa20f7f094a29cba483828c5520bcde049ce07e7dad8  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/utils/direct_url_helpers.py
 b6fc7273697f0485ec133905e76f08c1f6e5d8f4aa0eb030c6ba8bb47b174a5b  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/frame/methods/test_first_valid_index.py
 b714c3fd1f93251bce0c38de0590cce80e37e9b3eae6f1cf64167965ad488425  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/tslibs/test_conversion.py
+b71adc5095fcd29149d5dbfa4fb210abed9ebd9e51c05845e02d2dc03e826635  ./orbiter/README.md
 b7223d7babdeeec1177402f2f46623315de60101e6405d88a96fb11733dd8236  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/tseries/frequencies/test_frequencies.py
 b72d3fc5fd0b9c7c1901d11ff9df052ced4ae211aac7fec3b03dc21f0a0b2626  ./python-trader/shoonya_env/lib/python3.11/site-packages/cryptography/x509/name.py
 b73c0c1ff7e141eb9bc0ca877528af6ac83571181349b360d8288c567ccc9b25  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/index/__init__.py
@@ -2632,7 +2629,6 @@ bcf70d0646381f6471b32916d5b8d383e152953950d87d722dbf99b187dfb048  ./python-trade
 bd013adfdba81218f5be98c4771bb994d22124249466477ba6a965508d0164e0  ./python-trader/shoonya_env/lib/python3.11/site-packages/urllib3/util/response.py
 bd0c054ad47ffe1e31371af4e87c5f170bf90785561452834a5843971a0177e4  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/indexing/multiindex/test_getitem.py
 bd0ea5ea03a0f47a9c6ceb2f1eb4a225154b7448fd2f89b81e4446633893c850  ./python-trader/shoonya_env/lib/python3.11/site-packages/cryptography/hazmat/primitives/asymmetric/padding.py
-bd1f0900f6cf15eb98c5c50e8a63213f0bb54b82ac4fb0a88ca687dc025e88af  ./docs/integrations/shoonya.md
 bd1f0900f6cf15eb98c5c50e8a63213f0bb54b82ac4fb0a88ca687dc025e88af  ./python-trader/docs/integrations/shoonya.md
 bd37565030425d617ac24dd7ceeecbe48d656ed1984f138d8be20a60e9837453  ./python-trader/shoonya_env/lib/python3.11/site-packages/google/auth/transport/__init__.py
 bd512829d6b0a094630056b23f05e43013cbcbb4524ecf9fe38c124034769c9d  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_vendor/rich/json.py
@@ -2804,7 +2800,9 @@ c97672ca1aee61584bbc59848c16b804335cf50f5f43adbfba980e3241e78301  ./python-trade
 c9858af506f79e40dae1a4fee13900a06216aa78b95813d0a952156c7c37b311  ./python-trader/shoonya_env/lib/python3.11/site-packages/numpy/lib/_shape_base_impl.py
 c98c0a5e29a0aa8ea01c58c682a8640036fa7d19dc4ab17e39ec17e948a76558  ./python-trader/shoonya_env/lib/python3.11/site-packages/websocket/tests/echo-server.py
 c98c6ffda7cce4d03826eafb41aea298e039689555042b127fe660b9ca895182  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/frame/test_logical_ops.py
+c9a7b0814a2a3d8bf31a0886eb393d42feb1e21343b8946d5f5ddf656d32ca21  ./docs/integrations/shoonya.md
 c9be5b828d43bf1e326c6c80c118e4c1a75c850b6981b6b98a3a791952f3d4ec  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/test_col.py
+ca0948dc63ec0cbc3206e463e1ce647b0aac72ac88e30c9734da8b5e223ac14b  ./orbiter/core/broker/connection.py
 ca09a67ef11ada8e038b045fad8b04285c510b067029cf8ff71230b0f16a7185  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/series/methods/test_round.py
 ca32a1e348651d5a9f0a4c9eb4dfea3c73d17d0e80ddbf5c042228432a3b6e39  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/arrays/floating/test_construction.py
 ca6d9fa0ede62425d6f204b74223e98757095a42ebb192aa46b01d7895c5a731  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/io/formats/style/test_highlight.py
@@ -3430,6 +3428,7 @@ ecdeb33ed08596fc57316847574f29b148dd6082b65e0b0ddf2a39760b9afefe  ./python-trade
 ece7b28d2aaa631eb38af1d489be2d7f59f85c8a9344f937eecdc2e117e9a111  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/core/arrays/categorical.py
 ed230b616683235b24f743a283d531a1f92ec798f65dc67e9580ace7e557a69f  ./orbiter/filters/sl/sl_supertrend_reversal.py
 ed230b616683235b24f743a283d531a1f92ec798f65dc67e9580ace7e557a69f  ./python-trader/orbiter/filters/sl/sl_supertrend_reversal.py
+ed25684c975c402beffc3265c95ee951f7ea75bbaee751f3fe92e5d96629a9ca  ./CHANGELOG.md
 ed2b481cba70717d96ee1b6edc319ad9c458f0586402f81ee559045cf03294be  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/series/methods/test_quantile.py
 ed3b75bb2b782c05a128232b41cf4647f112859c9c90f8a00d79310cdbf18811  ./python-trader/shoonya_env/lib/python3.11/site-packages/oauthlib/oauth1/rfc5849/request_validator.py
 ed3bf0f3e9003a38e851054c2937517d567e92c3fe837ecc149f97e2143783b1  ./docs/future/REMOTE_MONITORING.md
@@ -3627,6 +3626,7 @@ fa2adaad6c48c87727f997f36367ac3f7e104065e07eac13c0603fdb56f87f34  ./backtest_lab
 fa31cb384fd31da673e4115c0a7a122fd11802d2749d77a6e3db3da1fe23bcac  ./python-trader/shoonya_env/lib/python3.11/site-packages/pip/_internal/utils/_log.py
 fa38c655cef7c615a713bd8690722bb5c06941291d23e90ed81dfed9ec5e31b1  ./backtest_lab/archives/generate_mojo_report.py
 fa3fd0be3e858111cf059a54ca79027cbef87de965be819beb74c5032679489a  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/window/moments/test_moments_consistency_rolling.py
+fa478d419177f44654a15cea8845a96b7b21a5fc969a7aa7cb0b609d70f14240  ./install/rpi/RASPI_SETUP.md
 fa4b0143b31f0f356f6c1955fdfb5805602612a7c0f3a963233331cda65e0252  ./python-trader/shoonya_env/lib/python3.11/site-packages/cffi/__init__.py
 fa8421f0a0985332d4f95be44ec725e3cd269420a248edd3e34b94dd2b0707b3  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/indexing/multiindex/test_partial.py
 fa921a05efef9a09ccfe893a4fffadfb05477ad5ed370df448e316556343a8b2  ./python-trader/shoonya_env/lib/python3.11/site-packages/pandas/tests/extension/date/__init__.py

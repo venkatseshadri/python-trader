@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 ORBITER v3.1.0-20260217-9a5be34 - Unified Segment Multi-Market Trader
+🚀 ORBITER v3.1.0-20260217-440cb55 - Unified Segment Multi-Market Trader
 """
 
 import time
@@ -26,7 +26,7 @@ from core.engine.syncer import Syncer
 import filters
 import config.config as global_config
 
-VERSION = "3.1.0-20260217-9a5be34"
+VERSION = "3.1.0-20260217-440cb55"
 
 class LoggerWriter:
     def __init__(self, level):
