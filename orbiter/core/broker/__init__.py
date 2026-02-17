@@ -9,6 +9,22 @@ from .margin import MarginCalculator
 from .executor import OrderExecutor
 
 class BrokerClient:
+    """
+    🚀 Central Gateway for Shoonya API Interactions.
+    
+    ARCHITECTURE:
+    - Acts as a Facade over `ConnectionManager`, `ScripMaster`, and `OrderExecutor`.
+    - Segment-Aware: Initialized with specific `segment_name` ('nfo', 'mcx').
+    - State: Maintains `SYMBOLDICT` (Live WebSocket Feed).
+    
+    CRITICAL LOGIC:
+    1. Token Resolution: Uses `ScripMaster` which implements a "Dual-Key" storage 
+       (storing both raw '477167' and prefixed 'MCX|477167') to handle inconsistent inputs.
+    2. Future Order Placement (`place_future_order`):
+       - Priority 0: Check Live WS (`SYMBOLDICT`) for Lot Size (Most Accurate).
+       - Priority 1: Check Memory Cache (`TOKEN_TO_LOTSIZE`) loaded from JSON maps.
+       - Priority 2: Check Derivative Master (Fallback).
+    """
     def __init__(self, config_path: str = '../cred.yml', segment_name: str = 'nfo'):
         self.segment_name = segment_name.lower()
         self.conn = ConnectionManager(config_path)

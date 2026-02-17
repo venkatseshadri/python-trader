@@ -60,7 +60,16 @@ class ScripMaster:
         self.load_segment_futures_map(segment_name)
 
     def load_segment_futures_map(self, segment_name='nfo'):
-        """Load mapping files created by utilities"""
+        """
+        Load mapping files created by utilities (e.g., mcx_futures_map.json).
+        
+        CRITICAL: Implements "Dual-Key" Storage.
+        - Stores raw token ID: '477167' -> 'COPPER27FEB26'
+        - Stores prefixed ID: 'MCX|477167' -> 'COPPER27FEB26'
+        
+        This ensures that lookups succeed regardless of whether the input token 
+        comes from a clean source or a prefixed WebSocket message.
+        """
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         map_file = os.path.join(base_dir, 'data', f"{segment_name.lower()}_futures_map.json")
         
