@@ -26,3 +26,35 @@ class OrderExecutor:
             return {'ok': False, 'reason': 'future_order_failed', 'resp': res}
 
         return {**future_details, 'ok': True, 'resp': res, 'side': side}
+
+    def place_spread(self, spread: Dict[str, Any], execute: bool, product_type: str, price_type: str) -> Dict[str, Any]:
+        """Execute a two-leg Option Credit Spread (Sell ATM, Buy Hedge)"""
+        atm_sym = spread['atm_symbol']
+        hedge_sym = spread['hedge_symbol']
+        lot = spread['lot_size']
+        exch = spread.get('exchange', 'NFO')
+        side = spread['side'] # 'PUT' or 'CALL'
+
+        if not execute:
+            self.logger.info(f"sim_spread side={side} atm={atm_sym} hedge={hedge_sym} qty={lot} product={product_type}")
+            return {**spread, 'dry_run': True}
+
+        # 1. BUY Hedge first for margin benefit
+        h_res = self.api.place_order(buy_or_sell='B', product_type=product_type, exchange=exch, tradingsymbol=hedge_sym,
+                                    quantity=lot, discloseqty=0, price_type=price_type, price=0, trigger_price=None,
+                                    retention='DAY', remarks=f'orb_{side.lower()}_hedge')
+        self.logger.info(f"order_call side=B exch={exch} sym={hedge_sym} qty={lot} resp={h_res}")
+
+        if not h_res or h_res.get('stat') != 'Ok':
+             return {'ok': False, 'reason': f"hedge_leg_failed: {h_res.get('emsg') if h_res else 'No response'}", 'resp': h_res}
+
+        # 2. SELL ATM
+        a_res = self.api.place_order(buy_or_sell='S', product_type=product_type, exchange=exch, tradingsymbol=atm_sym,
+                                    quantity=lot, discloseqty=0, price_type=price_type, price=0, trigger_price=None,
+                                    retention='DAY', remarks=f'orb_{side.lower()}_atm')
+        self.logger.info(f"order_call side=S exch={exch} sym={atm_sym} qty={lot} resp={a_res}")
+
+        if not a_res or a_res.get('stat') != 'Ok':
+             return {'ok': False, 'reason': f"atm_leg_failed: {a_res.get('emsg') if a_res else 'No response'}", 'resp': a_res, 'hedge_order_id': h_res.get('norenordno')}
+
+        return {**spread, 'ok': True, 'atm_resp': a_res, 'hedge_resp': h_res}

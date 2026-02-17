@@ -1,0 +1,21 @@
+[Unit]
+Description=ORBITER Trading Bot Daemon
+After=network.target
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/python
+Environment=PYTHONPATH=/home/pi/python
+EnvironmentFile=/home/pi/python/orbiter.env
+
+# Start with flags from environment file
+ExecStart=/usr/bin/python3 orbiter/main.py ${ORBITER_FLAGS}
+
+Restart=always
+RestartSec=5
+StandardOutput=inherit
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

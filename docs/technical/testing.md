@@ -41,8 +41,22 @@ The core of our strategy validation lies in `test_scenarios.py`. It reads `scena
 2.  **Stop Loss Hit**: Confirms that the hard exit logic triggers correctly on a percentage-based pullback.
 3.  **Trailing Stop Loss**: Ensures the bot "Holds" or "Exits" correctly based on the relationship between current LTP and the trailed SL level.
 
-## 📝 Adding New Scenarios
-To add a new test case:
-1. Extract the OHLC data from the archive ZIP.
-2. Add a new entry to the `scenarios` list in `scenario_data.json`.
-3. Run `pytest` to confirm the engine behaves as expected.
+## 🛡️ Environment Parity & Verification
+
+To ensure your Production environment (Raspberry Pi) exactly matches your Development environment (MacBook Pro), use the checksum utility.
+
+### 1. Generating Checksums (Dev)
+The `./release.sh` script automatically generates `checksums.txt` in the root folder.
+
+### 2. Verifying Integrity (Prod/Pi)
+Run this command on your Raspberry Pi after pulling latest changes to detect any modified, missing, or corrupted files:
+```bash
+shasum -a 256 -c checksums.txt
+```
+
+### 3. Version Tracking
+Every instance of Orbiter identifies itself at startup. You can also verify the current build via the root file:
+```bash
+cat version.txt
+# Output Format: 3.1.0-YYYYMMDD-shash
+```

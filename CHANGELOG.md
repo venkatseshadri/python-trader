@@ -2,6 +2,13 @@
 
 All notable changes to the ORBITER project will be documented in this file.
 
+## [3.1.0-20260217-9a5be34] - 2026-02-17
+### Added
+- **Option Credit Spreads**: Integrated `place_spread` method in `OrderExecutor` to handle two-leg margin-efficient orders (Buy Hedge first).
+- **Environment Parity**: Synchronized `orbiter` to use the latest `core.broker` client instead of legacy scripts.
+- **Version Tracking**: Added start-up version logging to track code synchronization across development (Mac) and production (RPi) environments.
+- **Auto-Segment Switching**: Improved NFO/MCX segment detection and client initialization.
+
 ## [3.0.1] - 2026-02-16
 ### Added
 - **F8 Trend Sniper**: New entry filter based on ADX strength (>25) and EMA direction.

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detailed Attribute Analysis - ATGL 2025-12-03</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.5; color: #24292e; max-width: 1100px; margin: 0 auto; padding: 30px; background-color: #f6f8fa; }
+        h1 { border-bottom: 2px solid #eaecef; padding-bottom: 0.3em; color: #0366d6; }
+        .summary-box { background: #fff; border: 1px solid #d1d5da; border-radius: 6px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 30px; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #e1e4e8; }
+        th { background-color: #f1f8ff; color: #0366d6; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+        tr:hover { background-color: #fafbfc; }
+        .val { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; color: #d73a49; font-weight: bold; }
+        .logic { font-size: 0.9em; color: #586069; }
+        .section-header { background: #24292e; color: white; font-weight: bold; padding: 10px 15px; }
+        .prop-name { font-weight: 600; color: #24292e; }
+    </style>
+</head>
+<body>
+
+<h1>35 Property Deep-Dive: ATGL (2025-12-03)</h1>
+
+<div class="summary-box">
+    <strong>Case Study:</strong> ATGL | <strong>Date:</strong> 2025-12-03 | <strong>Direction:</strong> SHORT | <strong>Total Move:</strong> -1.1%
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 25%;">Property</th>
+            <th style="width: 15%;">Value</th>
+            <th style="width: 60%;">Logic & "Where" it comes from</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- 1. Identity & Outcome -->
+        <tr><td colspan="3" class="section-header">1. Identity & Outcome</td></tr>
+        <tr><td><span class="prop-name">Date</span></td><td><span class="val">2025-12-03</span></td><td class="logic">Timestamp of the session being analyzed.</td></tr>
+        <tr><td><span class="prop-name">Symbol</span></td><td><span class="val">ATGL</span></td><td class="logic">Stock identifier.</td></tr>
+        <tr><td><span class="prop-name">Direction</span></td><td><span class="val">SHORT</span></td><td class="logic">Calculated based on Daily Close vs Previous Close (or High/Low extremes).</td></tr>
+        <tr><td><span class="prop-name">Total_Move%</span></td><td><span class="val">-1.1</span></td><td class="logic">The absolute magnitude from the day's open or high to its extreme low/close.</td></tr>
+
+        <!-- 2. Structural Context -->
+        <tr><td colspan="3" class="section-header">2. Structural Context (Higher Timeframe)</td></tr>
+        <tr><td><span class="prop-name">Trend_20_gt_50</span></td><td><span class="val">False</span></td><td class="logic">Is Daily 20 EMA > Daily 50 EMA? (At start of day). False = Bearish.</td></tr>
+        <tr><td><span class="prop-name">Trend_50_gt_100</span></td><td><span class="val">False</span></td><td class="logic">Is Daily 50 EMA > Daily 100 EMA? False = Bearish.</td></tr>
+        <tr><td><span class="prop-name">Trend_Aligned</span></td><td><span class="val">True</span></td><td class="logic">Logic: <code>(Direction == SHORT and not 50_gt_100)</code>. Harmonizes intraday move with the dominant trend.</td></tr>
+
+        <!-- 3. Opening Conditions -->
+        <tr><td colspan="3" class="section-header">3. Opening Conditions</td></tr>
+        <tr><td><span class="prop-name">Open_gt_YClose</span></td><td><span class="val">True</span></td><td class="logic">Did today's 9:15 AM open price exceed yesterday's 3:30 PM close?</td></tr>
+        <tr><td><span class="prop-name">Gap%</span></td><td><span class="val">0.07</span></td><td class="logic"><code>(Today_Open - Yest_Close) / Yest_Close * 100</code>.</td></tr>
+        <tr><td><span class="prop-name">LTP_gt_YHigh</span></td><td><span class="val">False</span></td><td class="logic">Did the stock end the day above yesterday's High? (Failure = weak).</td></tr>
+        <tr><td><span class="prop-name">Did_Dip_YHigh</span></td><td><span class="val">True</span></td><td class="logic">For Shorts: Did the price at any point cross below yesterday's High? (Entry Trigger).</td></tr>
+
+        <!-- 4. Daily Volatility & Shape -->
+        <tr><td colspan="3" class="section-header">4. Daily Volatility & Shape</td></tr>
+        <tr><td><span class="prop-name">Day_Wick_U</span></td><td><span class="val">0.165</span></td><td class="logic">Average upper wick size relative to candle range for all 1-min candles.</td></tr>
+        <tr><td><span class="prop-name">Day_Wick_L</span></td><td><span class="val">0.261</span></td><td class="logic">Average lower wick size relative to candle range. Higher value = buying pressure/support.</td></tr>
+        <tr><td><span class="prop-name">Weekly_Color</span></td><td><span class="val">Red</span></td><td class="logic">Color of the weekly candle from Monday to Current Date.</td></tr>
+
+        <!-- 5. Intraday Trend Quality -->
+        <tr><td colspan="3" class="section-header">5. Intraday Trend Quality</td></tr>
+        <tr><td><span class="prop-name">EMA_Crosses</span></td><td><span class="val">41</span></td><td class="logic">Number of times 1-min Price crossed the 9 EMA. High = Sideways/Noisy.</td></tr>
+        <tr><td><span class="prop-name">EMA_Always_Correct</span></td><td><span class="val">False</span></td><td class="logic">Boolean: Did price stay on the "correct" side of EMA for the *entire* duration?</td></tr>
+
+        <!-- 6. Pullback & Reversal Dynamics -->
+        <tr><td colspan="3" class="section-header">6. Pullback & Reversal Dynamics</td></tr>
+        <tr><td><span class="prop-name">Pullback_Happened</span></td><td><span class="val">True</span></td><td class="logic">Did a counter-trend move of > 0.15% occur after the trend started?</td></tr>
+        <tr><td><span class="prop-name">Pullback_Depth%</span></td><td><span class="val">0.68</span></td><td class="logic">The max retracement magnitude during the move.</td></tr>
+        <tr><td><span class="prop-name">Pullback_Bucket</span></td><td><span class="val">4</span></td><td class="logic">Time window of pullback: 1 (9:15-10:30) to 4 (13:30-15:30).</td></tr>
+        <tr><td><span class="prop-name">Reversal_Confirmed</span></td><td><span class="val">True</span></td><td class="logic">Did price close "past" the pullback extreme? (Trend ended).</td></tr>
+        <tr><td><span class="prop-name">PreRev_EMA_Gap</span></td><td><span class="val">0.045</span></td><td class="logic">Distance (%) between 5 EMA and 9 EMA just before the reversal.</td></tr>
+        <tr><td><span class="prop-name">PreRev_ADX</span></td><td><span class="val">26.35</span></td><td class="logic">ADX value (14-period) at the peak of the move before reversal.</td></tr>
+        <tr><td><span class="prop-name">PreRev_ATR_Ratio</span></td><td><span class="val">1.36</span></td><td class="logic">Current ATR / Average ATR. Measures if volatility was "spiking" at peak.</td></tr>
+
+        <!-- 7. Exhaustion Signals -->
+        <tr><td colspan="3" class="section-header">7. Exhaustion Signals</td></tr>
+        <tr><td><span class="prop-name">Sideways_Post_Gap</span></td><td><span class="val">False</span></td><td class="logic">Did the first 30 mins stay within a < 0.25% range after a significant gap?</td></tr>
+        <tr><td><span class="prop-name">PrePeak_Wick_U</span></td><td><span class="val">0.215</span></td><td class="logic">Upper wick size in the 10 candles leading up to the session peak.</td></tr>
+        <tr><td><span class="prop-name">PrePeak_Compression</span></td><td><span class="val">False</span></td><td class="logic">Was the candle body ratio < 0.4 (Dojis) before the peak?</td></tr>
+        <tr><td><span class="prop-name">ADX_Exhaustion</span></td><td><span class="val">True</span></td><td class="logic">Did ADX fall by > 3 points from its intraday high? (Momentum decay).</td></tr>
+        <tr><td><span class="prop-name">ATR_Compression</span></td><td><span class="val">False</span></td><td class="logic">Did ATR drop below 70% of its daily peak? (Volatility cooling).</td></tr>
+
+        <!-- 8. Timing & Bucket Distribution -->
+        <tr><td colspan="3" class="section-header">8. Timing & Bucket Distribution</td></tr>
+        <tr><td><span class="prop-name">Best_Bucket</span></td><td><span class="val">1</span></td><td class="logic">The 90-min window that contributed the most to the 1.1% move.</td></tr>
+        <tr><td><span class="prop-name">B1_Move</span></td><td><span class="val">0.71</span></td><td class="logic">% move during 09:15 - 10:30.</td></tr>
+        <tr><td><span class="prop-name">B2_Move</span></td><td><span class="val">0.41</span></td><td class="logic">% move during 10:30 - 12:00.</td></tr>
+        <tr><td><span class="prop-name">B3_Move</span></td><td><span class="val">0.07</span></td><td class="logic">% move during 12:00 - 13:30.</td></tr>
+        <tr><td><span class="prop-name">B4_Move</span></td><td><span class="val">0.03</span></td><td class="logic">% move during 13:30 - 15:30.</td></tr>
+        <tr><td><span class="prop-name">B1_Exhaustion</span></td><td><span class="val">True</span></td><td class="logic">Did ADX drop > 2 points during the B1 window?</td></tr>
+        <tr><td><span class="prop-name">B4_Exhaustion</span></td><td><span class="val">True</span></td><td class="logic">Did ADX drop > 2 points during the B4 window?</td></tr>
+    </tbody>
+</table>
+
+<footer style="text-align: center; color: #6a737d; font-size: 0.8em; margin-top: 50px;">
+    Note: Calculated from 1-minute OHLC data using TA-Lib and Custom Python Logic in nifty_mover_analysis.py
+</footer>
+
+</body>
+</html>

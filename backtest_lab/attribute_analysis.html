@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbiter Revamp: Attribute Analysis (ATGL Case Study)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .case-study { background: #fff; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
+        .property-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-top: 4px solid #2c3e50; }
+        .property-name { font-weight: bold; color: #2c3e50; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+        .data-point { font-family: 'Courier New', Courier, monospace; background: #eef2f3; padding: 2px 6px; border-radius: 4px; color: #e74c3c; font-weight: bold; }
+        .logic-label { font-weight: bold; color: #7f8c8d; font-size: 0.9em; text-transform: uppercase; }
+        .description { margin-top: 10px; font-size: 0.95em; }
+        .trend-tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; color: white; }
+        .tag-short { background: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Orbiter Revamp: Data Dictionary</h1>
+    <p>Detailed Analysis of Factors Impacting 1% NIFTY Movers</p>
+</header>
+
+<div class="case-study">
+    <h3>Reference Case: ATGL (2025-12-03)</h3>
+    <p><strong>Direction:</strong> <span class="trend-tag tag-short">SHORT</span> | <strong>Total Move:</strong> <span class="data-point">-1.1%</span></p>
+    <p><em>This data point serves as the basis for the logic explanations below.</em></p>
+</div>
+
+<div class="property-grid">
+
+    <!-- Section 1: Core Identifiers -->
+    <div class="property-card">
+        <div class="property-name">1. Direction & Total_Move%</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">SHORT</span> / <span class="data-point">-1.1</span></div>
+        <div class="description">
+            Determines the primary trade bias and the absolute magnitude of the intraday trend from high to low (or low to high). 
+            <strong>Logic:</strong> Used as the "Label" for reverse engineering to identify which pre-conditions lead to 1%+ moves.
+        </div>
+    </div>
+
+    <!-- Section 2: Trend Structure -->
+    <div class="property-card">
+        <div class="property-name">2. Trend_20_gt_50 / Trend_50_gt_100</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">False</span> / <span class="data-point">False</span></div>
+        <div class="description">
+            Daily timeframe EMA stack (20, 50, 100).
+            <strong>Logic:</strong> For ATGL, both are False, meaning 20 < 50 and 50 < 100. This indicates a "Perfect Bearish Alignment" on the daily chart before the day even started.
+        </div>
+    </div>
+
+    <div class="property-card">
+        <div class="property-name">3. Trend_Aligned</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">True</span></div>
+        <div class="description">
+            Boolean check: Is (Direction == SHORT and EMA stack is Bearish) OR (Direction == LONG and EMA stack is Bullish)?
+            <strong>Logic:</strong> ATGL was SHORT and the EMAs were bearishly stacked. Trade was "With the Trend."
+        </div>
+    </div>
+
+    <!-- Section 3: Opening Context -->
+    <div class="property-card">
+        <div class="property-name">4. Open_gt_YClose & Gap%</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">True</span> / <span class="data-point">0.07</span></div>
+        <div class="description">
+            Measures the "Jump" from yesterday's close. 
+            <strong>Logic:</strong> A 0.07% gap is negligible (Flat Open). The fact that it opened green but moved SHORT is a sign of "Gap Rejection."
+        </div>
+    </div>
+
+    <div class="property-card">
+        <div class="property-name">5. Did_Dip_YHigh / LTP_gt_YHigh</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">True</span> / <span class="data-point">False</span></div>
+        <div class="description">
+            <strong>Did_Dip_YHigh:</strong> Price touched or fell below yesterday's high. 
+            <strong>LTP_gt_YHigh:</strong> Did it finish/stay above?
+            <strong>Logic:</strong> ATGL failed to hold above YHigh, providing the "Short Trigger" as it lost the previous day's resistance level.
+        </div>
+    </div>
+
+    <!-- Section 4: Intra-day Noise & Momentum -->
+    <div class="property-card">
+        <div class="property-name">6. EMA_Crosses & EMA_Always_Correct</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">41</span> / <span class="data-point">False</span></div>
+        <div class="description">
+            Measures how many times 1-minute price crossed the 20 EMA. 
+            <strong>Logic:</strong> 41 crosses is very high, indicating a "Grinding" move rather than a "Vertical" crash. <i>Always_Correct=False</i> means price often spiked above EMA during the down move.
+        </div>
+    </div>
+
+    <div class="property-card">
+        <div class="property-name">7. Pullback_Happened & Pullback_Depth%</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">True</span> / <span class="data-point">0.68</span></div>
+        <div class="description">
+            Tracks the largest counter-trend move during the session.
+            <strong>Logic:</strong> ATGL dropped 1.1% but had a 0.68% bounce. This is a 61.8% retracement, identifying a highly volatile/low-conviction trend.
+        </div>
+    </div>
+
+    <!-- Section 5: Pre-Reversal Metrics -->
+    <div class="property-card">
+        <div class="property-name">8. PreRev_ADX & ADX_Exhaustion</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">26.35</span> / <span class="data-point">True</span></div>
+        <div class="description">
+            The ADX value right before the trend ended.
+            <strong>Logic:</strong> ADX > 25 is strong, but <i>Exhaustion=True</i> means the ADX line "hooked" down, signaling the sellers were finished.
+        </div>
+    </div>
+
+    <div class="property-card">
+        <div class="property-name">9. PreRev_EMA_Gap</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">0.045</span></div>
+        <div class="description">
+            The distance between Price and EMA at the moment of reversal.
+            <strong>Logic:</strong> A tiny gap (0.045%) shows the reversal didn't happen because price was "stretched" (overextended), but rather after a consolidation near the EMA.
+        </div>
+    </div>
+
+    <!-- Section 6: Bucket Analysis (Distribution of Move) -->
+    <div class="property-card">
+        <div class="property-name">10. Best_Bucket & B1-B4 Moves</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">1</span> (B1: <span class="data-point">0.71</span>)</div>
+        <div class="description">
+            Divides the day into 4 quarters. 
+            <strong>Logic:</strong> ATGL's B1 (0.71%) was more than B2+B3+B4 combined. This proves the "Opening 90 Minutes" were the only tradable window for this stock.
+        </div>
+    </div>
+
+    <div class="property-card">
+        <div class="property-name">11. B1_Exhaustion & B4_Exhaustion</div>
+        <div><span class="logic-label">Data:</span> <span class="data-point">True</span> / <span class="data-point">True</span></div>
+        <div class="description">
+            Identifies if momentum died within those specific windows.
+            <strong>Logic:</strong> Both start and end of day saw momentum fizzle, explaining why the middle of the day (B2/B3) was so noisy.
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p style="text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 0.8em;">
+        Generated by Gemini CLI - Backtest Lab Reverse Engineering Series
+    </p>
+</footer>
+
+</body>
+</html>

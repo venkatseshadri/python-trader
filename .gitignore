@@ -53,7 +53,9 @@ lib/
 lib64/
 logs/
 orbiter/data/nse_token_map.json
+orbiter/data/span/*.json
 orbiter/logs/
+.orbiter.lock
 parts/
 sdist/
 shoonya_env/
