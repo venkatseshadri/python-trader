@@ -50,8 +50,7 @@ def watch_logs():
             if any(keyword in line for keyword in KEYWORDS):
                 print(f"🚨 Alert detected: {line.strip()}")
                 clean_line = line.strip()
-                send_telegram_msg(f"🚨 *Orbiter Alert Detected*:
-`{clean_line}`")
+                send_telegram_msg(f"🚨 *Orbiter Alert Detected*:\n`{clean_line}`")
             
             time.sleep(0.1)
 
