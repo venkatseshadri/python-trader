@@ -37,49 +37,73 @@ class Executor:
                     if base_symbol.endswith('-EQ'): base_symbol = base_symbol[:-3]
                     base_symbol = base_symbol.strip()
 
-                # ✅ Fix: Use OPTFUT for MCX symbols
-                target_instrument = state.config.get('OPTION_INSTRUMENT', 'OPTSTK')
-                if token.startswith('MCX|'):
-                    target_instrument = 'OPTFUT'
-
                 is_bull = score >= state.config['TRADE_SCORE']
-                spread = (state.client.place_put_credit_spread if is_bull else state.client.place_call_credit_spread)(
-                    symbol=base_symbol, ltp=ltp, hedge_steps=state.config.get('HEDGE_STEPS'),
-                    expiry_type=state.config.get('OPTION_EXPIRY'), execute=state.config.get('OPTION_EXECUTE'),
-                    product_type=state.config.get('OPTION_PRODUCT_TYPE'), price_type=state.config.get('OPTION_PRICE_TYPE'),
-                    instrument=target_instrument
-                )
+                
+                # ✅ MCX: Trade Futures Directly
+                if token.startswith('MCX|'):
+                    order_res = state.client.place_future_order(
+                        symbol=base_symbol, token=token, side='B' if is_bull else 'S',
+                        execute=state.config.get('OPTION_EXECUTE'),
+                        product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                        price_type=state.config.get('OPTION_PRICE_TYPE')
+                    )
+                    
+                    if not order_res.get('ok'):
+                        print(f"⚠️ Future order failed for {base_symbol}: {order_res.get('reason')}")
+                        continue
 
-                if not spread.get('ok'):
-                    print(f"⚠️ Spread failed for {base_symbol}: {spread.get('reason')}")
-                    continue
+                    sig = {
+                        'token': token, 'symbol': symbol_full, 'company_name': base_symbol,
+                        'ltp': ltp, 'ltp_display': ltp_display, 'score': score,
+                        'strategy': 'FUTURE_LONG' if is_bull else 'FUTURE_SHORT',
+                        'dry_run': order_res.get('dry_run', False),
+                        'lot_size': order_res.get('lot_size', 0)
+                    }
+                    
+                    state.active_positions[token] = {
+                        'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
+                        'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
+                        'lot_size': sig['lot_size'], 'config': state.config
+                    }
 
-                span_m = state.client.calculate_span_for_spread(spread, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
-                atm_p = state.client.get_option_ltp_by_symbol(spread.get('atm_symbol'))
-                hdg_p = state.client.get_option_ltp_by_symbol(spread.get('hedge_symbol'))
+                # ✅ NFO (or others): Use Credit Spreads
+                else:
+                    spread = (state.client.place_put_credit_spread if is_bull else state.client.place_call_credit_spread)(
+                        symbol=base_symbol, ltp=ltp, hedge_steps=state.config.get('HEDGE_STEPS'),
+                        expiry_type=state.config.get('OPTION_EXPIRY'), execute=state.config.get('OPTION_EXECUTE'),
+                        product_type=state.config.get('OPTION_PRODUCT_TYPE'), price_type=state.config.get('OPTION_PRICE_TYPE'),
+                        instrument=state.config.get('OPTION_INSTRUMENT')
+                    )
 
-                sig = {
-                    'token': token, 'symbol': symbol_full, 'company_name': base_symbol,
-                    'ltp': ltp, 'ltp_display': ltp_display, 'score': score,
-                    'orb_high': orb_r.get('orb_high', 0), 'orb_low': orb_r.get('orb_low', 0),
-                    'ema5': ema_r.get('ema5', 0), 'strategy': 'PUT_CREDIT_SPREAD' if is_bull else 'CALL_CREDIT_SPREAD',
-                    'expiry': spread.get('expiry'), 'atm_strike': spread.get('atm_strike'),
-                    'hedge_strike': spread.get('hedge_strike'), 'atm_symbol': spread.get('atm_symbol'),
-                    'hedge_symbol': spread.get('hedge_symbol'), 'atm_premium_entry': atm_p,
-                    'hedge_premium_entry': hdg_p, 'dry_run': spread.get('dry_run', False),
-                    **{k: span_m.get(k, 0) for k in ['span', 'expo', 'total_margin', 'pledged_required', 'span_trade', 'expo_trade', 'pre_trade', 'add', 'add_trade', 'ten', 'ten_trade', 'del', 'del_trade', 'spl', 'spl_trade']}
-                }
-                buy_signals.append(sig)
+                    if not spread.get('ok'):
+                        print(f"⚠️ Spread failed for {base_symbol}: {spread.get('reason')}")
+                        continue
 
-                state.active_positions[token] = {
-                    'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
-                    'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
-                    'atm_symbol': sig['atm_symbol'], 'hedge_symbol': sig['hedge_symbol'],
-                    'expiry': sig['expiry'], 'atm_strike': sig['atm_strike'], 'hedge_strike': sig['hedge_strike'],
-                    'atm_premium_entry': atm_p, 'hedge_premium_entry': hdg_p,
-                    'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
-                    'lot_size': spread.get('lot_size', 0), 'config': state.config
-                }
+                    span_m = state.client.calculate_span_for_spread(spread, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
+                    atm_p = state.client.get_option_ltp_by_symbol(spread.get('atm_symbol'))
+                    hdg_p = state.client.get_option_ltp_by_symbol(spread.get('hedge_symbol'))
+
+                    sig = {
+                        'token': token, 'symbol': symbol_full, 'company_name': base_symbol,
+                        'ltp': ltp, 'ltp_display': ltp_display, 'score': score,
+                        'orb_high': orb_r.get('orb_high', 0), 'orb_low': orb_r.get('orb_low', 0),
+                        'ema5': ema_r.get('ema5', 0), 'strategy': 'PUT_CREDIT_SPREAD' if is_bull else 'CALL_CREDIT_SPREAD',
+                        'expiry': spread.get('expiry'), 'atm_strike': spread.get('atm_strike'),
+                        'hedge_strike': spread.get('hedge_strike'), 'atm_symbol': spread.get('atm_symbol'),
+                        'hedge_symbol': spread.get('hedge_symbol'), 'atm_premium_entry': atm_p,
+                        'hedge_premium_entry': hdg_p, 'dry_run': spread.get('dry_run', False),
+                        **{k: span_m.get(k, 0) for k in ['span', 'expo', 'total_margin', 'pledged_required', 'span_trade', 'expo_trade', 'pre_trade', 'add', 'add_trade', 'ten', 'ten_trade', 'del', 'del_trade', 'spl', 'spl_trade']}
+                    }
+
+                    state.active_positions[token] = {
+                        'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
+                        'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
+                        'atm_symbol': sig['atm_symbol'], 'hedge_symbol': sig['hedge_symbol'],
+                        'expiry': sig['expiry'], 'atm_strike': sig['atm_strike'], 'hedge_strike': sig['hedge_strike'],
+                        'atm_premium_entry': atm_p, 'hedge_premium_entry': hdg_p,
+                        'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
+                        'lot_size': spread.get('lot_size', 0), 'config': state.config
+                    }
                 print(f"✅ POSITION ADDED: {token} @ {ltp}")
                 send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
         
@@ -95,32 +119,58 @@ class Executor:
         
         for token, info in list(state.active_positions.items()):
             ltp = state.client.get_ltp(token) or info.get('entry_price', 0)
-            atm_p_exit = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
-            hdg_p_exit = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
-
-            entry_net = info.get('entry_net_premium', 0)
-            basis = info.get('atm_premium_entry', 0)
-            pct = 0.0
-            if entry_net != 0 and basis != 0 and atm_p_exit and hdg_p_exit:
-                pct = (entry_net - (atm_p_exit - hdg_p_exit)) / abs(basis) * 100.0
-
-            if exec_orders:
-                qty, atm_s, hdg_s = info.get('lot_size', 0), info.get('atm_symbol'), info.get('hedge_symbol')
-                if qty > 0 and atm_s and hdg_s:
-                    for side, sym, rem in [('B', atm_s, 'sq_atm'), ('S', hdg_s, 'sq_hdg')]:
+            strategy = info.get('strategy', '')
+            
+            # ✅ Handle Future Square-Off
+            if 'FUTURE' in strategy:
+                if exec_orders:
+                    side = 'S' if 'LONG' in strategy else 'B'
+                    qty = info.get('lot_size', 0)
+                    exch = token.split('|')[0] if '|' in token else 'NFO'
+                    tsym = state.client.TOKEN_TO_SYMBOL.get(token.split('|')[-1])
+                    if qty > 0 and tsym:
                         state.client.api.place_order(buy_or_sell=side, product_type=state.config.get('OPTION_PRODUCT_TYPE'),
-                                                   exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
-                                                   price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_{rem}')
+                                                   exchange=exch, tradingsymbol=tsym, quantity=qty, discloseqty=0,
+                                                   price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_sq_fut')
+                
+                pct = ((float(ltp) - info['entry_price']) / info['entry_price'] * 100.0)
+                if 'SHORT' in strategy: pct = -pct
+                
+                to_square.append({
+                    'token': token, 'symbol': info.get('symbol'), 'company_name': info.get('company_name'),
+                    'entry_price': info.get('entry_price'), 'exit_price': float(ltp), 'pct_change': pct, 'reason': reason,
+                    'strategy': strategy, 'lot_size': info.get('lot_size', 0),
+                    'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
+                })
 
-            to_square.append({
-                'token': token, 'symbol': info.get('symbol'), 'company_name': info.get('company_name'),
-                'entry_price': info.get('entry_price'), 'exit_price': float(ltp), 'pct_change': pct, 'reason': reason,
-                'strategy': info.get('strategy'), 'expiry': info.get('expiry'), 'atm_strike': info.get('atm_strike'),
-                'hedge_strike': info.get('hedge_strike'), 'atm_symbol': info.get('atm_symbol'), 'hedge_symbol': info.get('hedge_symbol'),
-                'atm_premium_entry': info.get('atm_premium_entry'), 'hedge_premium_entry': info.get('hedge_premium_entry'),
-                'atm_premium_exit': atm_p_exit, 'hedge_premium_exit': hdg_p_exit, 'lot_size': info.get('lot_size', 0),
-                'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
-            })
+            # ✅ Handle Spread Square-Off
+            else:
+                atm_p_exit = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
+                hdg_p_exit = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+
+                entry_net = info.get('entry_net_premium', 0)
+                basis = info.get('atm_premium_entry', 0)
+                pct = 0.0
+                if entry_net != 0 and basis != 0 and atm_p_exit and hdg_p_exit:
+                    pct = (entry_net - (atm_p_exit - hdg_p_exit)) / abs(basis) * 100.0
+
+                if exec_orders:
+                    qty, atm_s, hdg_s = info.get('lot_size', 0), info.get('atm_symbol'), info.get('hedge_symbol')
+                    if qty > 0 and atm_s and hdg_s:
+                        for side, sym, rem in [('B', atm_s, 'sq_atm'), ('S', hdg_s, 'sq_hdg')]:
+                            state.client.api.place_order(buy_or_sell=side, product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                                                       exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
+                                                       price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_{rem}')
+
+                to_square.append({
+                    'token': token, 'symbol': info.get('symbol'), 'company_name': info.get('company_name'),
+                    'entry_price': info.get('entry_price'), 'exit_price': float(ltp), 'pct_change': pct, 'reason': reason,
+                    'strategy': info.get('strategy'), 'expiry': info.get('expiry'), 'atm_strike': info.get('atm_strike'),
+                    'hedge_strike': info.get('hedge_strike'), 'atm_symbol': info.get('atm_symbol'), 'hedge_symbol': info.get('hedge_symbol'),
+                    'atm_premium_entry': info.get('atm_premium_entry'), 'hedge_premium_entry': info.get('hedge_premium_entry'),
+                    'atm_premium_exit': atm_p_exit, 'hedge_premium_exit': hdg_p_exit, 'lot_size': info.get('lot_size', 0),
+                    'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
+                })
 
         state.active_positions.clear()
         if to_square:
@@ -141,21 +191,42 @@ class Executor:
             ltp = float(data.get('ltp') or state.client.get_ltp(token) or 0)
             if ltp == 0: continue
 
-            atm_ltp = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
-            hdg_ltp = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+            strategy = info.get('strategy', '')
             
-            if atm_ltp and hdg_ltp:
-                current_net = atm_ltp - hdg_ltp
-                data['current_net_premium'] = current_net
-                entry_net, basis = info.get('entry_net_premium', 0), info.get('atm_premium_entry', 0)
-                if entry_net != 0 and basis != 0:
-                    profit_pct = (entry_net - current_net) / abs(basis) * 100.0
-                    info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), profit_pct)
-                    pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
-                    info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
-                    port_pnl += pos_pnl
-                    if state.verbose_logs:
-                        print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
+            # ✅ PnL for Futures
+            if 'FUTURE' in strategy:
+                profit_pct = ((ltp - info['entry_price']) / info['entry_price'] * 100.0)
+                if 'SHORT' in strategy: profit_pct = -profit_pct
+                
+                info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), profit_pct)
+                pos_pnl = (profit_pct / 100.0) * info['entry_price'] * info.get('lot_size', 0)
+                info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
+                port_pnl += pos_pnl
+                
+                if state.verbose_logs:
+                    print(f"📈 FUT {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
+                
+                # For compatibility with legacy filters
+                atm_ltp, hdg_ltp = 0, 0 
+
+            # ✅ PnL for Spreads
+            else:
+                atm_ltp = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
+                hdg_ltp = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+                
+                if atm_ltp and hdg_ltp:
+                    current_net = atm_ltp - hdg_ltp
+                    data['current_net_premium'] = current_net
+                    entry_net, basis = info.get('entry_net_premium', 0), info.get('atm_premium_entry', 0)
+                    if entry_net != 0 and basis != 0:
+                        profit_pct = (entry_net - current_net) / abs(basis) * 100.0
+                        info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), profit_pct)
+                        pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
+                        info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
+                        port_pnl += pos_pnl
+                        if state.verbose_logs:
+                            print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
+            
             evaluated.append((token, info, ltp, data, atm_ltp, hdg_ltp))
 
         target_t, sl_t = state.config.get('TOTAL_TARGET_PROFIT_RS', 0), state.config.get('TOTAL_STOP_LOSS_RS', 0)

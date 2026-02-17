@@ -2,10 +2,10 @@ from datetime import time as dt_time
 
 # 🔥 SHARED CONFIGURATION
 TOP_N = 10                    # Execute TOP 10 highest scoring
-TRADE_SCORE = 0.0             # Minimum total score (sum of %pts) to trigger trade
+TRADE_SCORE = 0.35             # Minimum total score (sum of %pts) to trigger trade
 ENTRY_WEIGHTS = [0.5, 1.0, 0.5, 0.5, 0.8, 1.2, 0.7]
 
-OPTION_EXECUTE = True
+OPTION_EXECUTE = False
 OPTION_PRODUCT_TYPE = 'I'
 OPTION_PRICE_TYPE = 'MKT'
 OPTION_EXPIRY = 'monthly'

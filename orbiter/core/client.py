@@ -715,6 +715,56 @@ class BrokerClient:
             'atm_symbol': atm_row['tradingsymbol'],
             'hedge_symbol': hedge_row['tradingsymbol']
         }
+
+    def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
+                           product_type: str = "I", price_type: str = "MKT") -> Dict[ Any, Any]:
+        """Place a direct Future order (Long or Short)"""
+        # Resolve tradingsymbol from token
+        # token format: 'MCX|467013'
+        exch = token.split('|')[0] if '|' in token else 'NFO'
+        t_id = token.split('|')[-1]
+        tsym = self.TOKEN_TO_SYMBOL.get(t_id)
+        
+        if not tsym:
+            return {'ok': False, 'reason': f'tradingsymbol_not_found_for_{t_id}'}
+
+        # Determine lot size from master
+        if not self.NFO_OPTIONS_LOADED:
+            self.load_nfo_symbol_mapping()
+        
+        row = next((r for r in self.NFO_OPTIONS if r['token'] == t_id), None)
+        lot_size = int(row.get('lot_size', 1)) if row else 1
+
+        if not execute:
+            self.trade_logger.info(
+                "sim_order side=%s exchange=%s symbol=%s qty=%s product=%s price_type=%s remarks=orb_future",
+                side, exch, tsym, lot_size, product_type, price_type
+            )
+            return {'ok': True, 'tsym': tsym, 'lot_size': lot_size, 'dry_run': True}
+
+        resp = self.api.place_order(
+            buy_or_sell=side,
+            product_type=product_type,
+            exchange=exch,
+            tradingsymbol=tsym,
+            quantity=lot_size,
+            discloseqty=0,
+            price_type=price_type,
+            price=0,
+            trigger_price=None,
+            retention='DAY',
+            remarks='orb_future'
+        )
+        
+        self.trade_logger.info(
+            "order_call side=%s exchange=%s symbol=%s qty=%s product=%s resp=%s",
+            side, exch, tsym, lot_size, product_type, resp
+        )
+
+        if not resp or resp.get('stat') != 'Ok':
+            return {'ok': False, 'reason': 'future_order_failed', 'resp': resp}
+
+        return {'ok': True, 'tsym': tsym, 'lot_size': lot_size, 'resp': resp}
     
     def login(self, factor2_override: Optional[str] = None) -> bool:
         print("🔐 Authenticating...")
