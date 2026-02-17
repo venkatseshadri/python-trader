@@ -919,6 +919,9 @@ class BrokerClient:
                                 self.TOKEN_TO_SYMBOL[tok] = f"{info} FUT"
                                 self.TOKEN_TO_COMPANY[tok] = info
                     print(f"✅ Loaded {len(fut_data)} futures from {os.path.basename(map_file)}")
+                    if self.verbose_logs:
+                        for t, s in list(self.TOKEN_TO_SYMBOL.items())[:3]:
+                            print(f"DEBUG: Mapped {t} -> {s}")
                 except Exception as e:
                     print(f"⚠️ Failed to load {map_file}: {e}")
 
