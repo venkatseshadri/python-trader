@@ -47,6 +47,8 @@ class BrokerClient:
     @property
     def TOKEN_TO_COMPANY(self): return self.master.TOKEN_TO_COMPANY
     @property
+    def TOKEN_TO_LOTSIZE(self): return self.master.TOKEN_TO_LOTSIZE
+    @property
     def DERIVATIVE_OPTIONS(self): return self.master.DERIVATIVE_OPTIONS
     @property
     def DERIVATIVE_LOADED(self): return self.master.DERIVATIVE_LOADED
@@ -159,22 +161,25 @@ class BrokerClient:
                 lot_size = int(live_data['ls'])
                 # print(f"✅ Found lot size in Live Feed: {lot_size}")
 
-        # 1️⃣ Priority: mcx_futures_map.json (Updated by utility)
-        if lot_size <= 0:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            map_file = os.path.join(base_dir, 'data', f"{self.segment_name}_futures_map.json")
-        if os.path.exists(map_file):
-            try:
-                with open(map_file, 'r') as f:
-                    fut_data = json.load(f)
-                    tok_id = res['token'].split("|")[-1]
-                    info = fut_data.get(tok_id)
-                    if info and len(info) >= 3:
-                        lot_size = int(info[2])
-                        print(f"✅ Found lot size in mapping: {lot_size}")
-            except Exception: pass
+                # 1️⃣ Priority: In-Memory Map Cache (Loaded at startup)
 
-        # 2️⃣ Fallback: derivative master cache
+                if lot_size <= 0:
+
+                    tok_id = str(res['token'].split("|")[-1])
+
+                    cached_ls = self.TOKEN_TO_LOTSIZE.get(tok_id)
+
+                    if cached_ls:
+
+                        lot_size = cached_ls
+
+                        # print(f"✅ Found lot size in Memory Cache: {lot_size}")
+
+        
+
+                # 2️⃣ Fallback: derivative master cache
+
+        
         if lot_size <= 0:
             for r in self.master.DERIVATIVE_OPTIONS:
                 if r.get('tradingsymbol') == res['tsym']:

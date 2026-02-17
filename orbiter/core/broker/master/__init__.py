@@ -19,6 +19,7 @@ class ScripMaster:
         self.TOKEN_TO_SYMBOL = self.equity.TOKEN_TO_SYMBOL
         self.SYMBOL_TO_TOKEN = self.equity.SYMBOL_TO_TOKEN
         self.TOKEN_TO_COMPANY = self.equity.TOKEN_TO_COMPANY
+        self.TOKEN_TO_LOTSIZE: Dict[str, int] = {}  # 🔥 New: Cache lot sizes in memory
 
     @property
     def DERIVATIVE_OPTIONS(self):
@@ -73,6 +74,13 @@ class ScripMaster:
                         
                         if isinstance(info, list) and len(info) >= 2:
                             tsym, comp = info[1], info[0]
+                            # Try to extract lot size if available (index 2)
+                            if len(info) >= 3:
+                                try:
+                                    ls = int(info[2])
+                                    self.TOKEN_TO_LOTSIZE[tok_str] = ls
+                                    self.TOKEN_TO_LOTSIZE[prefixed] = ls
+                                except: pass
                         else: 
                             tsym, comp = f"{info} FUT", info
                         
