@@ -279,6 +279,8 @@ class BrokerClient:
         # Fallback to TOKEN_TO_SYMBOL mapping
         if not tsym:
             tsym = self.TOKEN_TO_SYMBOL.get(t_id_only)
+            if self.verbose_logs:
+                print(f"DEBUG: Lookup '{t_id_only}' -> '{tsym}' (Map Size: {len(self.TOKEN_TO_SYMBOL)})")
 
         if not tsym:
             return {'ok': False, 'reason': f'future_not_found'}
