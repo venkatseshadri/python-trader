@@ -41,7 +41,9 @@ class Executor:
                 
                 # ✅ MCX: Trade Futures Directly
                 if token.startswith('MCX|'):
-                    if token not in state.client.SYMBOLDICT:
+                    # Check SYMBOLDICT with both full key and raw ID
+                    t_id_raw = token.split('|')[-1]
+                    if token not in state.client.SYMBOLDICT and f"MCX|{t_id_raw}" not in state.client.SYMBOLDICT:
                         print(f"⏳ Waiting for WS resolution for {token}...")
                         continue
 
