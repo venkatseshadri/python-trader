@@ -37,12 +37,17 @@ class Executor:
                     if base_symbol.endswith('-EQ'): base_symbol = base_symbol[:-3]
                     base_symbol = base_symbol.strip()
 
+                # ✅ Fix: Use OPTFUT for MCX symbols
+                target_instrument = state.config.get('OPTION_INSTRUMENT', 'OPTSTK')
+                if token.startswith('MCX|'):
+                    target_instrument = 'OPTFUT'
+
                 is_bull = score >= state.config['TRADE_SCORE']
                 spread = (state.client.place_put_credit_spread if is_bull else state.client.place_call_credit_spread)(
                     symbol=base_symbol, ltp=ltp, hedge_steps=state.config.get('HEDGE_STEPS'),
                     expiry_type=state.config.get('OPTION_EXPIRY'), execute=state.config.get('OPTION_EXECUTE'),
                     product_type=state.config.get('OPTION_PRODUCT_TYPE'), price_type=state.config.get('OPTION_PRICE_TYPE'),
-                    instrument=state.config.get('OPTION_INSTRUMENT')
+                    instrument=target_instrument
                 )
 
                 if not spread.get('ok'):
