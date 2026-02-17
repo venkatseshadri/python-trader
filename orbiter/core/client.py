@@ -260,6 +260,10 @@ class BrokerClient:
     def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
                            product_type: str = "I", price_type: str = "MKT") -> Dict[Any, Any]:
         """Place a direct Future order (Long or Short)"""
+        if self.verbose_logs:
+            print(f"DEBUG [place_future_order] Lookup Token: {token} (type: {type(token)})")
+            print(f"DEBUG [place_future_order] Mapping Size: {len(self.TOKEN_TO_SYMBOL)}")
+
         # Resolve from SYMBOLDICT (Live data from WS)
         data = self.SYMBOLDICT.get(token)
         tsym = data.get('tsym') if data else None
