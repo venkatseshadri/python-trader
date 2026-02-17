@@ -23,9 +23,12 @@ def main():
     
     # Initialize BrokerClient
     try:
-        client = BrokerClient("../ShoonyaApi-py/cred.yml")
+        client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name='mcx')
     except Exception:
-        client = BrokerClient()
+        client = BrokerClient(segment_name='mcx')
+    
+    # Ensure MCX master is loaded for Lot Sizes
+    client.download_scrip_master('MCX')
     
     if not client.login():
         print("❌ Login failed. Please check credentials/TOTP.")
@@ -76,7 +79,7 @@ def main():
     
     # Prepare the new list string
     new_config_lines = ["SYMBOLS_FUTURE_UNIVERSE = ["]
-    for sym, tok, tsym in futures_list:
+    for sym, tok, tsym, ls in futures_list:
         new_config_lines.append(f"    '{tok}',  # {sym}")
     new_config_lines.append("]")
     new_config_str = "\n".join(new_config_lines)
