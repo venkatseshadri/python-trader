@@ -138,6 +138,8 @@ class BrokerClient:
                         self.TOKEN_TO_COMPANY[t_str] = base
                         count += 1
                 print(f"✅ Loaded {count} {self.segment_name.upper()} futures from {map_filename}")
+                if self.verbose_logs:
+                    print(f"DEBUG: Sample KEYS in TOKEN_TO_SYMBOL: {list(self.TOKEN_TO_SYMBOL.keys())[:5]}")
             except Exception as e:
                 print(f"⚠️ Failed to load {map_file}: {e}")
         else:
