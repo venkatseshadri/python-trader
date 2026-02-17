@@ -12,7 +12,7 @@ SYMBOLS_FUTURE_UNIVERSE = []
 
 MARKET_OPEN = dt_time(9, 0)
 MARKET_CLOSE = dt_time(23, 30)
-OPTION_INSTRUMENT = 'OPTCOM'
+OPTION_INSTRUMENT = 'OPTFUT'
 
 # 🔥 Load MCX Holidays from data/mcx/holidays.json
 _base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
