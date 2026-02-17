@@ -128,33 +128,51 @@ class BrokerClient:
         self.download_scrip_master("NFO")
         self.download_scrip_master("MCX")
 
-    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str = "OPTSTK"):
-        if not self.NFO_OPTIONS_LOADED:
-            self.load_nfo_symbol_mapping()
+        def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str = "OPTSTK"):
 
-        expiry_str = expiry.isoformat()
-        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT') else 'NFO'
-        
-        # Determine valid instruments for this search
-        # If searching for OPTSTK, also allow FUTSTK for lot_size/expiry resolution if needed
-        # If searching for OPTCOM, also allow FUTCOM
-        inst_group = (instrument,)
-        if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
-        elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
-        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
-        elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+            if not self.NFO_OPTIONS_LOADED:
 
-                        return [
+                self.load_nfo_symbol_mapping()
 
-                            row for row in self.NFO_OPTIONS
+    
 
-                            if (row.get('symbol') == symbol or (exchange == 'MCX' and symbol in row.get('symbol', '')))
+            expiry_str = expiry.isoformat()
 
-                            and row.get('instrument') in inst_group 
+            exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT') else 'NFO'
 
-                            and row.get('expiry') == expiry_str and row.get('exchange') == exchange
+            
 
-                        ]
+            # Determine valid instruments for this search
+
+            inst_group = (instrument,)
+
+            if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
+
+            elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
+
+            elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+
+            elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+
+    
+
+            search_symbol = symbol.upper().strip()
+
+    
+
+            return [
+
+                row for row in self.NFO_OPTIONS
+
+                if (row.get('symbol', '').upper().strip() == search_symbol or (exchange == 'MCX' and search_symbol in row.get('symbol', '').upper()))
+
+                and row.get('instrument') in inst_group 
+
+                and row.get('expiry') == expiry_str and row.get('exchange') == exchange
+
+            ]
+
+    
 
                 
             def _select_expiry(self, symbol: str, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Optional[datetime.date]:
@@ -171,8 +189,11 @@ class BrokerClient:
         elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
         elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
 
+        search_symbol = symbol.upper().strip()
+
         for row in self.NFO_OPTIONS:
-            if not (row.get('symbol') == symbol or (exchange == 'MCX' and symbol in row.get('symbol', ''))):
+            row_sym = row.get('symbol', '').upper().strip()
+            if not (row_sym == search_symbol or (exchange == 'MCX' and search_symbol in row_sym)):
                 continue
             if row.get('instrument') not in inst_group or row.get('exchange') != exchange:
                 continue
