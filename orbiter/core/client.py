@@ -27,9 +27,10 @@ from NorenRestApiPy.NorenApi import position
 from config.config import VERBOSE_LOGS
 
 class BrokerClient:
-    def __init__(self, config_path: str = '../cred.yml'):
+    def __init__(self, config_path: str = '../cred.yml', segment_name: str = 'nfo'):
         self.api = ShoonyaApiPy()
         self.socket_opened = False
+        self.segment_name = segment_name.lower()
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
         self.TOKEN_TO_SYMBOL: Dict[str, str] = {}
         self.SYMBOL_TO_TOKEN: Dict[str, str] = {}
@@ -681,34 +682,23 @@ class BrokerClient:
     def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
                            product_type: str = "I", price_type: str = "MKT") -> Dict[Any, Any]:
         """Place a direct Future order (Long or Short)"""
-        if self.verbose_logs:
-            print(f"DEBUG: place_future_order called for {token} ({symbol})")
-            print(f"DEBUG: SYMBOLDICT keys sample: {list(self.SYMBOLDICT.keys())[:5]}")
-
-        # 1. Resolve from SYMBOLDICT (Live data from WS)
+        # Resolve from SYMBOLDICT (Live data from WS)
         data = self.SYMBOLDICT.get(token)
-        if self.verbose_logs:
-            print(f"DEBUG: data for {token}: {data}")
-
         tsym = data.get('tsym') if data else None
         exch = token.split('|')[0] if '|' in token else 'MCX'
+        t_id = token.split('|')[-1]
         
-        # 2. Fallback to TOKEN_TO_SYMBOL mapping
+        # Fallback to TOKEN_TO_SYMBOL mapping using string ID
         if not tsym:
-            t_id = token.split('|')[-1]
-            tsym = self.TOKEN_TO_SYMBOL.get(t_id)
-            if self.verbose_logs:
-                print(f"DEBUG: fallback tsym for {t_id}: {tsym}")
+            tsym = self.TOKEN_TO_SYMBOL.get(str(t_id))
 
         if not tsym:
-            if self.verbose_logs:
-                print(f"DEBUG: Failed to resolve tsym for {token}")
             return {'ok': False, 'reason': f'future_not_found'}
 
         # Determine lot size
         lot_size = int(data.get('ls', 1)) if data and data.get('ls') else 1
         if lot_size == 1: # check master
-            row = next((r for r in self.NFO_OPTIONS if r['token'] == token.split('|')[-1]), None)
+            row = next((r for r in self.NFO_OPTIONS if r['token'] == t_id), None)
             if row: lot_size = int(row.get('lot_size', 1))
 
         if not execute:
@@ -897,33 +887,31 @@ class BrokerClient:
             print("🔌 Connection closed")
 
     # 🔥 SYMBOL MAPPING (unchanged - perfect)
-    def load_nfo_futures_map(self):
-        """Load NFO/MCX Futures from specialized mapping files"""
+    def load_futures_map(self):
+        """Load Futures from specialized mapping file for the active segment"""
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
-        # 1. Load NFO
-        nfo_file = os.path.join(base_dir, 'data', 'nfo_futures_map.json')
-        # 2. Load MCX
-        mcx_file = os.path.join(base_dir, 'data', 'mcx_futures_map.json')
+        # Determine specific file for segment
+        map_filename = f"{self.segment_name}_futures_map.json"
+        map_file = os.path.join(base_dir, 'data', map_filename)
         
-        for map_file in [nfo_file, mcx_file]:
-            if os.path.exists(map_file):
-                try:
-                    with open(map_file, 'r') as f:
-                        fut_data = json.load(f)
-                        for tok, info in fut_data.items():
-                            if isinstance(info, list) and len(info) >= 2:
-                                self.TOKEN_TO_SYMBOL[tok] = info[1]     # Full TSYM
-                                self.TOKEN_TO_COMPANY[tok] = info[0]    # Base Symbol
-                            else:
-                                self.TOKEN_TO_SYMBOL[tok] = f"{info} FUT"
-                                self.TOKEN_TO_COMPANY[tok] = info
-                    print(f"✅ Loaded {len(fut_data)} futures from {os.path.basename(map_file)}")
-                    if self.verbose_logs:
-                        for t, s in list(self.TOKEN_TO_SYMBOL.items())[:3]:
-                            print(f"DEBUG: Mapped {t} -> {s}")
-                except Exception as e:
-                    print(f"⚠️ Failed to load {map_file}: {e}")
+        if os.path.exists(map_file):
+            try:
+                with open(map_file, 'r') as f:
+                    fut_data = json.load(f)
+                    for tok, info in fut_data.items():
+                        t_str = str(tok).strip()
+                        if isinstance(info, list) and len(info) >= 2:
+                            self.TOKEN_TO_SYMBOL[t_str] = info[1]     # Full TSYM
+                            self.TOKEN_TO_COMPANY[t_str] = info[0]    # Base Symbol
+                        else:
+                            self.TOKEN_TO_SYMBOL[t_str] = f"{info} FUT"
+                            self.TOKEN_TO_COMPANY[t_str] = info
+                print(f"✅ Loaded {len(fut_data)} {self.segment_name.upper()} futures from {map_filename}")
+            except Exception as e:
+                print(f"⚠️ Failed to load {map_file}: {e}")
+        else:
+            print(f"⚠️ No futures map found for {self.segment_name.upper()} at {map_file}")
 
         # ✅ Check for expiry and auto-update (using NFO as sample)
         should_update = False
@@ -988,7 +976,7 @@ class BrokerClient:
                     self.TOKEN_TO_COMPANY = data.get('token_to_company', {})
                     
                     print(f"✅ Loaded {len(self.TOKEN_TO_SYMBOL):,} NSE symbols")
-                    self.load_nfo_futures_map()
+                    self.load_futures_map()
                     return
             except Exception: needs_download = True
         else: needs_download = True
@@ -998,7 +986,7 @@ class BrokerClient:
             self.download_scrip_master("NSE")
             self.download_scrip_master("NFO")
             self.download_scrip_master("MCX")
-            self.load_nfo_futures_map()
+            self.load_futures_map()
     
     def download_scrip_master(self, exchange: str):
         """Unified downloader for all Shoonya scrip masters (NSE, NFO, MCX, etc.)"""
