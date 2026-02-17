@@ -41,6 +41,9 @@ class Executor:
                 
                 # ✅ MCX: Trade Futures Directly
                 if token.startswith('MCX|'):
+                    if state.verbose_logs:
+                        print(f"DEBUG [Executor] Processing MCX Token: {token} (Bull: {is_bull})")
+
                     # Check SYMBOLDICT with both full key and raw ID
                     t_id_raw = token.split('|')[-1]
                     if token not in state.client.SYMBOLDICT and f"MCX|{t_id_raw}" not in state.client.SYMBOLDICT:
@@ -53,6 +56,9 @@ class Executor:
                         product_type=state.config.get('OPTION_PRODUCT_TYPE'),
                         price_type=state.config.get('OPTION_PRICE_TYPE')
                     )
+                    
+                    if state.verbose_logs:
+                        print(f"DEBUG [Executor] MCX Order Result: {order_res}")
                     
                     if not order_res.get('ok'):
                         print(f"⚠️ Future order failed for {base_symbol}: {order_res.get('reason')}")
