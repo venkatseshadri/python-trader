@@ -34,10 +34,10 @@ class LoggerWriter:
         self.level = level
         self.raw = raw
     def write(self, message):
-        if message.strip():
+        if message and message.strip():
             self.level(message.strip())
             if self.raw:
-                print(message.strip(), file=sys.__stdout__)
+                sys.__stdout__.write(message)
     def flush(self):
         pass
 
@@ -186,8 +186,8 @@ class Orbiter:
 
     def run(self):
         try:
-            logger.info("⏳ Stabilizing connection (2s)...")
-            time.sleep(2)
+            logger.info("⏳ Stabilizing connection (5s)...")
+            time.sleep(5)
             
             # ☀️ Market Start Heartbeat
             send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`\nUniverse: `{len(self.state.symbols)}` symbols")

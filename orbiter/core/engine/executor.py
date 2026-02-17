@@ -41,6 +41,10 @@ class Executor:
                 
                 # ✅ MCX: Trade Futures Directly
                 if token.startswith('MCX|'):
+                    if token not in state.client.SYMBOLDICT:
+                        print(f"⏳ Waiting for WS resolution for {token}...")
+                        continue
+
                     order_res = state.client.place_future_order(
                         symbol=base_symbol, token=token, side='B' if is_bull else 'S',
                         execute=state.config.get('OPTION_EXECUTE'),
