@@ -354,8 +354,12 @@ def log_scan_metrics(metrics):
     new_rows = []
 
     def try_float(val):
-        try: return float(val) if val is not None else 0.0
-        except: return 0.0
+        if isinstance(val, dict):
+            return float(val.get('total_margin', 0.0))
+        try: 
+            return float(val) if val is not None else 0.0
+        except: 
+            return 0.0
 
     for item in metrics:
         filters_payload = item.get('filters') or {}
@@ -411,10 +415,10 @@ def log_scan_metrics(metrics):
             "Spl CE": f"₹{try_float(item.get('spl_ce')):.2f}",
             "Spl Trade CE": f"₹{try_float(item.get('spl_trade_ce')):.2f}",
 
-            "F1 Score": orb.get('score', 0),
-            "F2 Score": ema.get('score', 0),
-            "F3 Score": f3.get('score', 0),
-            "F4 Score": f4.get('score', 0)
+            "F1 Score": try_float(orb.get('score')),
+            "F2 Score": try_float(ema.get('score')),
+            "F3 Score": try_float(f3.get('score')),
+            "F4 Score": try_float(f4.get('score'))
         }
 
         def safe_float(val):
