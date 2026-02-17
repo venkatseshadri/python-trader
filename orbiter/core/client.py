@@ -175,7 +175,7 @@ class BrokerClient:
     
 
                 
-            def _select_expiry(self, symbol: str, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Optional[datetime.date]:
+    def _select_expiry(self, symbol: str, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Optional[datetime.date]:
         if not self.NFO_OPTIONS_LOADED:
             self.load_nfo_symbol_mapping()
 
