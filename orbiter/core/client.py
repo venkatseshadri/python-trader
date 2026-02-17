@@ -899,8 +899,9 @@ class BrokerClient:
             try:
                 with open(map_file, 'r') as f:
                     fut_data = json.load(f)
-                    for tok, info in fut_data.items():
-                        t_str = str(tok).strip()
+                    # 🔥 fut_data is a dict where key is token_id
+                    for tok_id, info in fut_data.items():
+                        t_str = str(tok_id).strip()
                         if isinstance(info, list) and len(info) >= 2:
                             self.TOKEN_TO_SYMBOL[t_str] = info[1]     # Full TSYM
                             self.TOKEN_TO_COMPANY[t_str] = info[0]    # Base Symbol
