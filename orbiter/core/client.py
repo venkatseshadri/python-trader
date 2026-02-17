@@ -1152,14 +1152,16 @@ class BrokerClient:
     
     def get_symbol(self, token: str, exchange: str = 'NSE') -> str:
         # Check if we have a mapping for this token ID
-        if token in self.TOKEN_TO_SYMBOL:
-            return self.TOKEN_TO_SYMBOL[token]
+        t_str = str(token).strip()
+        if t_str in self.TOKEN_TO_SYMBOL:
+            return self.TOKEN_TO_SYMBOL[t_str]
         # Fallback with correct exchange prefix
-        return f"{exchange}|{token}"
+        return f"{exchange}|{t_str}"
     
     def get_company_name(self, token: str, exchange: str = 'NSE') -> str:
         """✅ Get company name for token, fallback to symbol"""
-        return self.TOKEN_TO_COMPANY.get(token, self.get_symbol(token, exchange=exchange))
+        t_str = str(token).strip()
+        return self.TOKEN_TO_COMPANY.get(t_str, self.get_symbol(t_str, exchange=exchange))
     
     def get_token(self, symbol: str) -> str:
         return self.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
