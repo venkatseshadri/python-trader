@@ -123,14 +123,20 @@ class BrokerClient:
                     count = 0
                     for tok_id, info in fut_data.items():
                         t_str = str(tok_id).strip()
+                        # Store both raw and prefixed for robustness
+                        prefixed = f"{self.segment_name.upper()}|{t_str}"
+                        
                         if isinstance(info, list) and len(info) >= 2:
-                            self.TOKEN_TO_SYMBOL[t_str] = info[1]     # Full TSYM
-                            self.TOKEN_TO_COMPANY[t_str] = info[0]    # Base Symbol
-                            count += 1
+                            tsym = info[1]
+                            base = info[0]
                         else:
-                            self.TOKEN_TO_SYMBOL[t_str] = f"{info} FUT"
-                            self.TOKEN_TO_COMPANY[t_str] = info
-                            count += 1
+                            tsym = f"{info} FUT"
+                            base = info
+                        
+                        self.TOKEN_TO_SYMBOL[t_str] = tsym
+                        self.TOKEN_TO_SYMBOL[prefixed] = tsym
+                        self.TOKEN_TO_COMPANY[t_str] = base
+                        count += 1
                 print(f"✅ Loaded {count} {self.segment_name.upper()} futures from {map_filename}")
             except Exception as e:
                 print(f"⚠️ Failed to load {map_file}: {e}")
