@@ -172,11 +172,14 @@ class BrokerClient:
                 expiries.add(exp)
 
         if not expiries:
+            print(f"❌ [_select_expiry] No expiries found for {symbol} | {instrument} | {exchange}")
             return None
 
         today = datetime.date.today()
+        # 🔥 If it's expiry day, we still want to trade it until close
         valid = sorted(d for d in expiries if d >= today)
         if not valid:
+            print(f"❌ [_select_expiry] All expiries ({len(expiries)}) are in the past for {symbol}")
             return None
 
         if expiry_type == "monthly":
@@ -284,6 +287,7 @@ class BrokerClient:
 
         expiry = self._select_expiry(symbol, expiry_type=expiry_type, instrument=instrument)
         if not expiry:
+            print(f"❌ [get_contracts] Failed to resolve expiry for {symbol} ({instrument})")
             return {'ok': False, 'reason': 'no_expiry'}
 
         rows = self._get_option_rows(symbol, expiry, instrument=instrument)
