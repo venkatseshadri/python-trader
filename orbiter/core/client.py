@@ -648,23 +648,46 @@ class BrokerClient:
     
     def login(self, factor2_override: Optional[str] = None) -> bool:
         print("🔐 Authenticating...")
-        # Prompt for fresh 2FA every run and persist it to cred.yml
-        try:
-            current = self.cred.get('factor2', '')
-            new2 = (factor2_override or "").strip()
-            if not new2:
-                new2 = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
-            if new2:
-                self.cred['factor2'] = new2
-                try:
-                    with open(self.config_file, 'w') as f:
-                        yaml.dump(self.cred, f)
-                    print(f"🔒 Updated 2FA in {self.config_file}")
-                except Exception as e:
-                    print(f"⚠️ Failed to save credentials: {e}")
-        except Exception:
-            # non-interactive environment: proceed with existing value
-            pass
+        
+        two_fa = ""
+        # 1. Priority: Manual override
+        if factor2_override:
+            two_fa = factor2_override.strip()
+        
+        # 2. Priority: Automated TOTP (Best for Service/Daemon)
+        elif self.cred.get('totp_key'):
+            try:
+                import pyotp
+                totp = pyotp.TOTP(self.cred['totp_key'].replace(" ", ""))
+                two_fa = totp.now()
+                print(f"🤖 Automated TOTP generated")
+            except Exception as e:
+                print(f"⚠️ TOTP generation failed: {e}")
+
+        # 3. Priority: Interactive Input (Fallback)
+        if not two_fa:
+            try:
+                current = self.cred.get('factor2', '')
+                two_fa = input(f"Enter 2FA (current: {current}) or press Enter to keep: ").strip()
+                if not two_fa:
+                    two_fa = current
+            except (EOFError, RuntimeError, Exception):
+                # Running in non-interactive environment (service)
+                two_fa = self.cred.get('factor2', '')
+                if not two_fa:
+                    print("❌ No 2FA provided and environment is non-interactive.")
+                    return False
+
+        if two_fa:
+            self.cred['factor2'] = two_fa
+            # Update local credentials file if it changed
+            try:
+                with open(self.config_file, 'w') as f:
+                    yaml.dump(self.cred, f)
+                print(f"🔒 Updated 2FA in {self.config_file}")
+            except Exception as e:
+                print(f"⚠️ Failed to save credentials: {e}")
+
         ret = self.api.login(
             userid=self.cred['user'],
             password=self.cred['pwd'],
@@ -679,6 +702,7 @@ class BrokerClient:
                 reason = ret.get('emsg') or ret.get('reason') or ''
             print(f"❌ Login failed{': ' + reason if reason else ''}")
             return False
+        
         # 🔥 CRITICAL: Ensure symbol mapping is loaded before WebSocket data
         if not self.TOKEN_TO_SYMBOL:
             print("📥 Symbol mapping not loaded, loading now...")
