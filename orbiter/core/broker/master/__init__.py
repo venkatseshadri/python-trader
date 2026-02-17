@@ -68,9 +68,17 @@ class ScripMaster:
                 with open(map_file, 'r') as f:
                     data = json.load(f)
                     for tok, info in data.items():
+                        tok_str = str(tok).strip()
+                        prefixed = f"{segment_name.upper()}|{tok_str}"
+                        
                         if isinstance(info, list) and len(info) >= 2:
-                            self.TOKEN_TO_SYMBOL[tok], self.TOKEN_TO_COMPANY[tok] = info[1], info[0]
-                        else: self.TOKEN_TO_SYMBOL[tok], self.TOKEN_TO_COMPANY[tok] = f"{info} FUT", info
+                            tsym, comp = info[1], info[0]
+                        else: 
+                            tsym, comp = f"{info} FUT", info
+                        
+                        self.TOKEN_TO_SYMBOL[tok_str] = tsym
+                        self.TOKEN_TO_SYMBOL[prefixed] = tsym
+                        self.TOKEN_TO_COMPANY[tok_str] = comp
                 print(f"✅ Loaded {len(data)} {segment_name.upper()} futures from mapping")
                 return True
             except Exception: pass

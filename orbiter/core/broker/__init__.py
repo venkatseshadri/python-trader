@@ -138,6 +138,15 @@ class BrokerClient:
         """Place a single-leg Future trade (Long/Short)"""
         symbol, exchange = kwargs['symbol'], kwargs.get('exchange', 'NFO')
         res = self.resolver.get_near_future(symbol, exchange, self.api)
+        
+        # 🔥 Fallback: Check mapped futures directly if resolver/API failed
+        if not res and kwargs.get('token'):
+            token_in = str(kwargs.get('token'))
+            tsym = self.master.TOKEN_TO_SYMBOL.get(token_in)
+            if tsym:
+                res = {'token': token_in, 'tsym': tsym}
+                print(f"✅ Resolved via Map: {token_in} -> {tsym}")
+
         if not res: return {'ok': False, 'reason': 'future_not_found'}
         
         # print(f"🔍 Resolving lot size for {res['tsym']}...")
