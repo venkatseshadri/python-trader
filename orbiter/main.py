@@ -156,7 +156,8 @@ class Orbiter:
             'MARKET_OPEN': segment.MARKET_OPEN,
             'MARKET_CLOSE': segment.MARKET_CLOSE,
             'OPTION_INSTRUMENT': segment.OPTION_INSTRUMENT,
-            'SIMULATION': self.simulation
+            'SIMULATION': self.simulation,
+            'VERBOSE_LOGS': True # 🔥 FORCE
         }
         
         # Initialize Agnostic Components
