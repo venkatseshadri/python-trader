@@ -258,6 +258,7 @@ if __name__ == "__main__":
     manage_lockfile("acquire")
     try:
         bot = Orbiter(simulation=args.simulation)
+        bot.verbose_logs = True # 🔥 FORCE DEBUG
         bot.setup()
         if bot.login():
             bot.run()
