@@ -142,17 +142,31 @@ class BrokerClient:
 
             
 
-            # Determine valid instruments for this search
+                    # Determine valid instruments for this search
 
-            inst_group = (instrument,)
+            
 
-            if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
+                    inst_group = (instrument,)
 
-            elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
+            
 
-            elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+                    if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
 
-            elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+            
+
+                    elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
+
+            
+
+                    elif instrument == 'OPTCOM' or instrument == 'OPTFUT': 
+
+            
+
+                        inst_group = ('OPTCOM', 'OPTFUT') # Only options
+
+            
+
+            
 
     
 
@@ -186,8 +200,8 @@ class BrokerClient:
         inst_group = (instrument,)
         if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
         elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
-        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
-        elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+        elif instrument == 'OPTCOM' or instrument == 'OPTFUT': 
+            inst_group = ('OPTCOM', 'OPTFUT') # Only options
 
         search_symbol = symbol.upper().strip()
 
