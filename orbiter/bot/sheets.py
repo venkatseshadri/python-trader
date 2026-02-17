@@ -42,6 +42,15 @@ SYMBOLS_HEADER = ["Symbol", "Token", "Enabled"]
 LEGACY_CONTROL_HEADER = ["Symbol", "Token", "Key", "Value"]
 
 
+def _col_letter(index):
+    """Convert column index (1-based) to Excel-style letter (A, B, C...)"""
+    letters = ""
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters
+
+
 def _ensure_header(sheet, header):
     existing = sheet.row_values(1)
     if existing:
@@ -336,13 +345,6 @@ def log_scan_metrics(metrics):
             last_col = _col_letter(len(SCAN_METRICS_HEADER))
             sheet.update(f"A1:{last_col}1", [SCAN_METRICS_HEADER])
             header = SCAN_METRICS_HEADER
-
-    def _col_letter(index):
-        letters = ""
-        while index > 0:
-            index, remainder = divmod(index - 1, 26)
-            letters = chr(65 + remainder) + letters
-        return letters
 
     token_col_idx = header.index("Token") + 1 if "Token" in header else 2
     all_data = sheet.get_all_values()
