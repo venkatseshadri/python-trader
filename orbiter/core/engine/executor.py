@@ -3,6 +3,7 @@ import time
 import pytz
 import re
 from utils.utils import safe_ltp
+from utils.telegram_notifier import send_telegram_msg
 from .state import OrbiterState
 
 class Executor:
@@ -75,6 +76,7 @@ class Executor:
                     'lot_size': spread.get('lot_size', 0), 'config': state.config
                 }
                 print(f"✅ POSITION ADDED: {token} @ {ltp}")
+                send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
         
         if buy_signals:
             self.log_buy_signals(buy_signals)
@@ -116,8 +118,13 @@ class Executor:
             })
 
         state.active_positions.clear()
-        if to_square and self.log_closed_positions:
-            self.log_closed_positions(to_square)
+        if to_square:
+            if self.log_closed_positions:
+                self.log_closed_positions(to_square)
+            
+            # Send summary to Telegram
+            summary = "\n".join([f"• {pos['symbol']}: {pos['pct_change']:.2f}%" for pos in to_square])
+            send_telegram_msg(f"⏹️ *Mass Square Off Complete*\nReason: `{reason}`\n\n*Positions:*\n{summary}")
         return to_square
 
     def check_sl(self, state: OrbiterState, syncer):

@@ -24,7 +24,7 @@ from core.engine.evaluator import Evaluator
 from core.engine.executor import Executor
 from core.engine.syncer import Syncer
 import filters
-import config.config as global_config
+from utils.telegram_notifier import send_telegram_msg
 
 VERSION = "3.1.0-20260217-440cb55"
 
@@ -105,42 +105,46 @@ class Orbiter:
         self.syncer = None
 
     def _get_active_segment(self):
-        """Auto-detect if we should run NFO or MCX"""
+        """Auto-detect if we should run NFO or MCX with Hibernation support"""
         ist = pytz.timezone('Asia/Kolkata')
-        now = datetime.now(ist)
-        current_time = now.time()
         
-        # 1. Initial Segment Selection (based on time)
-        import config.nfo.config as nfo
-        import config.mcx.config as mcx
-        
-        if current_time > nfo.MARKET_CLOSE:
-            logger.info("🌙 Evening session: Detected MCX time window")
-            segment = mcx
-            seg_name = 'mcx'
-        else:
-            logger.info("☀️ Day session: Detected NFO time window")
-            segment = nfo
-            seg_name = 'nfo'
-
-        # 2. Segment-Specific Holiday/Off-Hours Check
-        is_weekend = now.weekday() >= 5
-        is_holiday = now.strftime("%Y-%m-%d") in segment.MARKET_HOLIDAYS
-        is_off_hours = not (segment.MARKET_OPEN <= current_time <= segment.MARKET_CLOSE)
-        
-        if not self.simulation:
-            if is_weekend or is_holiday or is_off_hours:
-                reason = "WEEKEND" if is_weekend else ("HOLIDAY" if is_holiday else "OFF-HOURS")
-                logger.warning(f"😴 {reason} for active segment! Soft-enabling SIMULATION mode.")
-                self.simulation = True
+        while True:
+            now = datetime.now(ist)
+            current_time = now.time()
+            is_weekend = now.weekday() >= 5
+            
+            # 1. Initial Segment Selection (based on time)
+            import config.nfo.config as nfo
+            import config.mcx.config as mcx
+            
+            # Determine Segment
+            if current_time > nfo.MARKET_CLOSE:
+                segment, seg_name = mcx, 'mcx'
             else:
-                logger.info(f"🟢 Market is LIVE for {seg_name.upper()}")
+                segment, seg_name = nfo, 'nfo'
 
-        return segment, seg_name
+            # 2. Check if the determined segment is actually LIVE
+            is_holiday = now.strftime("%Y-%m-%d") in segment.MARKET_HOLIDAYS
+            is_off_hours = not (segment.MARKET_OPEN <= current_time <= segment.MARKET_CLOSE)
+            
+            # 3. Decision Logic
+            if self.simulation:
+                # In simulation, we always run the best fit segment
+                logger.info(f"🧪 Simulation: Using {seg_name.upper()} context")
+                return segment, seg_name
+
+            if is_weekend or is_holiday or is_off_hours:
+                reason = "WEEKEND" if is_weekend else ("HOLIDAY" if is_holiday else f"OFF-HOURS ({seg_name.upper()})")
+                logger.info(f"💤 {reason}. Hibernating for 10 minutes...")
+                time.sleep(600)
+                continue # Re-check after sleep
+            
+            logger.info(f"🟢 Market is LIVE for {seg_name.upper()}")
+            return segment, seg_name
 
     def setup(self):
-        logger.info(f"✅ Initializing Engine [v{VERSION}]...")
         segment, seg_name = self._get_active_segment()
+        logger.info(f"✅ Initializing Engine [v{VERSION}] for {seg_name.upper()}...")
         
         # Build merged configuration
         full_config = {
@@ -181,6 +185,9 @@ class Orbiter:
             logger.info("⏳ Stabilizing connection (2s)...")
             time.sleep(2)
             
+            # ☀️ Market Start Heartbeat
+            send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`\nUniverse: `{len(self.state.symbols)}` symbols")
+            
             last_sl_check = 0
             while True:
                 now_ts = time.time()
@@ -199,8 +206,9 @@ class Orbiter:
                         logger.info("🔄 Triggering Market Close Reset (Squaring Off)...")
                         self.executor.square_off_all(self.state, reason="Market Close Reset")
                     
-                    logger.info("🏁 Session ended. Exiting for scheduled restart...")
-                    sys.exit(0)
+                    logger.info("🏁 Session ended. Hibernating for 30 minutes before next check...")
+                    time.sleep(1800)
+                    break # Exit the 'while True' to re-setup for the next segment if any
                 
                 # Evaluation Cycle
                 scores = {}
@@ -217,6 +225,8 @@ class Orbiter:
                     exit_hits = self.executor.check_sl(self.state, self.syncer)
                     if exit_hits:
                         logger.info(f"🔔 SL/TP Hits: {len(exit_hits)} positions squared off")
+                        for hit in exit_hits:
+                            send_telegram_msg(f"🎯 *Position Closed*\nSymbol: `{hit.get('symbol')}`\nReason: `{hit.get('reason', 'SL/TP')}`")
                     last_sl_check = now_ts
                 
                 # Scan Metrics Logging
@@ -253,3 +263,5 @@ if __name__ == "__main__":
         sys.exit(1)
     finally:
         manage_lockfile("release")
+        # Final safety sleep to prevent aggressive systemd restart loops
+        time.sleep(10)
