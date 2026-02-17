@@ -186,7 +186,13 @@ class BrokerClient:
             monthly = [d for d in valid if self._is_last_thursday(d)]
             if monthly:
                 return monthly[0]
-            # Fallback to nearest if no monthly found
+            
+            # 🔥 Fallback for MCX: If monthly (Last Thu) not found, just take the nearest
+            # This is critical for commodities which don't expire on Thursdays
+            if exchange == 'MCX':
+                print(f"ℹ️ [_select_expiry] No monthly expiry found for {symbol} MCX, falling back to nearest: {valid[0]}")
+                return valid[0]
+            
             return valid[0]
 
         return valid[0]
