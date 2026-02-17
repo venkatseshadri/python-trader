@@ -289,6 +289,10 @@ class BrokerClient:
                 print(f"DEBUG: Lookup '{t_id_only}' -> '{tsym}' (Map Size: {len(self.TOKEN_TO_SYMBOL)})")
 
         if not tsym:
+            with open("/tmp/orbiter_debug_keys.txt", "w") as f:
+                f.write(f"Failed lookup for {t_id_only} (Exch: {exch})\n")
+                f.write(f"Map Size: {len(self.TOKEN_TO_SYMBOL)}\n")
+                f.write(f"Keys: {list(self.TOKEN_TO_SYMBOL.keys())}\n")
             return {'ok': False, 'reason': f'future_not_found'}
 
         # Determine lot size
