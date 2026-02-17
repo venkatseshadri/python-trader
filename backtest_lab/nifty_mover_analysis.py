@@ -157,39 +157,55 @@ def extract_comprehensive_features(df_all, df_day, target_date, symbol, daily_re
     }
 
 def main():
-    files = [f for f in os.listdir(DATA_DIR) if f.endswith("_minute.csv")]
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch', type=int, default=0)
+    parser.add_argument('--total-batches', type=int, default=1)
+    args = parser.parse_args()
+
+    files = sorted([f for f in os.listdir(DATA_DIR) if f.endswith("_minute.csv")])
+    
+    # Split files into batches
+    batch_size = int(np.ceil(len(files) / args.total_batches))
+    start_idx = args.batch * batch_size
+    end_idx = min((args.batch + 1) * batch_size, len(files))
+    batch_files = files[start_idx:end_idx]
+    
     results = []
-    print(f"🚀 Processing {len(files[:60])} stocks for deep-dive analysis...")
-    for f in files[:60]:
+    print(f"🚀 Batch {args.batch+1}/{args.total_batches}: Processing {len(batch_files)} stocks...")
+    
+    for f in batch_files:
         symbol = f.replace("_minute.csv", "")
         try:
-            df = pd.read_csv(os.path.join(DATA_DIR, f))
+            file_path = os.path.join(DATA_DIR, f)
+            df = pd.read_csv(file_path)
             df['date'] = pd.to_datetime(df['date'])
-            daily = df.resample('D', on='date').agg({'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'}).dropna()
+            
+            # Resample to daily for filter selection
+            daily = df.copy()
+            daily['date'] = daily['date'].dt.date
+            daily = daily.groupby('date').agg({'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'})
+            
             daily['pc'], daily['ph'], daily['pl'] = daily['close'].shift(1), daily['high'].shift(1), daily['low'].shift(1)
             daily['ret'] = (daily['close'] - daily['pc']) / daily['pc']
-            # Analyze last 125 trading days (~6 months)
-            movers = daily.tail(125)[abs(daily['ret']) >= 0.01]
+            
+            # Analyze all trading days with >= 1% move in last 500 days
+            movers = daily.tail(500)[abs(daily['ret']) >= 0.01]
             
             for date_val, row in movers.iterrows():
-                df_day = df[df['date'].dt.date == date_val.date()].copy()
+                df_day = df[df['date'].dt.date == date_val].copy()
                 if df_day.empty: continue
-                feat = extract_comprehensive_features(df, df_day, date_val.date(), symbol, row['ret'], row['ph'], row['pc'], row['pl'])
+                feat = extract_comprehensive_features(df, df_day, date_val, symbol, row['ret'], row['ph'], row['pc'], row['pl'])
                 if feat: results.append(feat)
         except Exception as e: print(f"Error {symbol}: {e}")
 
-    final_df = pd.DataFrame(results)
-    final_df.to_csv(OUTPUT_FILE, index=False)
-    
-    print("\n" + "="*50)
-    print("🎯 REVERSE-ENGINEERED FILTER INSIGHTS")
-    print("="*50)
-    print(f"Total 1% Events: {len(final_df)}")
-    print(f"Restrictive Filter 'Trend_Aligned' Hit Rate: {final_df['Trend_Aligned'].mean()*100:.1f}%")
-    print(f"Predictive 'Open_gt_YClose' (for Longs): {final_df[final_df['Direction']=='LONG']['Open_gt_YClose'].mean()*100:.1f}%")
-    print(f"Average Exhaustion Signal at EOD: {final_df['ADX_Exhaustion'].mean()*100:.1f}%")
-    print(f"Most Profitable Timing: Bucket {final_df['Best_Bucket'].mode()[0]} ({(final_df['Best_Bucket']==1).mean()*100:.1f}% of moves)")
-    print("="*50)
+    if results:
+        batch_output = f"backtest_lab/batch_{args.batch}.csv"
+        final_df = pd.DataFrame(results)
+        final_df.to_csv(batch_output, index=False)
+        print(f"✅ Batch {args.batch+1} saved to {batch_output}")
+    else:
+        print(f"⚠️ Batch {args.batch+1} produced no results.")
 
 if __name__ == "__main__":
     main()

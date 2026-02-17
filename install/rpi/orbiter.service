@@ -5,9 +5,9 @@ After=network.target
 [Service]
 User=pi
 Group=pi
-WorkingDirectory=/home/pi/python
-Environment=PYTHONPATH=/home/pi/python
-EnvironmentFile=/home/pi/python/orbiter.env
+WorkingDirectory=/home/pi/python/python-trader
+Environment=PYTHONPATH=/home/pi/python/python-trader
+EnvironmentFile=/home/pi/python/python-trader/orbiter.env
 
 # Start with flags from environment file
 ExecStart=/usr/bin/python3 orbiter/main.py ${ORBITER_FLAGS}
