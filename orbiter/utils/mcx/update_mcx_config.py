@@ -11,7 +11,7 @@ import time
 # Ensure we can import from project root (orbiter/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from core.client import BrokerClient
+from core.broker import BrokerClient
 import config.config as config
 import logging
 
