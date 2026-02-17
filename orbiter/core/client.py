@@ -279,6 +279,12 @@ class BrokerClient:
         # Fallback to TOKEN_TO_SYMBOL mapping
         if not tsym:
             tsym = self.TOKEN_TO_SYMBOL.get(t_id_only)
+            
+            # 🔥 Second attempt: Try looking up with prefix if raw failed
+            if not tsym:
+                prefixed = f"{exch}|{t_id_only}"
+                tsym = self.TOKEN_TO_SYMBOL.get(prefixed)
+            
             if self.verbose_logs:
                 print(f"DEBUG: Lookup '{t_id_only}' -> '{tsym}' (Map Size: {len(self.TOKEN_TO_SYMBOL)})")
 
