@@ -8,7 +8,16 @@ SYMBOLS_UNIVERSE = [
 ]
 
 # This will be populated by update_mcx_config.py
-SYMBOLS_FUTURE_UNIVERSE = [] 
+SYMBOLS_FUTURE_UNIVERSE = [
+    'MCX|467013',  # CRUDEOIL
+    'MCX|467385',  # NATURALGAS
+    'MCX|454818',  # GOLD
+    'MCX|451666',  # SILVER
+    'MCX|477167',  # COPPER
+    'MCX|477171',  # ZINC
+    'MCX|477168',  # LEAD
+    'MCX|477166',  # ALUMINIUM
+] 
 
 MARKET_OPEN = dt_time(9, 0)
 MARKET_CLOSE = dt_time(23, 30)
