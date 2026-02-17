@@ -1006,14 +1006,26 @@ class BrokerClient:
                             })
                         
                         # Merge with existing options and cache
-                        self.NFO_OPTIONS.extend(new_options)
-                        self.NFO_OPTIONS_LOADED = True
-                        
                         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                         cache_file = os.path.join(base_dir, 'data', 'nfo_symbol_map.json')
+                        
+                        existing_options = []
+                        if os.path.exists(cache_file):
+                            try:
+                                with open(cache_file, 'r') as f_in:
+                                    existing_options = json.load(f_in).get('options', [])
+                            except: pass
+                        
+                        # Filter out old symbols for this specific exchange to prevent duplicates
+                        other_exchange_options = [row for row in existing_options if row.get('exchange') != exchange]
+                        combined_options = other_exchange_options + new_options
+                        
+                        self.NFO_OPTIONS = combined_options
+                        self.NFO_OPTIONS_LOADED = True
+                        
                         with open(cache_file, 'w') as f_out:
                             json.dump({'options': self.NFO_OPTIONS}, f_out)
-                        print(f"✅ Merged {len(new_options):,} {exchange} symbols into options cache")
+                        print(f"✅ Merged and Saved {len(new_options):,} {exchange} symbols into options cache")
 
         except Exception as e:
             print(f"⚠️ {exchange} download failed: {e}")
