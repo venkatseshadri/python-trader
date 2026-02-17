@@ -40,9 +40,18 @@ def main():
         fut_token = res['token'] if res else None
         tsym = res['tsym'] if res else None
         
+        # 🔥 Extract Lot Size from Master
+        ls = 0
+        if tsym:
+            # Check Derivative Master in Client
+            for r in client.master.DERIVATIVE_OPTIONS:
+                if r.get('tradingsymbol') == tsym:
+                    ls = int(r.get('lot_size', 0))
+                    break
+        
         if fut_token:
-            print(f"✅ {symbol:<15} -> {fut_token} ({tsym})")
-            futures_list.append((symbol, fut_token, tsym))
+            print(f"✅ {symbol:<15} -> {fut_token} ({tsym}) [Lot: {ls}]")
+            futures_list.append((symbol, fut_token, tsym, ls))
         else:
             print(f"❌ {symbol:<15} -> NO FUTURE FOUND")
             
@@ -53,7 +62,8 @@ def main():
         return
 
     # ✅ Save MCX Futures mapping for BrokerClient to use
-    nfo_map = {tok.split("|")[-1]: [sym, tsym] for sym, tok, tsym in futures_list}
+    # Structure: Token -> [Symbol, TradingSymbol, LotSize]
+    nfo_map = {tok.split("|")[-1]: [sym, tsym, ls] for sym, tok, tsym, ls in futures_list}
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     map_path = os.path.join(base_dir, 'data', 'mcx_futures_map.json')
     import json
