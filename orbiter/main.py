@@ -30,11 +30,14 @@ from utils.telegram_notifier import send_telegram_msg
 VERSION = "3.1.0-20260217-440cb55"
 
 class LoggerWriter:
-    def __init__(self, level):
+    def __init__(self, level, raw=False):
         self.level = level
+        self.raw = raw
     def write(self, message):
         if message.strip():
             self.level(message.strip())
+            if self.raw:
+                print(message.strip(), file=sys.__stdout__)
     def flush(self):
         pass
 
@@ -58,8 +61,8 @@ def setup_logging():
     
     l = logging.getLogger("ORBITER")
     
-    # 🔥 Redirect stdout and stderr to logger
-    sys.stdout = LoggerWriter(l.info)
+    # 🔥 Redirect stdout and stderr to logger (with raw support for stdout)
+    sys.stdout = LoggerWriter(l.info, raw=True)
     sys.stderr = LoggerWriter(l.error)
     
     return l
