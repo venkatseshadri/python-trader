@@ -133,7 +133,7 @@ class BrokerClient:
             self.load_nfo_symbol_mapping()
 
         expiry_str = expiry.isoformat()
-        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM') else 'NFO'
+        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT') else 'NFO'
         
         # Determine valid instruments for this search
         # If searching for OPTSTK, also allow FUTSTK for lot_size/expiry resolution if needed
@@ -141,7 +141,8 @@ class BrokerClient:
         inst_group = (instrument,)
         if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
         elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
-        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM')
+        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+        elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
 
         return [
             row for row in self.NFO_OPTIONS
@@ -154,13 +155,14 @@ class BrokerClient:
             self.load_nfo_symbol_mapping()
 
         expiries = set()
-        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM') else 'NFO'
+        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT') else 'NFO'
         
         # Match instrument groups
         inst_group = (instrument,)
         if instrument == 'OPTSTK': inst_group = ('OPTSTK', 'FUTSTK')
         elif instrument == 'OPTIDX': inst_group = ('OPTIDX', 'FUTIDX')
-        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM')
+        elif instrument == 'OPTCOM': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
+        elif instrument == 'OPTFUT': inst_group = ('OPTCOM', 'FUTCOM', 'OPTFUT')
 
         for row in self.NFO_OPTIONS:
             if row.get('symbol') != symbol or row.get('instrument') not in inst_group or row.get('exchange') != exchange:
@@ -368,7 +370,7 @@ class BrokerClient:
             qty = int(lot_size)
             # ✅ Dynamic Exchange based on instrument
             inst = row.get('instrument') or "OPTSTK"
-            exch = "MCX" if inst in ("OPTCOM", "FUTCOM") else "NFO"
+            exch = "MCX" if inst in ("OPTCOM", "FUTCOM", "OPTFUT") else "NFO"
             
             pos = {
                 "prd": "M" if product_type == "I" else product_type,
@@ -973,7 +975,7 @@ class BrokerClient:
                         lot_i = col_idx("LotSize")
                         
                         new_options = []
-                        valid_inst = ("OPTSTK", "OPTIDX", "FUTSTK", "FUTIDX", "FUTCOM", "OPTCOM")
+                        valid_inst = ("OPTSTK", "OPTIDX", "FUTSTK", "FUTIDX", "FUTCOM", "OPTCOM", "OPTFUT")
                         
                         for line in lines[1:]:
                             parts = line.decode().strip().rstrip(',').split(',')
