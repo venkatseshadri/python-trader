@@ -24,6 +24,7 @@ from core.engine.evaluator import Evaluator
 from core.engine.executor import Executor
 from core.engine.syncer import Syncer
 import filters
+import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg
 
 VERSION = "3.1.0-20260217-440cb55"
