@@ -152,9 +152,17 @@ class BrokerClient:
         # print(f"🔍 Resolving lot size for {res['tsym']}...")
         lot_size = 0
         
+        # 0️⃣ Priority: Live Data (SYMBOLDICT)
+        if hasattr(self, 'SYMBOLDICT'):
+            live_data = self.SYMBOLDICT.get(res['token'])
+            if live_data and live_data.get('ls'):
+                lot_size = int(live_data['ls'])
+                # print(f"✅ Found lot size in Live Feed: {lot_size}")
+
         # 1️⃣ Priority: mcx_futures_map.json (Updated by utility)
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        map_file = os.path.join(base_dir, 'data', f"{self.segment_name}_futures_map.json")
+        if lot_size <= 0:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            map_file = os.path.join(base_dir, 'data', f"{self.segment_name}_futures_map.json")
         if os.path.exists(map_file):
             try:
                 with open(map_file, 'r') as f:
