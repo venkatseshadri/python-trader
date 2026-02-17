@@ -355,10 +355,14 @@ def log_scan_metrics(metrics):
 
     def try_float(val):
         if isinstance(val, dict):
-            return float(val.get('total_margin', 0.0))
-        try: 
-            return float(val) if val is not None else 0.0
-        except: 
+            return float(val.get('total_margin', 0.0) or 0.0)
+        try:
+            if val is None or val == "": return 0.0
+            # Remove any currency symbols or commas if they somehow got in
+            if isinstance(val, str):
+                val = val.replace('₹', '').replace(',', '').strip()
+            return float(val)
+        except:
             return 0.0
 
     for item in metrics:
