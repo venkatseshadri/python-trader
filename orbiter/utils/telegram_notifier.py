@@ -43,8 +43,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         msg = " ".join(sys.argv[1:])
     else:
-        msg = "🚀 *Orbiter Test Notification*
-System is online and connected!"
+        msg = "🚀 *Orbiter Test Notification*\nSystem is online and connected!"
     
     if send_telegram_msg(msg):
         print("✅ Telegram message sent successfully!")
