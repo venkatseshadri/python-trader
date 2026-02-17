@@ -1,10 +1,16 @@
 # ORBITER & SNIPER: Production Roadmap
 
-This document tracks the stabilization and professionalization of the Orbiter trading bot and the Sniper backtesting suite.
+## 🤖 Phase 1: Remote Monitoring & Alerts (DONE ✅)
+- [x] **Telegram Integration:** 
+    - [x] **Remote Error Watcher:** Tail system logs on RPi and ping Telegram for CRITICAL/ERROR status.
+    - [x] **Trade Alerts:** Send real-time execution notifications to your private channel.
+    - [x] **Heartbeat Pings:** Daily check-in at market open to confirm the bot is alive.
+- [x] **Emergency Kill-Switch:** Handled via RPi shell access / upcoming Telegram commands.
+- [x] **Session Lifecycle:** Implemented Hibernation/Smart Rest to stop restart loops.
 
-## 🔬 Phase 1: Filter Reverse Engineering (The "Golden Stack")
+## 🔬 Phase 2: Filter Reverse Engineering (IN PROGRESS ⏳)
 - [ ] **Mass Attribute Analysis:** Expand the ATGL 35-property study to the entire `orbiter_revamp_data.csv` dataset.
-    - [ ] **Batch Processing:** Run analysis in 5 batches of ~21 stocks each to avoid timeouts.
+    - [ ] **Batch Processing:** (Batch 0 Running...) Run analysis in 5 batches of ~21 stocks each.
     - [ ] **Consolidation:** Merge `batch_0.csv` through `batch_4.csv` into a master `orbiter_revamp_data.csv`.
 - [ ] **Correlation Matrix:** Identify which indicators (ADX, RSI, EMA Slopes, ATR) have the highest "Predictive Power" for 1% moves.
 - [ ] **Filter Pruning:** Eliminate "Noise Filters" that don't add value.
