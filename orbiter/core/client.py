@@ -717,23 +717,26 @@ class BrokerClient:
         }
 
     def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
-                           product_type: str = "I", price_type: str = "MKT") -> Dict[ Any, Any]:
+                           product_type: str = "I", price_type: str = "MKT") -> Dict[Any, Any]:
         """Place a direct Future order (Long or Short)"""
-        # Resolve tradingsymbol from token
-        # token format: 'MCX|467013'
-        exch = token.split('|')[0] if '|' in token else 'NFO'
-        t_id = token.split('|')[-1]
-        tsym = self.TOKEN_TO_SYMBOL.get(t_id)
+        # 1. Resolve from SYMBOLDICT (Live data from WS)
+        data = self.SYMBOLDICT.get(token)
+        tsym = data.get('tsym') if data else None
+        exch = token.split('|')[0] if '|' in token else 'MCX'
         
+        # 2. Fallback to TOKEN_TO_SYMBOL mapping
         if not tsym:
-            return {'ok': False, 'reason': f'tradingsymbol_not_found_for_{t_id}'}
+            t_id = token.split('|')[-1]
+            tsym = self.TOKEN_TO_SYMBOL.get(t_id)
 
-        # Determine lot size from master
-        if not self.NFO_OPTIONS_LOADED:
-            self.load_nfo_symbol_mapping()
-        
-        row = next((r for r in self.NFO_OPTIONS if r['token'] == t_id), None)
-        lot_size = int(row.get('lot_size', 1)) if row else 1
+        if not tsym:
+            return {'ok': False, 'reason': f'future_not_found'}
+
+        # Determine lot size
+        lot_size = int(data.get('ls', 1)) if data and data.get('ls') else 1
+        if lot_size == 1: # check master
+            row = next((r for r in self.NFO_OPTIONS if r['token'] == token.split('|')[-1]), None)
+            if row: lot_size = int(row.get('lot_size', 1))
 
         if not execute:
             self.trade_logger.info(
@@ -852,6 +855,8 @@ class BrokerClient:
             self.SYMBOLDICT[key] = {
                 **message,
                 'symbol': symbol,
+                'tsym': message.get('tsym', self.get_symbol(token, exchange=exch)), # ✅ Capture TSYM
+                'ls': message.get('ls', 1), # ✅ Capture Lot Size
                 't': symbol,  # ✅ Add 't' field for company name (used by safe_ltp)
                 'company_name': self.get_company_name(token, exchange=exch),  # ✅ Full company name
                 'token': token,
