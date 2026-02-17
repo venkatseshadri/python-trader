@@ -43,6 +43,9 @@ class Executor:
                 if token.startswith('MCX|'):
                     if state.verbose_logs:
                         print(f"DEBUG [Executor] Processing MCX Token: {token} (Bull: {is_bull})")
+                        # 🔥 Diagnostic: Check mapping for a known token
+                        test_id = '477167' # Copper
+                        print(f"DEBUG [Executor] Map check {test_id}: {state.client.TOKEN_TO_SYMBOL.get(test_id)}")
 
                     # Check SYMBOLDICT with both full key and raw ID
                     t_id_raw = token.split('|')[-1]
