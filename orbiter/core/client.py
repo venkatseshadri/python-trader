@@ -260,19 +260,17 @@ class BrokerClient:
     def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
                            product_type: str = "I", price_type: str = "MKT") -> Dict[Any, Any]:
         """Place a direct Future order (Long or Short)"""
-        if self.verbose_logs:
-            print(f"DEBUG [place_future_order] Lookup Token: {token} (type: {type(token)})")
-            print(f"DEBUG [place_future_order] Mapping Size: {len(self.TOKEN_TO_SYMBOL)}")
-
-        # Resolve from SYMBOLDICT (Live data from WS)
+        # WS uses full key: 'MCX|467013'
         data = self.SYMBOLDICT.get(token)
         tsym = data.get('tsym') if data else None
-        exch = token.split('|')[0] if '|' in token else 'MCX'
-        t_id = token.split('|')[-1]
         
-        # Fallback to TOKEN_TO_SYMBOL mapping using string ID
+        # Standardize Token ID for mapping lookups
+        t_id_only = str(token.split('|')[-1]).strip()
+        exch = token.split('|')[0] if '|' in token else 'MCX'
+
+        # Fallback to TOKEN_TO_SYMBOL mapping
         if not tsym:
-            tsym = self.TOKEN_TO_SYMBOL.get(str(t_id))
+            tsym = self.TOKEN_TO_SYMBOL.get(t_id_only)
 
         if not tsym:
             return {'ok': False, 'reason': f'future_not_found'}
@@ -280,7 +278,7 @@ class BrokerClient:
         # Determine lot size
         lot_size = int(data.get('ls', 1)) if data and data.get('ls') else 1
         if lot_size == 1:
-            row = next((r for r in self.NFO_OPTIONS if r['token'] == t_id), None)
+            row = next((r for r in self.NFO_OPTIONS if r['token'] == t_id_only), None)
             if row: lot_size = int(row.get('lot_size', 1))
 
         if not execute:
