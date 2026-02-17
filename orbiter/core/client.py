@@ -719,8 +719,15 @@ class BrokerClient:
     def place_future_order(self, symbol: str, token: str, side: str, execute: bool = False,
                            product_type: str = "I", price_type: str = "MKT") -> Dict[Any, Any]:
         """Place a direct Future order (Long or Short)"""
+        if self.verbose_logs:
+            print(f"DEBUG: place_future_order called for {token} ({symbol})")
+            print(f"DEBUG: SYMBOLDICT keys sample: {list(self.SYMBOLDICT.keys())[:5]}")
+
         # 1. Resolve from SYMBOLDICT (Live data from WS)
         data = self.SYMBOLDICT.get(token)
+        if self.verbose_logs:
+            print(f"DEBUG: data for {token}: {data}")
+
         tsym = data.get('tsym') if data else None
         exch = token.split('|')[0] if '|' in token else 'MCX'
         
@@ -728,8 +735,12 @@ class BrokerClient:
         if not tsym:
             t_id = token.split('|')[-1]
             tsym = self.TOKEN_TO_SYMBOL.get(t_id)
+            if self.verbose_logs:
+                print(f"DEBUG: fallback tsym for {t_id}: {tsym}")
 
         if not tsym:
+            if self.verbose_logs:
+                print(f"DEBUG: Failed to resolve tsym for {token}")
             return {'ok': False, 'reason': f'future_not_found'}
 
         # Determine lot size
@@ -851,6 +862,9 @@ class BrokerClient:
             exch = token_to_exch.get(token) or message.get('e', 'NSE')
             key = f"{exch}|{token}"
             
+            if self.verbose_logs and exch == 'MCX':
+                print(f"DEBUG Tick MCX: {message}")
+
             symbol = self.get_symbol(token, exchange=exch)
             self.SYMBOLDICT[key] = {
                 **message,

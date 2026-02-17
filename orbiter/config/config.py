@@ -11,7 +11,7 @@ OPTION_PRICE_TYPE = 'MKT'
 OPTION_EXPIRY = 'monthly'
 HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
-VERBOSE_LOGS = False
+VERBOSE_LOGS = True
 
 # 🔥 ABSOLUTE PNL TARGETS (Optional: Set to 0 to disable)
 TARGET_PROFIT_RS = 0         # Exit if Total PnL >= this amount
