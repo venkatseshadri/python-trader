@@ -183,7 +183,8 @@ class Orbiter:
         self.summary = SummaryManager(self.client, seg_name)
         
         # Initialise AI Handler
-        self.ai = OrbiterAI("../ShoonyaApi-py/cred.yml")
+        cred_path = os.path.join(project_root, "ShoonyaApi-py", "cred.yml")
+        self.ai = OrbiterAI(cred_path)
 
         # Inject agnostic sheets logic
         from bot.sheets import log_buy_signals, log_closed_positions, update_active_positions
