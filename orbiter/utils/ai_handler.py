@@ -38,10 +38,13 @@ If the question is about why a trade wasn't taken, analyze the filter scores vs 
         # Try Primary (3.0 Flash) then Fallbacks
         for model_name in ['gemini-3-flash-preview', 'gemini-2.0-flash', 'gemini-flash-latest']:
             try:
+                print(f"🤖 AI Attempting Model: {model_name}...")
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(prompt)
+                print(f"✅ AI Success with {model_name}")
                 return response.text
             except Exception as e:
+                print(f"⚠️ AI Model {model_name} failed: {e}")
                 # If we hit a quota (429), try the next model
                 if "429" in str(e):
                     continue

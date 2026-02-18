@@ -85,16 +85,24 @@ class TelegramCommandListener:
 
     def _handle_command(self, text):
         now = time.time()
+        print(f"📥 Telegram Command Received: {text}")
         
         if text.startswith("/q"):
             question = text[2:].strip()
+            print(f"🤔 AI Query Question: {question}")
             if not question:
                 send_telegram_msg("❓ *Usage:* `/q why was trade not taken for RELIANCE?`")
                 return
             if "query" in self.callbacks:
+                print("🤖 Calling AI Query Callback...")
                 send_telegram_msg("🤖 *Thinking...*")
-                msg = self.callbacks["query"](question)
-                send_telegram_msg(msg)
+                try:
+                    msg = self.callbacks["query"](question)
+                    print(f"✅ AI Response Length: {len(msg)}")
+                    send_telegram_msg(msg)
+                except Exception as e:
+                    print(f"❌ AI Callback Error: {e}")
+                    send_telegram_msg(f"❌ AI Error: {str(e)}")
         elif text == "/margin":
             if "margin" in self.callbacks:
                 msg = self.callbacks["margin"]()
