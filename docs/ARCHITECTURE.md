@@ -32,6 +32,22 @@
     - **Listener:** Runs an async background thread to poll for commands.
     - **Safety:** Implements session-awareness (via `main.py` callback) to block critical actions during market hours.
 
+## 🛡️ Live Core vs. Research Separation
+
+To maintain 99.9% uptime during market hours, the project enforces a strict boundary between execution and research:
+
+### 1. Live Core (Orbiter)
+- **Directories:** `orbiter/`, `config/`, `ShoonyaApi-py/`.
+- **Status:** Mission Critical.
+- **Update Policy:** Triggers a daemon restart via `update.sh` to apply new logic.
+
+### 2. Research & Lab (Sniper / Docs)
+- **Directories:** `backtest_lab/`, `docs/`, `samples/`.
+- **Status:** Non-Critical.
+- **Update Policy:** Updates do NOT trigger a daemon restart. Research can be synced live without interrupting active trading sessions.
+
+---
+
 ## 🧠 Critical Logic: MCX Token Resolution
 
 We faced persistent `future_not_found` errors because `place_future_order` was receiving prefixed tokens (`MCX|477167`) but the map only contained raw IDs (`477167`), or vice-versa.
