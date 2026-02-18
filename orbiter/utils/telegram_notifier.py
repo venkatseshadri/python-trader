@@ -100,11 +100,17 @@ class TelegramCommandListener:
                 send_telegram_msg(msg)
         elif text == "/help":
             msg = [
-                "🤖 *Orbiter Commands:*",
-                "📊 `/status` - Full session prep/report",
-                "💰 `/margin` - Concise margin update",
-                "🔍 `/scan` - Live scan scores & PnL",
-                "🧹 `/cleanup` - Reset Google Sheets"
+                "🤖 *Orbiter C2 - Command Reference*",
+                "---",
+                "📊 `/status` - *The Big Picture:* Shows total buying power, collateral vs ledger cash, and any overnight positions.",
+                "",
+                "💰 `/margin` - *Wallet Check:* Concise snapshot of available margin and current utilization.",
+                "",
+                "🔍 `/scan` - *Market Pulse:* Live count of scanned symbols, Top 10 movers by score, and real-time P&L of open positions.",
+                "",
+                "🧹 `/cleanup` - *Reset Logs:* Clears trade logs and metrics in Google Sheets. (Blocked during active sessions; requires 2-step confirmation).",
+                "",
+                "ℹ️ *Note:* Commands are only accepted from authorized users."
             ]
             send_telegram_msg("\n".join(msg))
         elif text == "/cleanup":
