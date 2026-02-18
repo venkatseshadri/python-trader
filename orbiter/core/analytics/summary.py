@@ -133,18 +133,22 @@ class SummaryManager:
                         pass
 
                 day_change = 0.0
+                day_points = 0.0
                 if baseline_price > 10.0: 
-                    day_change = ((ltp - baseline_price) / baseline_price * 100.0)
+                    day_points = ltp - baseline_price
+                    day_change = (day_points / baseline_price * 100.0)
                 
                 # Final Sanity: If change is physically impossible (>20% for NFO), reset to 0
                 if abs(day_change) > 20.0:
                     day_change = 0.0
+                    day_points = 0.0
                 
                 if day_change > 0:    change_emoji = "📈"
                 elif day_change < 0:  change_emoji = "📉"
                 else:                 change_emoji = "➖"
                 
-                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_change:>+5.2f}%")
+                # Format: STOCK : [Score] [Points] [Percentage] [LTP]
+                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_points:>+6.2f} ({day_change:>+5.2f}%) | ₹{ltp:,.2f}")
         
         # 3. Active Positions & PnL
         if state.active_positions:
