@@ -30,7 +30,16 @@ import filters
 import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
 
-VERSION = "3.6.3-20260218-0c972a7"
+# Version Loading Logic
+def load_version():
+    try:
+        v_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'version.txt')
+        with open(v_path, 'r') as f:
+            return f.read().strip()
+    except:
+        return "3.6.3-DEV"
+
+VERSION = load_version()
 
 class LoggerWriter:
     def __init__(self, level, raw=False):
