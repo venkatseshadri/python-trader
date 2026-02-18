@@ -35,8 +35,8 @@ USER QUESTION:
 Please provide a concise, professional, and data-driven explanation in Markdown.
 If the question is about why a trade wasn't taken, analyze the filter scores vs the TRADE_SCORE threshold.
 """
-        # Try Primary (3.0 Flash) then Fallbacks
-        for model_name in ['gemini-3-flash-preview', 'gemini-2.0-flash', 'gemini-flash-latest']:
+        # Try working models only to prevent long hangs
+        for model_name in ['gemini-3-flash-preview', 'gemini-2.0-flash']:
             try:
                 print(f"🤖 AI Attempting Model: {model_name}...")
                 model = genai.GenerativeModel(model_name)
