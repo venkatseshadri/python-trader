@@ -23,6 +23,7 @@ from core.engine.state import OrbiterState
 from core.engine.evaluator import Evaluator
 from core.engine.executor import Executor
 from core.engine.syncer import Syncer
+from core.analytics.summary import SummaryManager
 import filters
 import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg
@@ -176,6 +177,9 @@ class Orbiter:
         self.state.executor = self.executor
         self.state.syncer = self.syncer
 
+        # Initialise Summary Manager
+        self.summary = SummaryManager(self.client, seg_name)
+
         logger.info(f"📊 Universe: {len(segment.SYMBOLS_FUTURE_UNIVERSE)} tokens")
         logger.info(f"🎯 Entry Threshold: {full_config['TRADE_SCORE']}pts")
 
@@ -190,8 +194,13 @@ class Orbiter:
             logger.info("⏳ Stabilizing connection (5s)...")
             time.sleep(5)
             
-            # ☀️ Market Start Heartbeat
-            send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`\nUniverse: `{len(self.state.symbols)}` symbols")
+            # ☀️ Market Start Summary
+            try:
+                pre_report = self.summary.generate_pre_session_report()
+                send_telegram_msg(pre_report)
+            except Exception as e:
+                logger.error(f"⚠️ Could not generate pre-session report: {e}")
+                send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`")
             
             last_sl_check = 0
             while True:
@@ -211,7 +220,17 @@ class Orbiter:
                         logger.info("🔄 Triggering Market Close Reset (Squaring Off)...")
                         self.executor.square_off_all(self.state, reason="Market Close Reset")
                     
-                    logger.info("🏁 Session ended. Hibernating for 30 minutes before next check...")
+                    logger.info("🏁 Session ended. Preparing debrief...")
+                    time.sleep(30) # Wait for Shoonya to settle positions/orders
+                    
+                    try:
+                        post_report = self.summary.generate_post_session_report()
+                        send_telegram_msg(post_report)
+                    except Exception as e:
+                        logger.error(f"⚠️ Could not generate post-session report: {e}")
+                        send_telegram_msg("🏁 *Orbiter:* Session ended (Report failed).")
+
+                    logger.info("💤 Hibernating for 30 minutes before next check...")
                     time.sleep(1800)
                     break # Exit the 'while True' to re-setup for the next segment if any
                 

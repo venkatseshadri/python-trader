@@ -152,6 +152,42 @@ class BrokerClient:
         if not res.get('ok'): return res
         return self.executor.place_spread(res, kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
 
+    def get_limits(self):
+        """Fetch margin and fund status from Shoonya."""
+        try:
+            res = self.api.get_limits()
+            if not res or res.get('stat') != 'Ok':
+                return None
+            return {
+                'cash': float(res.get('cash', 0)),
+                'margin_used': float(res.get('marginused', 0)),
+                'net_margin': float(res.get('marginused', 0)) + float(res.get('cash', 0)), # Simplified
+                'available': float(res.get('cash', 0)) - float(res.get('marginused', 0))
+            }
+        except Exception as e:
+            print(f"❌ Error fetching limits: {e}")
+            return None
+
+    def get_positions(self):
+        """Fetch all open/overnight positions."""
+        try:
+            res = self.api.get_positions()
+            if not res: return []
+            return [p for p in res if p.get('stat') == 'Ok']
+        except Exception as e:
+            print(f"❌ Error fetching positions: {e}")
+            return []
+
+    def get_order_history(self):
+        """Fetch orders to track session activity."""
+        try:
+            res = self.api.get_order_book()
+            if not res: return []
+            return [o for o in res if o.get('stat') == 'Ok']
+        except Exception as e:
+            print(f"❌ Error fetching order history: {e}")
+            return []
+
     def place_future_order(self, **kwargs):
         """Place a single-leg Future trade (Long/Short)"""
         symbol, exchange = kwargs['symbol'], kwargs.get('exchange', 'NFO')
