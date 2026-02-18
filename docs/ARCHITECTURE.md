@@ -21,6 +21,16 @@
     - Routes orders:
         - `MCX`: Calls `place_future_order`.
         - `NFO`: Calls `place_credit_spread`.
+    - **New:** Triggers `SummaryManager` for automated post-trade margin alerts.
+
+4.  **`core/analytics/summary.py` (SummaryManager):**
+    - **Purpose:** Centralizes all financial and performance calculations.
+    - **Parity Logic:** Fetches SPOT quotes for underlyings to match broker dashboards.
+    - **Tax Logic:** Calculates estimated Net P&L using segment-specific tax/brokerage rates.
+
+5.  **`utils/telegram_notifier.py` (C2 System):**
+    - **Listener:** Runs an async background thread to poll for commands.
+    - **Safety:** Implements session-awareness (via `main.py` callback) to block critical actions during market hours.
 
 ## 🧠 Critical Logic: MCX Token Resolution
 
