@@ -113,7 +113,9 @@ class SummaryManager:
                 # B. Calculate Day Change % (with Sanity Filter)
                 ltp = float(data.get('lp', 0))
                 # Prefer Open ('o'), fallback to Prev Close ('pc')
-                open_price = float(data.get('o') or data.get('pc') or 0)
+                raw_o = float(data.get('o') or 0)
+                raw_pc = float(data.get('pc') or 0)
+                open_price = raw_o if raw_o > 0 else raw_pc
                 
                 day_change = 0.0
                 if open_price > 10.0: # Ignore garbage baselines like 0 or 1.0
