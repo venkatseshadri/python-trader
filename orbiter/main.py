@@ -148,6 +148,18 @@ class Orbiter:
             logger.info(f"🟢 Market is LIVE for {seg_name.upper()}")
             return segment, seg_name
 
+    def is_session_active(self):
+        """Check if current time is within active market hours for the loaded segment"""
+        if not self.state or not self.state.config:
+            return False
+        ist = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(ist).time()
+        start = self.state.config.get('MARKET_OPEN')
+        end = self.state.config.get('MARKET_CLOSE')
+        if start and end:
+            return start <= now <= end
+        return False
+
     def setup(self):
         segment, seg_name = self._get_active_segment()
         logger.info(f"✅ Initializing Engine [v{VERSION}] for {seg_name.upper()}...")
@@ -189,11 +201,19 @@ class Orbiter:
 
     def run(self):
         try:
+            # 🛡️ Safety Wrapper for Cleanup
+            def safe_cleanup():
+                if self.is_session_active():
+                    send_telegram_msg("❌ *Cleanup Blocked:* Cannot reset sheets during active trading session.")
+                    return False
+                cleanup_google_sheets()
+                return True
+
             # 🎧 Start Command Listener
             callbacks = {
                 "margin": self.summary.generate_margin_status,
                 "status": self.summary.generate_pre_session_report,
-                "cleanup": cleanup_google_sheets
+                "cleanup": safe_cleanup
             }
             listener = TelegramCommandListener(callbacks)
             listener.start()
