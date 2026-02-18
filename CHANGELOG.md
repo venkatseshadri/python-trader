@@ -1,5 +1,9 @@
 # 📜 Changelog
 
+## [3.5.0-20260218-7cd581f] - 2026-02-18
+### Changed
+- Auto-versioned release update.
+
 ## [3.5.0-20260218-12f391d] - 2026-02-18
 ### Changed
 - Auto-versioned release update.
