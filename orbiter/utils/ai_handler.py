@@ -9,7 +9,7 @@ class OrbiterAI:
         self.model = None
         if self.api_key:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     def _load_key(self, path):
         if not os.path.exists(path):
