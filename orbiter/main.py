@@ -25,6 +25,7 @@ from core.engine.executor import Executor
 from core.engine.syncer import Syncer
 from core.analytics.summary import SummaryManager
 from utils.cleanup_sheets import cleanup_google_sheets
+from utils.ai_handler import OrbiterAI
 import filters
 import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
@@ -180,6 +181,9 @@ class Orbiter:
         
         # Initialise Summary Manager
         self.summary = SummaryManager(self.client, seg_name)
+        
+        # Initialise AI Handler
+        self.ai = OrbiterAI("../ShoonyaApi-py/cred.yml")
 
         # Inject agnostic sheets logic
         from bot.sheets import log_buy_signals, log_closed_positions, update_active_positions
@@ -199,6 +203,21 @@ class Orbiter:
         self.client.start_live_feed(self.state.symbols)
         return True
 
+    def _get_ai_context(self):
+        """Package current bot state for AI analysis"""
+        return {
+            "config": {
+                "TRADE_SCORE": self.state.config.get("TRADE_SCORE"),
+                "TOP_N": self.state.config.get("TOP_N"),
+                "SEGMENT": self.client.segment_name
+            },
+            "active_positions": [
+                {"symbol": p["symbol"], "strategy": p["strategy"], "entry": p["entry_price"]}
+                for p in self.state.active_positions.values()
+            ],
+            "recent_filters": self.state.filter_results_cache
+        }
+
     def run(self):
         try:
             # 🛡️ Safety Wrapper for Cleanup
@@ -214,7 +233,8 @@ class Orbiter:
                 "margin": self.summary.generate_margin_status,
                 "status": self.summary.generate_pre_session_report,
                 "scan": lambda: self.summary.generate_live_scan_report(self.state),
-                "cleanup": safe_cleanup
+                "cleanup": safe_cleanup,
+                "query": lambda q: self.ai.ask(q, self._get_ai_context())
             }
             listener = TelegramCommandListener(callbacks)
             listener.start()

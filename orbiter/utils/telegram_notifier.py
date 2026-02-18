@@ -86,7 +86,16 @@ class TelegramCommandListener:
     def _handle_command(self, text):
         now = time.time()
         
-        if text == "/margin":
+        if text.startswith("/q"):
+            question = text[2:].strip()
+            if not question:
+                send_telegram_msg("❓ *Usage:* `/q why was trade not taken for RELIANCE?`")
+                return
+            if "query" in self.callbacks:
+                send_telegram_msg("🤖 *Thinking...*")
+                msg = self.callbacks["query"](question)
+                send_telegram_msg(msg)
+        elif text == "/margin":
             if "margin" in self.callbacks:
                 msg = self.callbacks["margin"]()
                 send_telegram_msg(msg)
@@ -107,6 +116,8 @@ class TelegramCommandListener:
                 "💰 `/margin` - *Wallet Check:* Concise snapshot of available margin and current utilization.",
                 "",
                 "🔍 `/scan` - *Market Pulse:* Live count of scanned symbols, Top 10 movers by score, and real-time P&L of open positions.",
+                "",
+                "🤖 `/q <question>` - *AI Explainer:* Ask the bot why a trade was taken (or not), analyze scores, or get a performance summary.",
                 "",
                 "🧹 `/cleanup` - *Reset Logs:* Clears trade logs and metrics in Google Sheets. (Blocked during active sessions; requires 2-step confirmation).",
                 "",
