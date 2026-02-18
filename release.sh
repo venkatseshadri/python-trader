@@ -15,6 +15,14 @@ DATE=$(date +%Y%m%d)
 GIT_HASH=$(git rev-parse --short=7 HEAD)
 FULL_VERSION="${VERSION_BASE}-${DATE}-${GIT_HASH}"
 
+# 0. Pre-Release Test Suite
+echo "🧪 Running mandatory pre-release tests..."
+./run_tests.sh
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Release aborted."
+    exit 1
+fi
+
 echo "📦 Preparing release: ${FULL_VERSION}"
 
 # 1. Update version.txt
