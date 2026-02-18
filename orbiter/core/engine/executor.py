@@ -7,11 +7,21 @@ from utils.telegram_notifier import send_telegram_msg
 from .state import OrbiterState
 
 class Executor:
-    def __init__(self, log_buy_signals, log_closed_positions, sl_filters, tp_filters):
+    def __init__(self, log_buy_signals, log_closed_positions, sl_filters, tp_filters, summary_manager=None):
         self.log_buy_signals = log_buy_signals
         self.log_closed_positions = log_closed_positions
         self.sl_filters = sl_filters
         self.tp_filters = tp_filters
+        self.summary = summary_manager
+
+    def _send_margin_update(self):
+        """Helper to send concise margin status to Telegram"""
+        if self.summary:
+            try:
+                msg = self.summary.generate_margin_status()
+                send_telegram_msg(msg)
+            except Exception as e:
+                print(f"⚠️ Could not send margin update: {e}")
 
     def rank_signals(self, state: OrbiterState, scores, syncer):
         """Process signals and place orders"""
@@ -121,6 +131,9 @@ class Executor:
                     }
                 print(f"✅ POSITION ADDED: {token} @ {ltp}")
                 send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
+                
+                # 💰 Auto-Margin Update
+                self._send_margin_update()
         
         if buy_signals:
             self.log_buy_signals(buy_signals)

@@ -26,7 +26,7 @@ from core.engine.syncer import Syncer
 from core.analytics.summary import SummaryManager
 import filters
 import config.config as global_config
-from utils.telegram_notifier import send_telegram_msg
+from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
 
 VERSION = "3.2.1-20260218-403dbd2"
 
@@ -165,20 +165,17 @@ class Orbiter:
         self.client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name=seg_name)
         self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config)
         
+        # Initialise Summary Manager
+        self.summary = SummaryManager(self.client, seg_name)
+
         # Inject agnostic sheets logic
         from bot.sheets import log_buy_signals, log_closed_positions, update_active_positions
         from filters import get_filters
         
-        self.executor = Executor(log_buy_signals, log_closed_positions, get_filters('sl'), get_filters('tp'))
+        self.executor = Executor(log_buy_signals, log_closed_positions, get_filters('sl'), get_filters('tp'), summary_manager=self.summary)
         self.syncer = Syncer(update_active_positions)
         
         # Link state back to components
-        self.state.evaluator = self.evaluator
-        self.state.executor = self.executor
-        self.state.syncer = self.syncer
-
-        # Initialise Summary Manager
-        self.summary = SummaryManager(self.client, seg_name)
 
         logger.info(f"📊 Universe: {len(segment.SYMBOLS_FUTURE_UNIVERSE)} tokens")
         logger.info(f"🎯 Entry Threshold: {full_config['TRADE_SCORE']}pts")
@@ -191,6 +188,14 @@ class Orbiter:
 
     def run(self):
         try:
+            # 🎧 Start Command Listener
+            callbacks = {
+                "margin": self.summary.generate_margin_status,
+                "status": self.summary.generate_pre_session_report # Status shows full context
+            }
+            listener = TelegramCommandListener(callbacks)
+            listener.start()
+
             logger.info("⏳ Stabilizing connection (5s)...")
             time.sleep(5)
             

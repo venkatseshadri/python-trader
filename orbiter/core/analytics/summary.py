@@ -67,6 +67,21 @@ class SummaryManager:
         msg.append("\n🚀 *Orbiter:* Ready for the session.")
         return "\n".join(msg)
 
+    def generate_margin_status(self) -> str:
+        """Concise margin update for post-trade and /margin command."""
+        limits = self.broker.get_limits()
+        if not limits:
+            return "⚠️ *Margin Status:* Could not fetch data."
+            
+        msg = [
+            f"💰 *Margin Update ({self.segment})*",
+            f"✅ *Available:* ₹{limits['available']:,.2f}",
+            f"🔒 *Used:* ₹{limits['margin_used']:,.2f}",
+            f"🏦 *Collateral:* ₹{limits['collateral_value']:,.2f}",
+            f"💵 *Ledger:* ₹{limits['liquid_cash']:,.2f}"
+        ]
+        return "\n".join(msg)
+
     def generate_post_session_report(self) -> str:
         """3:30 PM (NFO) / End of MCX Post-Market Debrief."""
         limits = self.broker.get_limits()
