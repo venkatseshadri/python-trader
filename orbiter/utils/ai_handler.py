@@ -19,7 +19,7 @@ class OrbiterAI:
         return creds.get('gemini_api_key')
 
     def ask(self, question, state_context):
-        if not self.model:
+        if not self.api_key:
             return "⚠️ AI Error: Gemini API key not found in credentials."
 
         prompt = f"""
@@ -35,8 +35,17 @@ USER QUESTION:
 Please provide a concise, professional, and data-driven explanation in Markdown.
 If the question is about why a trade wasn't taken, analyze the filter scores vs the TRADE_SCORE threshold.
 """
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"❌ AI Error: {str(e)}"
+        # Try Primary (3.0 Flash) then Fallbacks
+        for model_name in ['gemini-3-flash-preview', 'gemini-2.0-flash', 'gemini-flash-latest']:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                return response.text
+            except Exception as e:
+                # If we hit a quota (429), try the next model
+                if "429" in str(e):
+                    continue
+                # If it's a 404 or other error, log and try next
+                continue
+        
+        return "❌ AI Error: All models failed (likely due to quota limits or 404s). Please try again in a few minutes."
