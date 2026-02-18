@@ -3,7 +3,14 @@
 # 🚀 ORBITER Release Automation Script
 # Updates version.txt, main.py, README, and regenerates checksums.
 
-VERSION_BASE="3.1.0"
+# Read current version base from version.txt (e.g. 3.2.1)
+# If version.txt doesn't exist, default to 3.1.0
+if [ -f "version.txt" ]; then
+    VERSION_BASE=$(cat version.txt | cut -d'-' -f1)
+else
+    VERSION_BASE="3.1.0"
+fi
+
 DATE=$(date +%Y%m%d)
 GIT_HASH=$(git rev-parse --short=7 HEAD)
 FULL_VERSION="${VERSION_BASE}-${DATE}-${GIT_HASH}"
@@ -31,6 +38,7 @@ fi
 
 # 5. Regenerate checksums.txt
 echo "🧮 Regenerating checksums.txt..."
+# Use find to generate file list, then calculate shasum with relative paths
 find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" -o -name "Dockerfile" -o -name "*.sh" -o -name "*.service" -o -name "*.env" \) \
     -not -path "*/.*" \
     -not -path "./.venv/*" \
@@ -40,7 +48,7 @@ find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml
     -not -path "./orbiter/logs/*" \
     -not -path "./checksums.txt" \
     -not -path "./version.txt" \
-    -exec shasum -a 256 {} + | sort > checksums.txt
+    -exec shasum -a 256 {} + | sed 's|  \./|  |' | sort > checksums.txt
 
 echo "✅ Release ${FULL_VERSION} ready!"
 echo "Files updated: version.txt, orbiter/main.py, orbiter/README.md, CHANGELOG.md, checksums.txt"

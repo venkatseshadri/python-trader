@@ -24,11 +24,17 @@ fi
 # 3. Verify File Integrity
 echo "🛡️ Verifying file integrity..."
 if [ -f "checksums.txt" ]; then
-    FAILED=$(shasum -a 256 -c checksums.txt 2>/dev/null | grep -c "FAILED")
-    if [ "$FAILED" -eq "0" ]; then
+    # Calculate number of failures
+    FAILED_LIST=$(shasum -a 256 -c checksums.txt 2>/dev/null | grep "FAILED" | cut -d':' -f1)
+    FAILED_COUNT=$(echo "$FAILED_LIST" | grep -v '^$' | wc -l)
+    
+    if [ "$FAILED_COUNT" -eq "0" ]; then
         echo "✅ Integrity check passed!"
     else
-        echo "⚠️ WARNING: $FAILED files failed the integrity check. Check checksums.txt for details."
+        echo "⚠️ WARNING: $FAILED_COUNT files failed the integrity check."
+        echo "Top 5 failures:"
+        echo "$FAILED_LIST" | head -n 5
+        echo "Check checksums.txt and local diffs for details."
     fi
 else
     echo "ℹ️ No checksums.txt found, skipping integrity check."
