@@ -110,22 +110,37 @@ class SummaryManager:
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
-                # B. Calculate Day Change % (with Sanity Filter)
+                # B. Calculate Day Change % (with Sanity Filter & API Fallback)
                 ltp = float(data.get('lp', 0))
-                # Prefer Open ('o'), fallback to Prev Close ('pc')
-                raw_o = float(data.get('o') or 0)
-                raw_pc = float(data.get('pc') or 0)
-                open_price = raw_o if raw_o > 0 else raw_pc
                 
+                # Check live feed for Open ('o') or Prev Close ('c')
+                raw_o = float(data.get('o') or 0)
+                raw_pc = float(data.get('c') or data.get('pc') or 0)
+                open_price = raw_o if raw_o > 10.0 else raw_pc
+                
+                # 🔄 API Fallback: If live feed is missing baseline, fetch a quick quote
+                if open_price < 10.0:
+                    try:
+                        exch = token.split('|')[0]
+                        tok_id = token.split('|')[-1]
+                        quote = state.client.api.get_quotes(exchange=exch, token=tok_id)
+                        if quote:
+                            open_price = float(quote.get('o') or quote.get('c') or 0)
+                    except:
+                        pass
+
                 day_change = 0.0
-                if open_price > 10.0: # Ignore garbage baselines like 0 or 1.0
+                if open_price > 10.0: 
                     day_change = ((ltp - open_price) / open_price * 100.0)
                 
                 # Final Sanity: If change is physically impossible (>20% for NFO), reset to 0
                 if abs(day_change) > 20.0:
                     day_change = 0.0
                 
-                change_emoji = "📈" if day_change >= 0 else "📉"
+                if day_change > 0:    change_emoji = "📈"
+                elif day_change < 0:  change_emoji = "📉"
+                else:                 change_emoji = "➖"
+                
                 msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_change:>+5.2f}%")
         
         # 3. Active Positions & PnL
