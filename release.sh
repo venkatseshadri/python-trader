@@ -21,7 +21,6 @@ echo "📦 Preparing release: ${FULL_VERSION}"
 echo "${FULL_VERSION}" > version.txt
 
 # 2. Update orbiter/main.py (Docstring + Variable)
-# Using perl for cross-platform compatibility (macOS/Linux)
 perl -i -pe "s/^VERSION = \".*?\"/VERSION = \"${FULL_VERSION}\"/g" orbiter/main.py
 perl -i -pe "s/🚀 ORBITER v.*? -/🚀 ORBITER v${FULL_VERSION} -/g" orbiter/main.py
 
@@ -32,14 +31,11 @@ perl -i -pe "s/Version .*? -/Version ${FULL_VERSION} -/g" orbiter/README.md
 # 4. Update CHANGELOG.md (Add entry if not present)
 if ! grep -q "## \[${FULL_VERSION}\]" CHANGELOG.md; then
     echo "📝 Adding entry to CHANGELOG.md..."
-    # Insert after the # Changelog header
     perl -i -pe "print \"## [${FULL_VERSION}] - $(date +%Y-%m-%d)\n### Changed\n- Auto-versioned release update.\n\n\" if $. == 3" CHANGELOG.md
 fi
 
-# 5. Regenerate checksums.txt
+# 5. Regenerate checksums.txt (MUST BE DONE AFTER PERL REPLACEMENTS)
 echo "🧮 Regenerating checksums.txt..."
-# Use find to generate file list, then calculate shasum with relative paths
-# We exclude submodules (python-trader), envs, and cache
 find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" -o -name "Dockerfile" -o -name "*.sh" -o -name "*.service" -o -name "*.env" \) \
     -not -path "*/.*" \
     -not -path "./.venv/*" \
@@ -51,7 +47,6 @@ find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml
     -not -path "./orbiter/data/span/*" \
     -not -path "./orbiter/data/nse_token_map.json" \
     -not -path "./checksums.txt" \
-    -not -path "./version.txt" \
     -exec shasum -a 256 {} + | sed 's|  \./|  |' | sort > checksums.txt
 
 echo "✅ Release ${FULL_VERSION} ready!"
