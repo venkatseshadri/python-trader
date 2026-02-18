@@ -26,9 +26,10 @@ class SummaryManager:
     Output: Formatted Telegram Messages.
     """
     
-    def __init__(self, broker_client, segment_name: str):
+    def __init__(self, broker_client, segment_name: str, version: str = "3.x"):
         self.broker = broker_client
         self.segment = segment_name.upper()
+        self.version = version
         self.logger = logging.getLogger(f"SummaryManager_{segment_name}")
 
     def generate_pre_session_report(self) -> str:
@@ -37,6 +38,7 @@ class SummaryManager:
         positions = self.broker.get_positions()
         
         msg = [f"🌅 *{self.segment} SESSION PREP* ({datetime.now().strftime('%H:%M')})"]
+        msg.append(f"🤖 *Orbiter v{self.version}*")
         msg.append("-" * 25)
         
         if limits:
@@ -74,7 +76,7 @@ class SummaryManager:
             return "⚠️ *Margin Status:* Could not fetch data."
             
         msg = [
-            f"💰 *Margin Update ({self.segment})*",
+            f"💰 *Margin Update ({self.segment})* (v{self.version})",
             f"✅ *Available:* ₹{limits['available']:,.2f}",
             f"🔒 *Used:* ₹{limits['margin_used']:,.2f}",
             f"🏦 *Collateral:* ₹{limits['collateral_value']:,.2f}",

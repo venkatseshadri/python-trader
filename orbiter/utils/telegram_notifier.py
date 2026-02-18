@@ -111,6 +111,10 @@ class TelegramCommandListener:
              if "status" in self.callbacks:
                 msg = self.callbacks["status"]()
                 send_telegram_msg(msg)
+        elif text == "/version":
+            if "version" in self.callbacks:
+                msg = self.callbacks["version"]()
+                send_telegram_msg(msg)
         elif text == "/scan":
              if "scan" in self.callbacks:
                 msg = self.callbacks["scan"]()
@@ -126,6 +130,8 @@ class TelegramCommandListener:
                 "🔍 `/scan` - *Market Pulse:* Live count of scanned symbols, Top 10 movers by score, and real-time P&L of open positions.",
                 "",
                 "🤖 `/q <question>` - *AI Explainer:* Ask the bot why a trade was taken (or not), analyze scores, or get a performance summary.",
+                "",
+                "ℹ️ `/version` - *Bot Version:* Returns the currently running version of the Orbiter engine.",
                 "",
                 "🧹 `/cleanup` - *Reset Logs:* Clears trade logs and metrics in Google Sheets. (Blocked during active sessions; requires 2-step confirmation).",
                 "",

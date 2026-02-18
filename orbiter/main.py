@@ -189,7 +189,7 @@ class Orbiter:
         self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config)
         
         # Initialise Summary Manager
-        self.summary = SummaryManager(self.client, seg_name)
+        self.summary = SummaryManager(self.client, seg_name, version=VERSION)
         
         # Initialise AI Handler
         cred_path = os.path.join(project_root, "ShoonyaApi-py", "cred.yml")
@@ -255,7 +255,8 @@ class Orbiter:
                 "status": self.summary.generate_pre_session_report,
                 "scan": lambda: self.summary.generate_live_scan_report(self.state),
                 "cleanup": safe_cleanup,
-                "query": handle_ai_query
+                "query": handle_ai_query,
+                "version": lambda: f"🤖 *Orbiter v{VERSION}*"
             }
             listener = TelegramCommandListener(callbacks)
             listener.start()
