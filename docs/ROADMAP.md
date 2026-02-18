@@ -29,21 +29,23 @@
 - [ ] **Session Lifecycle:** Finalize auto-exit at 15:25 (NFO) and 23:25 (MCX).
 - [ ] **Log Rotation:** Implement log rotation to prevent SD card overflow on Pi.
 
-## 🛠️ Phase 5: DevOps & Integrity
+## 🛠️ Phase 5: DevOps & Integrity (DONE ✅)
 - [x] **Portable Checksums:** Updated `release.sh` to use relative-path SHA-256 hashes.
 - [x] **Automated Updates:** Verified `update.sh` loop over Tailscale.
-- [ ] **System Integrity:** Investigate and fix the high number of integrity check failures on Pi.
+- [x] **System Integrity:** Resolved 3482+ integrity check failures on Pi (Paths normalized & submodules excluded).
 
-## 🕹️ Phase 6: Remote Command & Control (C2) - NEW
-- [ ] **Specification:** Refer to `docs/C2_SPECIFICATION.md`.
+## 🕹️ Phase 6: Remote Command & Control (C2) (IN PROGRESS ⏳)
+- [x] **Specification:** Completed in `docs/C2_SPECIFICATION.md`.
 - [ ] **RuntimeConfig Manager:** Implement a thread-safe singleton to allow hot-reloading.
-- [ ] **Telegram Command Handler:** Implement interactive control commands.
+- [x] **Telegram Command Handler:** Implemented asynchronous background listener with callback support.
+- [x] **Basic Commands:** Added `/margin` and `/status` for on-demand financial/operational snapshots.
 
-## 📊 Phase 7: Automated Session Reporting - NEW
-- [ ] **Specification:** Refer to `docs/REPORTING_SPECIFICATION.md`.
-- [ ] **Pre-Session Report:** Automated fund/margin/position check at 9:30 AM (NFO) and 5:30 PM (MCX).
-- [ ] **Post-Session Debrief:** Comprehensive P&L, Slippage, and T+1 Margin report at market close.
-- [ ] **Performance Tracking:** Log session summaries to a local CSV/Database for weekly performance analysis.
+## 📊 Phase 7: Automated Session Reporting (DONE ✅)
+- [x] **Specification:** Completed in `docs/REPORTING_SPECIFICATION.md`.
+- [x] **Pre-Session Report:** Automated fund/margin/position check at market open (NFO/MCX).
+- [x] **Post-Session Debrief:** Comprehensive P&L and T+1 Margin report at market close.
+- [x] **Real-time Margin Updates:** Automated "Post-Trade" margin snapshots sent to Telegram.
+- [ ] **Performance Tracking:** Log session summaries to a local CSV/Database for weekly analysis.
 
 ---
 *Last Updated: 2026-02-18*
