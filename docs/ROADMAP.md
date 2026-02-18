@@ -39,5 +39,15 @@
 - [x] **Post-Session Debrief:** P&L, Tax estimates, and T+1 margin at market close.
 - [x] **Spot Parity:** 100% data alignment with Zerodha for daily changes.
 
+## 🛡️ Phase 8: Quality & Reliability (IN PROGRESS ⏳)
+- [x] **Mandatory Pre-Release Tests:** Integrated `run_tests.sh` into `release.sh`.
+- [x] **Coverage Baseline:** Established at 48% for Orbiter Core.
+- [ ] **Coverage Milestone: Bulletproof Core**
+    - [ ] 🎯 **Level 1:** Reach **60%** Coverage (Resolver & Margin logic)
+    - [ ] 🎯 **Level 2:** Reach **70%** Coverage (Connection & Authentication)
+    - [ ] 🎯 **Level 3:** Reach **80%** Coverage (Advanced Edge Cases)
+    - [ ] 🎯 **Level 4:** Reach **90%+** Coverage (Mission Critical)
+    - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
+
 ---
-*Last Updated: 2026-02-18 | Build: v3.5.0*
+*Last Updated: 2026-02-18 | Build: v3.7.4*
