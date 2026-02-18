@@ -113,25 +113,28 @@ class SummaryManager:
                 # B. Calculate Day Change % (with Sanity Filter & API Fallback)
                 ltp = float(data.get('lp', 0))
                 
-                # Check live feed for Open ('o') or Prev Close ('c')
+                # Industry Standard: Day % is calculated from Previous Close ('c' or 'pc')
                 raw_o = float(data.get('o') or 0)
-                raw_pc = float(data.get('c') or data.get('pc') or 0)
-                open_price = raw_o if raw_o > 10.0 else raw_pc
+                raw_c = float(data.get('c') or data.get('pc') or 0)
+                
+                # Prefer Close, fallback to Open
+                baseline_price = raw_c if raw_c > 10.0 else raw_o
                 
                 # 🔄 API Fallback: If live feed is missing baseline, fetch a quick quote
-                if open_price < 10.0:
+                if baseline_price < 10.0:
                     try:
                         exch = token.split('|')[0]
                         tok_id = token.split('|')[-1]
                         quote = state.client.api.get_quotes(exchange=exch, token=tok_id)
                         if quote:
-                            open_price = float(quote.get('o') or quote.get('c') or 0)
+                            # Prefer 'c' (Close) from quote
+                            baseline_price = float(quote.get('c') or quote.get('o') or 0)
                     except:
                         pass
 
                 day_change = 0.0
-                if open_price > 10.0: 
-                    day_change = ((ltp - open_price) / open_price * 100.0)
+                if baseline_price > 10.0: 
+                    day_change = ((ltp - baseline_price) / baseline_price * 100.0)
                 
                 # Final Sanity: If change is physically impossible (>20% for NFO), reset to 0
                 if abs(day_change) > 20.0:
