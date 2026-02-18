@@ -173,6 +173,33 @@ class Orbiter:
         return False
 
     def setup(self):
+        # 🎧 Start Global Command Listener Early
+        def safe_cleanup():
+            if self.is_session_active():
+                send_telegram_msg("❌ *Cleanup Blocked:* Cannot reset sheets during active trading session.")
+                return False
+            cleanup_google_sheets()
+            return True
+
+        def handle_ai_query(q):
+            if not self.state: return "🤖 *Orbiter:* System is currently hibernating. Full state context is unavailable."
+            try:
+                return self.ai.ask(q, self._get_ai_context())
+            except Exception as e:
+                logger.error(f"❌ AI Query Error: {e}")
+                return f"❌ AI Error: Internal state processing failed ({str(e)})"
+
+        callbacks = {
+            "margin": lambda: self.summary.generate_margin_status() if self.summary else "💤 *Orbiter:* Hibernating. Margin data unavailable.",
+            "status": lambda: self.summary.generate_pre_session_report() if self.summary else "💤 *Orbiter:* Hibernating. Session report unavailable.",
+            "scan": lambda: self.summary.generate_live_scan_report(self.state) if self.summary and self.state else "💤 *Orbiter:* Hibernating. No active scans.",
+            "cleanup": safe_cleanup,
+            "query": handle_ai_query,
+            "version": lambda: f"🤖 *Orbiter v{VERSION}*"
+        }
+        listener = TelegramCommandListener(callbacks)
+        listener.start()
+
         segment, seg_name = self._get_active_segment()
         logger.info(f"✅ Initializing Engine [v{VERSION}] for {seg_name.upper()}...")
         
@@ -235,37 +262,6 @@ class Orbiter:
 
     def run(self):
         try:
-            # 🛡️ Safety Wrapper for Cleanup
-            def safe_cleanup():
-                if self.is_session_active():
-                    send_telegram_msg("❌ *Cleanup Blocked:* Cannot reset sheets during active trading session.")
-                    return False
-                cleanup_google_sheets()
-                return True
-
-            # 🤖 AI Query Wrapper
-            def handle_ai_query(q):
-                try:
-                    return self.ai.ask(q, self._get_ai_context())
-                except Exception as e:
-                    logger.error(f"❌ AI Query Error: {e}")
-                    return f"❌ AI Error: Internal state processing failed ({str(e)})"
-
-            # 🎧 Start Command Listener
-            callbacks = {
-                "margin": self.summary.generate_margin_status,
-                "status": self.summary.generate_pre_session_report,
-                "scan": lambda: self.summary.generate_live_scan_report(self.state),
-                "cleanup": safe_cleanup,
-                "query": handle_ai_query,
-                "version": lambda: f"🤖 *Orbiter v{VERSION}*"
-            }
-            listener = TelegramCommandListener(callbacks)
-            listener.start()
-
-            logger.info("⏳ Stabilizing connection (5s)...")
-            time.sleep(5)
-            
             # ☀️ Market Start Summary
             try:
                 pre_report = self.summary.generate_pre_session_report()
