@@ -49,6 +49,8 @@ class TelegramCommandListener:
         self.last_update_id = 0
         self.running = False
         self._thread = None
+        self._cleanup_pending = False
+        self._cleanup_timestamp = 0
 
     def start(self):
         if self.token and not self.running:
@@ -82,6 +84,8 @@ class TelegramCommandListener:
             time.sleep(1)
 
     def _handle_command(self, text):
+        now = time.time()
+        
         if text == "/margin":
             if "margin" in self.callbacks:
                 msg = self.callbacks["margin"]()
@@ -90,6 +94,20 @@ class TelegramCommandListener:
              if "status" in self.callbacks:
                 msg = self.callbacks["status"]()
                 send_telegram_msg(msg)
+        elif text == "/cleanup":
+            self._cleanup_pending = True
+            self._cleanup_timestamp = now
+            send_telegram_msg("⚠️ *CRITICAL:* This will delete ALL trade logs and scan metrics.\nSend `/confirm_cleanup` within 60s to proceed.")
+        elif text == "/confirm_cleanup":
+            if self._cleanup_pending and (now - self._cleanup_timestamp < 60):
+                self._cleanup_pending = False
+                send_telegram_msg("🧹 *Cleanup in progress...*")
+                if "cleanup" in self.callbacks:
+                    self.callbacks["cleanup"]()
+                    send_telegram_msg("✨ *Google Sheets Cleanup Complete!*")
+            else:
+                self._cleanup_pending = False
+                send_telegram_msg("❌ *Cleanup Cancelled:* No pending request or time expired.")
 
 if __name__ == "__main__":
     # Test script if run directly

@@ -24,6 +24,7 @@ from core.engine.evaluator import Evaluator
 from core.engine.executor import Executor
 from core.engine.syncer import Syncer
 from core.analytics.summary import SummaryManager
+from utils.cleanup_sheets import cleanup_google_sheets
 import filters
 import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
@@ -191,7 +192,8 @@ class Orbiter:
             # 🎧 Start Command Listener
             callbacks = {
                 "margin": self.summary.generate_margin_status,
-                "status": self.summary.generate_pre_session_report # Status shows full context
+                "status": self.summary.generate_pre_session_report,
+                "cleanup": cleanup_google_sheets
             }
             listener = TelegramCommandListener(callbacks)
             listener.start()
