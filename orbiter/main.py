@@ -326,7 +326,8 @@ class Orbiter:
                 from bot.sheets import log_scan_metrics
                 if log_scan_metrics and self.state.last_scan_metrics:
                     if now_ts - self.state.last_scan_log_ts >= 60:
-                        log_scan_metrics(self.state.last_scan_metrics)
+                        tab_name = f"scan_metrics_{self.client.segment_name.lower()}"
+                        log_scan_metrics(self.state.last_scan_metrics, tab_name=tab_name)
                         self.state.last_scan_log_ts = now_ts
                         self.syncer.sync_active_positions_to_sheets(self.state)
 

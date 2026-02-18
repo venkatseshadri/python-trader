@@ -322,7 +322,7 @@ def log_square_off(square_offs):
     print(f"✅ {len(square_offs)} SQUARE-OFF(s) → Google Sheets @ {timestamp}")
 
 
-def log_scan_metrics(metrics):
+def log_scan_metrics(metrics, tab_name="scan_metrics"):
     """Log per-scan symbol metrics (ORB/EMA) to Google Sheets."""
     if not metrics:
         return
@@ -331,7 +331,7 @@ def log_scan_metrics(metrics):
     creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
     client = gspread.authorize(creds)
     book = client.open("trade_log")
-    sheet = _get_or_create_worksheet(book, "scan_metrics")
+    sheet = _get_or_create_worksheet(book, tab_name)
     _ensure_header(sheet, SCAN_METRICS_HEADER)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S IST")
 
