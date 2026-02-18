@@ -35,15 +35,15 @@
 - [ ] **System Integrity:** Investigate and fix the high number of integrity check failures on Pi.
 
 ## 🕹️ Phase 6: Remote Command & Control (C2) - NEW
-- [ ] **Specification:** Refer to `docs/C2_SPECIFICATION.md` for detailed filter parameters and command sets.
-- [ ] **RuntimeConfig Manager:** Implement a thread-safe singleton to allow hot-reloading of filters/risk params.
-- [ ] **Telegram Command Handler:**
-    - [ ] `/filter enable/disable <id>`: Toggle filters on the fly.
-    - [ ] `/f1 to /f8 <param> <value>`: Fine-tune entry thresholds and weights.
-    - [ ] `/set tp/sl/trail <value>`: Adjust risk parameters in real-time.
-    - [ ] `/status`: Snapshot of P&L, positions, and bot health.
-    - [ ] `/kill`: Immediate emergency exit of all positions.
-- [ ] **Validation Layer:** Ensure commands are only accepted from authorized Chat IDs.
+- [ ] **Specification:** Refer to `docs/C2_SPECIFICATION.md`.
+- [ ] **RuntimeConfig Manager:** Implement a thread-safe singleton to allow hot-reloading.
+- [ ] **Telegram Command Handler:** Implement interactive control commands.
+
+## 📊 Phase 7: Automated Session Reporting - NEW
+- [ ] **Specification:** Refer to `docs/REPORTING_SPECIFICATION.md`.
+- [ ] **Pre-Session Report:** Automated fund/margin/position check at 9:30 AM (NFO) and 5:30 PM (MCX).
+- [ ] **Post-Session Debrief:** Comprehensive P&L, Slippage, and T+1 Margin report at market close.
+- [ ] **Performance Tracking:** Log session summaries to a local CSV/Database for weekly performance analysis.
 
 ---
 *Last Updated: 2026-02-18*
