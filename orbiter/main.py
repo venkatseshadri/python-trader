@@ -215,17 +215,20 @@ class Orbiter:
 
     def _get_ai_context(self):
         """Package current bot state for AI analysis"""
+        # Ensure we only send JSON-serializable data
+        cache = self.state.filter_results_cache if hasattr(self.state, 'filter_results_cache') else {}
+        
         return {
             "config": {
-                "TRADE_SCORE": self.state.config.get("TRADE_SCORE"),
-                "TOP_N": self.state.config.get("TOP_N"),
-                "SEGMENT": self.client.segment_name
+                "TRADE_SCORE": self.state.config.get("TRADE_SCORE", 0),
+                "TOP_N": self.state.config.get("TOP_N", 0),
+                "SEGMENT": getattr(self.client, 'segment_name', 'UNKNOWN')
             },
             "active_positions": [
-                {"symbol": p["symbol"], "strategy": p["strategy"], "entry": p["entry_price"]}
+                {"symbol": p.get("symbol", "??"), "strategy": p.get("strategy", "??"), "entry": p.get("entry_price", 0)}
                 for p in self.state.active_positions.values()
             ],
-            "recent_filters": self.state.filter_results_cache
+            "recent_filters": cache
         }
 
     def run(self):
@@ -238,13 +241,21 @@ class Orbiter:
                 cleanup_google_sheets()
                 return True
 
+            # 🤖 AI Query Wrapper
+            def handle_ai_query(q):
+                try:
+                    return self.ai.ask(q, self._get_ai_context())
+                except Exception as e:
+                    logger.error(f"❌ AI Query Error: {e}")
+                    return f"❌ AI Error: Internal state processing failed ({str(e)})"
+
             # 🎧 Start Command Listener
             callbacks = {
                 "margin": self.summary.generate_margin_status,
                 "status": self.summary.generate_pre_session_report,
                 "scan": lambda: self.summary.generate_live_scan_report(self.state),
                 "cleanup": safe_cleanup,
-                "query": lambda q: self.ai.ask(q, self._get_ai_context())
+                "query": handle_ai_query
             }
             listener = TelegramCommandListener(callbacks)
             listener.start()
