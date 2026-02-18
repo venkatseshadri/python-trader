@@ -1,5 +1,9 @@
 # 📜 Changelog
 
+## [3.8.1-20260218-92b9dfd] - 2026-02-18
+### Changed
+- Automated release update.
+
 ## [3.7.8-20260218-47579f3] - 2026-02-18
 ### Changed
 - Automated release update.
