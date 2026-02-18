@@ -47,14 +47,13 @@ class ScripMaster:
 
         # 2. Load Derivative Caches (Mode-Aware)
         f_ok = self.futures.load_cache()
-        o_ok = False
-        if segment_name.lower() == 'nfo':
-            o_ok = self.options.load_cache()
+        o_ok = self.options.load_cache()
 
-        if not f_ok or (segment_name.lower() == 'nfo' and not o_ok):
+        # If caches are empty or failed, force download
+        if not f_ok or not o_ok:
+            print("📦 Derivative caches empty. Downloading masters...")
             self.download_scrip_master("NFO")
-            if segment_name.lower() == 'mcx':
-                self.download_scrip_master("MCX")
+            self.download_scrip_master("MCX")
 
         # 3. Load local futures mapping (Primary source for lot sizes)
         self.load_segment_futures_map(segment_name)

@@ -23,12 +23,25 @@ class ContractResolver:
 
     def _select_expiry(self, symbol: str, expiry_type: str, instrument: str) -> Optional[datetime.date]:
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master("NFO"); self.master.download_scrip_master("MCX")
-        expiries = set()
-        exchange = 'MCX' if instrument == 'OPTCOM' else 'NFO'
-        for row in self.master.DERIVATIVE_OPTIONS:
-            if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('exchange') == exchange:
-                exp = self.master._parse_expiry_date(row.get('expiry'))
-                if exp: expiries.add(exp)
+        
+        def find_exp():
+            exps = set()
+            exchange = 'MCX' if instrument == 'OPTCOM' else 'NFO'
+            for row in self.master.DERIVATIVE_OPTIONS:
+                if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('exchange') == exchange:
+                    exp = self.master._parse_expiry_date(row.get('expiry'))
+                    if exp: exps.add(exp)
+            return exps
+
+        expiries = find_exp()
+        
+        # 🔄 EMERGENCY: If still no expiries, force one more download and retry
+        if not expiries:
+            print(f"🔄 No expiries for {symbol}. Forcing master refresh...")
+            self.master.download_scrip_master("NFO")
+            self.master.download_scrip_master("MCX")
+            expiries = find_exp()
+
         if not expiries: return None
         today = datetime.date.today()
         valid = sorted(d for d in expiries if d >= today)
