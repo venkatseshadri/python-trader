@@ -39,10 +39,12 @@ fi
 # 5. Regenerate checksums.txt
 echo "🧮 Regenerating checksums.txt..."
 # Use find to generate file list, then calculate shasum with relative paths
+# We exclude submodules (python-trader), envs, and cache
 find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" -o -name "Dockerfile" -o -name "*.sh" -o -name "*.service" -o -name "*.env" \) \
     -not -path "*/.*" \
     -not -path "./.venv/*" \
     -not -path "./shoonya_env/*" \
+    -not -path "./python-trader/*" \
     -not -path "*/__pycache__/*" \
     -not -path "./logs/*" \
     -not -path "./orbiter/logs/*" \
