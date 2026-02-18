@@ -54,8 +54,7 @@ def cleanup_google_sheets(sheet_name="trade_log"):
             except Exception as e:
                 print(f"  ❌ Error clearing '{title}': {e}")
 
-        print("
-✨ Cleanup Complete! All logs have been reset.")
+        print("\n✨ Cleanup Complete! All logs have been reset.")
         print("💡 Note: 'control' and 'symbols' tabs were preserved.")
 
     except Exception as e:
