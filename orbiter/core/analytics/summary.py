@@ -110,27 +110,27 @@ class SummaryManager:
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
-                # B. Calculate Day Change % (with Sanity Filter & API Fallback)
+                # B. Calculate Day Change % (with Zerodha Parity & API Fetch)
                 ltp = float(data.get('lp', 0))
+                baseline_price = 0.0
                 
-                # Industry Standard: Day % is calculated from Previous Close ('c' or 'pc')
-                raw_o = float(data.get('o') or 0)
-                raw_c = float(data.get('c') or data.get('pc') or 0)
+                # 🔄 ALWAYS fetch authoritative Previous Close from API ('c' field)
+                # This ensures 100% parity with Zerodha for the Top 10 symbols.
+                try:
+                    exch = token.split('|')[0]
+                    tok_id = token.split('|')[-1]
+                    quote = state.client.api.get_quotes(exchange=exch, token=tok_id)
+                    if quote:
+                        # 'c' is the Previous Day Close in Shoonya API
+                        baseline_price = float(quote.get('c') or 0)
+                except:
+                    pass
                 
-                # Prefer Close, fallback to Open
-                baseline_price = raw_c if raw_c > 10.0 else raw_o
-                
-                # 🔄 API Fallback: If live feed is missing baseline, fetch a quick quote
+                # Fallback to live feed ONLY if API fetch failed
                 if baseline_price < 10.0:
-                    try:
-                        exch = token.split('|')[0]
-                        tok_id = token.split('|')[-1]
-                        quote = state.client.api.get_quotes(exchange=exch, token=tok_id)
-                        if quote:
-                            # Prefer 'c' (Close) from quote
-                            baseline_price = float(quote.get('c') or quote.get('o') or 0)
-                    except:
-                        pass
+                    raw_c = float(data.get('c') or data.get('pc') or 0)
+                    raw_o = float(data.get('o') or 0)
+                    baseline_price = raw_c if raw_c > 10.0 else raw_o
 
                 day_change = 0.0
                 day_points = 0.0
