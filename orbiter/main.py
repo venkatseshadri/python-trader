@@ -152,7 +152,9 @@ class Orbiter:
             if is_weekend or is_holiday or is_off_hours:
                 reason = "WEEKEND" if is_weekend else ("HOLIDAY" if is_holiday else f"OFF-HOURS ({seg_name.upper()})")
                 logger.info(f"💤 {reason}. Hibernating for 10 minutes...")
-                time.sleep(600)
+                # Non-blocking sleep: check every 60s but keep thread alive
+                for _ in range(10):
+                    time.sleep(60)
                 continue # Re-check after sleep
             
             logger.info(f"🟢 Market is LIVE for {seg_name.upper()}")
@@ -300,9 +302,13 @@ class Orbiter:
                         logger.error(f"⚠️ Could not generate post-session report: {e}")
                         send_telegram_msg("🏁 *Orbiter:* Session ended (Report failed).")
 
-                    logger.info("💤 Hibernating for 30 minutes before next check...")
-                    time.sleep(1800)
-                    break # Exit the 'while True' to re-setup for the next segment if any
+                    logger.info("💤 Hibernating until next segment check...")
+                    # Non-blocking sleep: check every 60s but keep the process alive
+                    # This ensures the Telegram background thread stays responsive
+                    for _ in range(30): # 30 minutes
+                        if not self.is_running: break
+                        time.sleep(60)
+                    break 
                 
                 # Evaluation Cycle
                 scores = {}
