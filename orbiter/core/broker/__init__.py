@@ -153,16 +153,26 @@ class BrokerClient:
         return self.executor.place_spread(res, kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
 
     def get_limits(self):
-        """Fetch margin and fund status from Shoonya."""
+        """Fetch granular margin and fund status from Shoonya."""
         try:
             res = self.api.get_limits()
             if not res or res.get('stat') != 'Ok':
                 return None
+            
+            cash = float(res.get('cash', 0))
+            collateral = float(res.get('collateral', 0))
+            used = float(res.get('marginused', 0))
+            
+            # Total Buying Power = Cash + Collateral
+            total_power = cash + collateral
+            
             return {
-                'cash': float(res.get('cash', 0)),
-                'margin_used': float(res.get('marginused', 0)),
-                'net_margin': float(res.get('marginused', 0)) + float(res.get('cash', 0)), # Simplified
-                'available': float(res.get('cash', 0)) - float(res.get('marginused', 0))
+                'liquid_cash': cash,              # Ledger Balance
+                'collateral_value': collateral,   # Pledged Holdings (After Haircut)
+                'margin_used': used,              # Blocked Margin
+                'total_power': total_power,       # Total Margin (F in report)
+                'available': total_power - used,  # Net Status (K in report)
+                'payin': float(res.get('payin', 0))
             }
         except Exception as e:
             print(f"❌ Error fetching limits: {e}")

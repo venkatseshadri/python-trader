@@ -40,9 +40,16 @@ class SummaryManager:
         msg.append("-" * 25)
         
         if limits:
-            msg.append(f"💰 *Available Margin:* ₹{limits['available']:,.2f}")
+            msg.append(f"💰 *Total Buying Power:* ₹{limits['total_power']:,.2f}")
             msg.append(f"🔒 *Margin Used:* ₹{limits['margin_used']:,.2f}")
-            msg.append(f"💳 *Cash Balance:* ₹{limits['cash']:,.2f}")
+            msg.append(f"✅ *Net Available:* ₹{limits['available']:,.2f}")
+            msg.append("-" * 20)
+            msg.append(f"🏦 *Collateral Value:* ₹{limits['collateral_value']:,.2f}")
+            msg.append(f"💵 *Ledger Cash:* ₹{limits['liquid_cash']:,.2f}")
+            
+            # Health check: Warn if liquid cash is dangerously low (< 5k)
+            if limits['liquid_cash'] < 5000:
+                msg.append("\n⚠️ *Warning:* Low liquid cash. MTM loss might lead to liquidations.")
         else:
             msg.append("⚠️ *Limits:* Could not fetch margin status.")
 
