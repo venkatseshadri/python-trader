@@ -26,22 +26,10 @@ __pycache__/
 *$py.class
 # Backtest Lab Artifacts
 # Credentials and secrets
-# Data cache (local, not shared)
-# IDE
-# Logs
-# Misc
-# OS
-# Python
-# Testing
-# Virtual environments
-backtest_lab/data/
-backtest_lab/reports/
-backtest_lab/reports/*.html
-backtest_lab/scenarios_best/
-backtest_lab/scenarios/master_suite/
-build/
-cred.yml
-credentials.json
+**/cred.yml
+**/credentials.json
+.env
+.env.local
 develop-eggs/
 dist/
 downloads/
