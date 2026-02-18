@@ -7,6 +7,7 @@ from .entry.f5_ema_scope import ema_scope_filter
 from .entry.f6_ema_gap import ema_gap_expansion_filter
 from .entry.f7_atr_relative import atr_momentum_filter
 from .entry.f8_trend_sniper import trend_sniper_filter
+from .entry.f9_institutional_flip import institutional_flip_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
 from .sl.f2_5ema_below_9ema import sl_5ema_below_9ema
 from .sl.sl_supertrend_reversal import sl_supertrend_reversal
@@ -49,6 +50,7 @@ FILTERS = [
     Filter('ef6_ema_gap', 'entry', ema_gap_expansion_filter),
     Filter('ef7_atr_relative', 'entry', atr_momentum_filter),
     Filter('ef8_trend_sniper', 'entry', trend_sniper_filter),
+    Filter('ef9_institutional_flip', 'entry', institutional_flip_filter),
     # Stop Loss Filters
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
     Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),

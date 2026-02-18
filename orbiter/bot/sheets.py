@@ -460,7 +460,7 @@ def log_scan_metrics(metrics, tab_name="scan_metrics"):
     if new_rows:
         sheet.append_rows(new_rows)
 
-    print(f"✅ {len(metrics)} scan metrics → Google Sheets @ {timestamp}")
+    print(f"✅ {len(metrics)} scan metrics → Google Sheets [{tab_name}] @ {timestamp}")
 
 
 def update_active_positions(active_data):

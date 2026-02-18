@@ -1,0 +1,16 @@
+{
+    "name": "NIFTY Pattern Alpha",
+    "description": "Optimized configuration based on the Top 3 patterns discovered from 1,941 NIFTY events.",
+    "TOP_N": 5,
+    "TRADE_SCORE": 1.0,
+    "ENTRY_WEIGHTS": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0],
+    "weights_info": "ef1..ef5 are disabled. ef6(EMA_GAP), ef8(SNIPER/ADX), ef9(FLIP) are active.",
+    "OPTION_EXECUTE": false,
+    "TSL_ACTIVATION_RS": 2000,
+    "TSL_RETREACEMENT_PCT": 30,
+    "filters": {
+        "ef6_ema_gap": {"weight": 1.0},
+        "ef8_trend_sniper": {"weight": 1.0},
+        "ef9_institutional_flip": {"weight": 1.0}
+    }
+}

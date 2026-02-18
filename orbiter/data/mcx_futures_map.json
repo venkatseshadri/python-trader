@@ -4,6 +4,11 @@
         "CRUDEOIL19FEB26",
         100
     ],
+    "467014": [
+        "CRUDEOILM",
+        "CRUDEOILM19FEB26",
+        10
+    ],
     "467385": [
         "NATURALGAS",
         "NATURALGAS24FEB26",
@@ -14,10 +19,30 @@
         "GOLD02APR26",
         1
     ],
+    "472781": [
+        "GOLDM",
+        "GOLDM05MAR26",
+        100
+    ],
+    "472788": [
+        "GOLDPETAL",
+        "GOLDPETAL27FEB26",
+        1
+    ],
     "451666": [
         "SILVER",
         "SILVER05MAR26",
         30
+    ],
+    "451669": [
+        "SILVERM",
+        "SILVERM27FEB26",
+        5
+    ],
+    "458305": [
+        "SILVERMIC",
+        "SILVERMIC27FEB26",
+        1
     ],
     "477167": [
         "COPPER",
@@ -29,10 +54,20 @@
         "ZINC27FEB26",
         5
     ],
+    "477172": [
+        "ZINCMINI",
+        "ZINCMINI27FEB26",
+        1
+    ],
     "477168": [
         "LEAD",
         "LEAD27FEB26",
         5
+    ],
+    "477169": [
+        "LEADMINI",
+        "LEADMINI27FEB26",
+        1
     ],
     "477166": [
         "ALUMINIUM",

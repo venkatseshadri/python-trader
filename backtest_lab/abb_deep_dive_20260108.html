@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deep Dive Analysis - ABB 2026-01-08</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.5; color: #24292e; max-width: 1100px; margin: 0 auto; padding: 30px; background-color: #f6f8fa; }
+        h1 { border-bottom: 2px solid #eaecef; padding-bottom: 0.3em; color: #d73a49; }
+        .summary-box { background: #fff; border: 1px solid #d1d5da; border-radius: 6px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .highlight { background-color: #fffbdd; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 30px; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #e1e4e8; }
+        th { background-color: #f1f8ff; color: #0366d6; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+        tr:hover { background-color: #fafbfc; }
+        .val { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-weight: bold; color: #24292e; }
+        .val-neg { color: #d73a49; }
+        .val-pos { color: #28a745; }
+        .logic { font-size: 0.9em; color: #586069; }
+        .section-header { background: #24292e; color: white; font-weight: bold; padding: 10px 15px; }
+        .prop-name { font-weight: 600; color: #24292e; }
+    </style>
+</head>
+<body>
+
+<h1>🛡️ Reverse Engineering Deep-Dive: ABB</h1>
+
+<div class="summary-box">
+    <strong>Stock:</strong> ABB | <strong>Date:</strong> 2026-01-08 | <strong>Direction:</strong> <span class="val-neg">SHORT</span> | <strong>Close Return:</strong> <span class="val-neg">-5.07%</span><br>
+    <p>This session is a textbook example of an <span class="highlight">Institutional Liquidity Grab</span>. The stock initially trapped buyers with a 1.19% spike before reversing for a massive 7% intraday descent.</p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 25%;">Property</th>
+            <th style="width: 15%;">Value</th>
+            <th style="width: 60%;">Technical Analysis & Insight</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- 1. Volatility Extremes -->
+        <tr><td colspan="3" class="section-header">1. Volatility & Profit Potential</td></tr>
+        <tr><td><span class="prop-name">Max_Gain%</span></td><td><span class="val val-pos">+1.19%</span></td><td class="logic">The "Trap": Price moved significantly against the final direction, inducing false long entries.</td></tr>
+        <tr><td><span class="prop-name">Max_DD%</span></td><td><span class="val val-neg">-6.06%</span></td><td class="logic">The "Potential": The maximum profit available if entered at the absolute intraday peak.</td></tr>
+        <tr><td><span class="prop-name">Intraday Range</span></td><td><span class="val">7.25%</span></td><td class="logic">Total distance from High to Low. Extreme volatility indicating institutional participation.</td></tr>
+
+        <!-- 2. Trend & Context -->
+        <tr><td colspan="3" class="section-header">2. Structural Context</td></tr>
+        <tr><td><span class="prop-name">Trend_Aligned</span></td><td><span class="val" style="color:#28a745">True</span></td><td class="logic">The intraday short move was in harmony with the bearish daily structural trend (EMA 50/100).</td></tr>
+        <tr><td><span class="prop-name">Weekly_Color</span></td><td><span class="val val-neg">Red</span></td><td class="logic">The weekly candle was already bearish, providing a higher-timeframe "wind at the back."</td></tr>
+
+        <!-- 3. Intraday Dynamics -->
+        <tr><td colspan="3" class="section-header">3. Intraday Trend Quality</td></tr>
+        <tr><td><span class="prop-name">EMA_Crosses</span></td><td><span class="val">24</span></td><td class="logic">Relatively clean trend. For a 5% move, 24 crosses is low noise compared to typical 1% movers (40+).</td></tr>
+        <tr><td><span class="prop-name">EMA_Always_Correct</span></td><td><span class="val" style="color:#d73a49">False</span></td><td class="logic">Price did not stay on one side of the EMA entire day, mostly due to the early morning trap.</td></tr>
+
+        <!-- 4. Momentum & Exhaustion -->
+        <tr><td colspan="3" class="section-header">4. Momentum & Exhaustion</td></tr>
+        <tr><td><span class="prop-name">PreRev_ADX</span></td><td><span class="val">31.83</span></td><td class="logic">Strong momentum (ADX > 25) was present before the final late-day descent.</td></tr>
+        <tr><td><span class="prop-name">ADX_Exhaustion</span></td><td><span class="val" style="color:#28a745">True</span></td><td class="logic">Momentum decayed by EOD, suggesting the move was complete and a reversal or consolidation was likely next day.</td></tr>
+
+        <!-- 5. Timing -->
+        <tr><td colspan="3" class="section-header">5. Timing & Buckets</td></tr>
+        <tr><td><span class="prop-name">Best_Bucket</span></td><td><span class="val">4</span></td><td class="logic">The final 90 minutes (13:30 - 15:30) were the most violent, contributing 2.7% of the move.</td></tr>
+        <tr><td><span class="prop-name">B1_Move (Open)</span></td><td><span class="val">0.36%</span></td><td class="logic">The opening window was relatively quiet, used primarily for setting the trap.</td></tr>
+    </tbody>
+</table>
+
+<footer style="text-align: center; color: #6a737d; font-size: 0.8em; margin-top: 50px;">
+    Generated by Orbiter AI Reverse-Engineering Engine | Data Source: backtest_lab/data/stocks/ABB_minute.csv
+</footer>
+
+</body>
+</html>

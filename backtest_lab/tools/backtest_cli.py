@@ -17,11 +17,20 @@ from backtest_lab.core.reporter import calculate_advanced_stats
 from backtest_lab.generate_unified_matrix import UnifiedFastExitEngine, resample_data
 
 class BacktestEngine:
-    def __init__(self, scrips, start_date, end_date):
+    def __init__(self, scrips, start_date, end_date, scenario_path=None):
         self.scrips = scrips
         self.start_date = pd.to_datetime(start_date).date()
         self.end_date = pd.to_datetime(end_date).date()
         self.trades = []
+        self.scenario = None
+        if scenario_path:
+            import json
+            full_path = os.path.join('backtest_lab/scenarios', scenario_path)
+            if os.path.exists(full_path):
+                with open(full_path) as f:
+                    self.scenario = json.load(f)
+                    print(f"✅ Loaded Scenario: {self.scenario.get('name')}")
+        
         # Basic Lot mapping
         self.lot_sizes = {"RELIANCE": 250, "TCS": 175, "LT": 175, "SBIN": 750, "HDFCBANK": 550, "ICICIBANK": 700, "AXISBANK": 625, "KOTAKBANK": 400, "BOSCHLTD": 25}
 
@@ -45,6 +54,14 @@ class BacktestEngine:
         df['date'] = pd.to_datetime(df['date'])
         
         # Indicators
+        df['ema9_1m'] = talib.EMA(df['close'].values.astype(float), 9)
+        df['ema20_1m'] = talib.EMA(df['close'].values.astype(float), 20)
+        
+        # Calculate 1m Wick Stats for exit logic
+        df['tr'] = (df['high'] - df['low']).replace(0, 1e-9)
+        df['l_wick_pct'] = (df[['open', 'close']].min(axis=1) - df['low']) / df['tr']
+        df['u_wick_pct'] = (df['high'] - df[['open', 'close']].max(axis=1)) / df['tr']
+
         df_5m = df.set_index('date').resample('5min').agg({'close':'last'}).dropna()
         df_5m['ema9_5m'] = talib.EMA(df_5m['close'].values.astype(float), 9)
         
@@ -59,6 +76,9 @@ class BacktestEngine:
         df = df.merge(df_5m[['ema9_5m']], on='date', how='left').ffill()
         df = df.merge(df_15m[['ema5','ema9','ema20','ema50','adx']], on='date', how='left').ffill()
         
+        # New Ribbon Calculation for ef6
+        df['ribbon_gap'] = abs(df['ema5'] - df['ema9']) / df['ema5'] * 100
+
         # Trim to timeframe
         df = df[(df['date'].dt.date >= self.start_date) & (df['date'].dt.date <= self.end_date)].reset_index(drop=True)
         
@@ -67,7 +87,10 @@ class BacktestEngine:
         max_pnl = 0
         lot = self.lot_sizes.get(stock, 50)
         current_date = None
+        last_trade_date = None 
         orb_l = 0
+        yest_high = 0
+        yest_low = 0
         
         for i, row in df.iterrows():
             t = row['date'].time()
@@ -76,25 +99,70 @@ class BacktestEngine:
             if d != current_date:
                 current_date = d
                 day_data = df[df['date'].dt.date == d]
+                prev_day_data = df[df['date'].dt.date < d].tail(375)
+                if not prev_day_data.empty:
+                    yest_high = prev_day_data['high'].max()
+                    yest_low = prev_day_data['low'].min()
+                
                 orb_mask = (day_data['date'].dt.time >= dt_time(9,15)) & (day_data['date'].dt.time <= dt_time(10,0))
                 if orb_mask.any():
                     orb_l = day_data.loc[orb_mask, 'low'].min()
                 else: orb_l = 0
             
             if not in_position:
-                if t.minute % 15 == 0 and t >= dt_time(10, 15) and t <= dt_time(14, 30):
-                    is_short = (row['ema5'] < row['ema9']) and (row['ema20'] < row['ema50']) and (row['adx'] > 25)
-                    if is_short and row['close'] < orb_l:
-                        in_position = True
-                        entry_price = row['close']
-                        self.trades.append({'Time': row['date'], 'Stock': stock, 'Action': 'ENTRY (SHORT)', 'Price': entry_price, 'PnL_Rs': 0, 'Reason': 'Elite_Short'})
-                        max_pnl = 0
+                if d != last_trade_date:
+                    score = 0.0
+                    if self.scenario:
+                        if row['adx'] > 25: score += 0.25 
+                        if row['ribbon_gap'] < 0.05: score += 0.25 
+                        if row['close'] < yest_low: score += 0.50 
+                        
+                        threshold = self.scenario.get('TRADE_SCORE', 1.0)
+                        if score >= threshold and t >= dt_time(10, 15) and t <= dt_time(13, 00):
+                            in_position = True
+                            last_trade_date = d
+                            entry_price = row['close']
+                            max_pnl = 0
+                            self.trades.append({'Time': row['date'], 'Stock': stock, 'Action': 'ENTRY (SHORT)', 'Price': entry_price, 'PnL_Rs': 0, 'Reason': 'Pattern_Alpha'})
+                    else:
+                        if t.minute % 15 == 0 and t >= dt_time(10, 15) and t <= dt_time(14, 30):
+                            is_short = (row['ema5'] < row['ema9']) and (row['ema20'] < row['ema50']) and (row['adx'] > 25)
+                            if is_short and row['close'] < orb_l:
+                                in_position = True
+                                last_trade_date = d
+                                entry_price = row['close']
+                                max_pnl = 0
+                                self.trades.append({'Time': row['date'], 'Stock': stock, 'Action': 'ENTRY (SHORT)', 'Price': entry_price, 'PnL_Rs': 0, 'Reason': 'Elite_Short'})
             else:
                 pnl = (entry_price - row['close']) * lot
                 max_pnl = max(max_pnl, pnl)
-                exit_hit = row['close'] > row['ema9_5m'] or (max_pnl > 1000 and pnl < (max_pnl * 0.70)) or t >= dt_time(15, 15)
+                
+                # 1. Hard SL (0.5%)
+                hard_sl = entry_price * 1.005
+                
+                # 2. Dynamic Trailing SL
+                trailing_exit = False
+                if max_pnl > 2000:
+                    trailing_exit = pnl < (max_pnl * 0.85) # Keep 85%
+                elif max_pnl > 1000:
+                    trailing_exit = pnl < (max_pnl * 0.70) # Keep 70%
+                
+                # 3. Wick Reversal Check (3 consecutive lower wicks > 40%)
+                wick_reversal = False
+                if i > 2:
+                    prev_wicks = df.loc[i-2:i, 'l_wick_pct'].mean()
+                    if prev_wicks > 0.40: wick_reversal = True
+
+                exit_hit = (row['close'] > hard_sl) or \
+                           (row['close'] > row['ema20_1m']) or \
+                           trailing_exit or \
+                           wick_reversal or \
+                           (t >= dt_time(15, 15))
+                
                 if exit_hit:
-                    self.trades.append({'Time': row['date'], 'Stock': stock, 'Action': 'SQUARE-OFF', 'Price': row['close'], 'PnL_Rs': round(pnl, 2), 'Reason': 'FAST_EXIT'})
+                    reason = "HARD_SL" if row['close'] > hard_sl else ("EMA_EXIT" if row['close'] > row['ema20_1m'] else ("WICK_REV" if wick_reversal else "TSL"))
+                    if t >= dt_time(15, 15): reason = "EOD"
+                    self.trades.append({'Time': row['date'], 'Stock': stock, 'Action': 'SQUARE-OFF', 'Price': row['close'], 'PnL_Rs': round(pnl, 2), 'Reason': reason})
                     in_position = False
 
 if __name__ == "__main__":
@@ -102,10 +170,11 @@ if __name__ == "__main__":
     parser.add_argument('--stocks', nargs='+', required=True)
     parser.add_argument('--start', required=True)
     parser.add_argument('--end', required=True)
+    parser.add_argument('--scenario', default=None)
     parser.add_argument('--output', default='backtest_results')
     args = parser.parse_args()
     
-    runner = BacktestEngine(args.stocks, args.start, args.end)
+    runner = BacktestEngine(args.stocks, args.start, args.end, scenario_path=args.scenario)
     results_df = runner.run()
     
     if not results_df.empty:

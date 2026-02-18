@@ -35,16 +35,16 @@ class TestScanLogic(unittest.TestCase):
     def test_valid_percentage(self):
         """Verify normal market moves are calculated correctly with new formatting."""
         report = self._get_report_for_prices(ltp=1050, prev_close=1000, open_price=1000)
-        # Expected Format: - `TESTSTOCK `: **[+10.50]** | 🟢 ` +50.00` (`+5.00%`) | `₹1,050.00`
+        # Expected Format: - `TESTSTOCK `: **[+10.50]** | 🟢 📈 ` +50.00` (`+5.00%`) | `₹1,050.00`
         self.assertIn("`+5.00%`", report)
         self.assertIn("` +50.00`", report)
-        self.assertIn("🟢", report)
+        self.assertIn("🟢 📈", report)
 
     def test_garbage_open_price(self):
         """Verify that baseline < 10.0 is caught."""
         report = self._get_report_for_prices(ltp=1050, open_price=1.0, prev_close=0)
         self.assertIn("`+0.00%`", report)
-        self.assertIn("⚪", report)
+        self.assertIn("⚪ ➖", report)
 
     def test_impossible_move(self):
         """Verify that a >20% move is caught."""
