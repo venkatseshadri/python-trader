@@ -1,53 +1,42 @@
-
-__pycache__/
-.coverage
-.DS_Store
-.eggs/
-.env
-.env.local
-.idea/
-.installed.cfg
-.ipynb_checkpoints/
-.pytest_cache/
-.Python
+# IDE & System
 .vscode/
-*.egg
-*.egg-info/
-*.key
-*.log
-*.log.*
-*.pem
+.idea/
+.DS_Store
+__pycache__/
 *.py[cod]
-*.pyc
 *.so
-*.swo
-*.swp
-*~
-*$py.class
-# Backtest Lab Artifacts
-# Credentials and secrets
+.Python
+env/
+venv/
+.venv/
+shoonya_env/
+
+# Credentials & Secrets
 **/cred.yml
 **/credentials.json
 .env
 .env.local
-develop-eggs/
-dist/
-downloads/
-eggs/
-env/
-ENV/
-htmlcov/
-lib/
-lib64/
+*.key
+*.pem
+
+# Backtest Lab (Data & Large Artifacts)
+backtest_lab/data/
+backtest_lab/reports/
+backtest_lab/reports/*.html
+backtest_lab/scenarios_best/
+backtest_lab/scenarios/master_suite/
+backtest_lab/orbiter_revamp_data.csv
+backtest_lab/nifty_1pct_movers_detailed.csv
+
+# Application Logs & Cache
 logs/
-orbiter/data/nse_token_map.json
-orbiter/data/span/*.json
 orbiter/logs/
+orbiter/data/span/*.json
+orbiter/data/nse_token_map.json
 .orbiter.lock
-parts/
-sdist/
-shoonya_env/
-Thumbs.db
-var/
-venv/
-wheels/
+
+# Build & Dist
+build/
+dist/
+*.egg-info/
+*.egg
