@@ -213,6 +213,7 @@ class Orbiter:
             callbacks = {
                 "margin": self.summary.generate_margin_status,
                 "status": self.summary.generate_pre_session_report,
+                "scan": lambda: self.summary.generate_live_scan_report(self.state),
                 "cleanup": safe_cleanup
             }
             listener = TelegramCommandListener(callbacks)

@@ -94,6 +94,19 @@ class TelegramCommandListener:
              if "status" in self.callbacks:
                 msg = self.callbacks["status"]()
                 send_telegram_msg(msg)
+        elif text == "/scan":
+             if "scan" in self.callbacks:
+                msg = self.callbacks["scan"]()
+                send_telegram_msg(msg)
+        elif text == "/help":
+            msg = [
+                "🤖 *Orbiter Commands:*",
+                "📊 `/status` - Full session prep/report",
+                "💰 `/margin` - Concise margin update",
+                "🔍 `/scan` - Live scan scores & PnL",
+                "🧹 `/cleanup` - Reset Google Sheets"
+            ]
+            send_telegram_msg("\n".join(msg))
         elif text == "/cleanup":
             self._cleanup_pending = True
             self._cleanup_timestamp = now

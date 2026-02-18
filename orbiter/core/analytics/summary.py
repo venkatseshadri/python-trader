@@ -82,6 +82,66 @@ class SummaryManager:
         ]
         return "\n".join(msg)
 
+    def generate_live_scan_report(self, state) -> str:
+        """🔍 Real-time report of scans and active positions."""
+        msg = [f"📊 *{self.segment} LIVE STATUS*"]
+        msg.append("-" * 25)
+
+        # 1. Scan Stats
+        msg.append(f"🔎 *Scanning:* {len(state.symbols)} symbols")
+        
+        # 2. Top 10 Scans by Score (Absolute)
+        # We look into filter_results_cache which stores results from Evaluator
+        scores = []
+        for token, results in state.filter_results_cache.items():
+            total_score = sum(r.get('score', 0) for r in results.values() if isinstance(r, dict))
+            scores.append((token, total_score))
+        
+        # Sort by absolute score descending
+        top_10 = sorted(scores, key=lambda x: abs(x[1]), reverse=True)[:10]
+        if top_10:
+            msg.append("\n🔝 *Top 10 Scans:*")
+            for token, score in top_10:
+                symbol = state.client.get_symbol(token.split('|')[-1])
+                # Using company name for better readability if available
+                short_name = symbol.split('27')[0] if '27' in symbol else symbol
+                msg.append(f"- `{short_name}`: *{score:>+5.2f}*")
+        
+        # 3. Active Positions & PnL
+        if state.active_positions:
+            msg.append(f"\n💼 *Active Positions:* ({len(state.active_positions)})")
+            total_pnl = 0.0
+            for token, info in state.active_positions.items():
+                ltp = state.client.get_ltp(token) or info.get('entry_price', 0)
+                strategy = info.get('strategy', '')
+                
+                # PnL Calculation
+                pos_pnl = 0.0
+                if 'FUTURE' in strategy:
+                    profit_pct = ((float(ltp) - info['entry_price']) / info['entry_price'] * 100.0)
+                    if 'SHORT' in strategy: profit_pct = -profit_pct
+                    pos_pnl = (profit_pct / 100.0) * info['entry_price'] * info.get('lot_size', 0)
+                else:
+                    # Spread PnL
+                    atm_ltp = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
+                    hdg_ltp = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+                    if atm_ltp and hdg_ltp:
+                        current_net = atm_ltp - hdg_ltp
+                        entry_net = info.get('entry_net_premium', 0)
+                        pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
+                
+                total_pnl += pos_pnl
+                emoji = "🟢" if pos_pnl >= 0 else "🔴"
+                msg.append(f"{emoji} `{info['symbol']}`: ₹{pos_pnl:,.2f}")
+            
+            msg.append("-" * 20)
+            pnl_emoji = "💰" if total_pnl >= 0 else "💸"
+            msg.append(f"{pnl_emoji} *Total PnL:* ₹{total_pnl:,.2f}")
+        else:
+            msg.append("\n✅ *No active positions.*")
+
+        return "\n".join(msg)
+
     def generate_post_session_report(self) -> str:
         """3:30 PM (NFO) / End of MCX Post-Market Debrief."""
         limits = self.broker.get_limits()
