@@ -110,35 +110,39 @@ class SummaryManager:
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
-                # B. Calculate Day Change % (with Zerodha Parity & API Fetch)
-                ltp = float(data.get('lp', 0))
+                # B. Calculate Day Change % (with Zerodha Spot Parity)
+                # 🔄 Strategy: Fetch SPOT (NSE Cash) data for points/percentage to match Zerodha
+                ltp_spot = 0.0
                 baseline_price = 0.0
                 
-                # 🔄 ALWAYS fetch authoritative Previous Close from API ('c' field)
-                # This ensures 100% parity with Zerodha for the Top 10 symbols.
                 try:
-                    exch = token.split('|')[0]
-                    tok_id = token.split('|')[-1]
-                    quote = state.client.api.get_quotes(exchange=exch, token=tok_id)
-                    if quote:
-                        # 'c' is the Previous Day Close in Shoonya API
-                        baseline_price = float(quote.get('c') or 0)
+                    # 1. Resolve Spot Token (e.g., 'NTPC' -> 'NSE|11630')
+                    spot_token_id = state.client.get_token(clean_name)
+                    if spot_token_id and not spot_token_id.startswith('NFO'):
+                        # 2. Fetch authoritative Spot Quote
+                        quote = state.client.api.get_quotes(exchange='NSE', token=spot_token_id)
+                        if quote:
+                            ltp_spot = float(quote.get('lp') or 0)
+                            baseline_price = float(quote.get('c') or 0)
                 except:
                     pass
                 
-                # Fallback to live feed ONLY if API fetch failed
-                if baseline_price < 10.0:
+                # 3. Fallback to Future data ONLY if Spot fetch failed or LTP is 0
+                if ltp_spot == 0 or baseline_price == 0:
+                    ltp_display = float(data.get('lp', 0))
                     raw_c = float(data.get('c') or data.get('pc') or 0)
                     raw_o = float(data.get('o') or 0)
                     baseline_price = raw_c if raw_c > 10.0 else raw_o
+                else:
+                    ltp_display = ltp_spot
 
                 day_change = 0.0
                 day_points = 0.0
                 if baseline_price > 10.0: 
-                    day_points = ltp - baseline_price
+                    day_points = ltp_display - baseline_price
                     day_change = (day_points / baseline_price * 100.0)
                 
-                # Final Sanity: If change is physically impossible (>20% for NFO), reset to 0
+                # Final Sanity: If change is physically impossible (>20%), reset to 0
                 if abs(day_change) > 20.0:
                     day_change = 0.0
                     day_points = 0.0
@@ -148,7 +152,8 @@ class SummaryManager:
                 else:                 change_emoji = "➖"
                 
                 # Format: STOCK : [Score] [Points] [Percentage] [LTP]
-                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_points:>+6.2f} ({day_change:>+5.2f}%) | ₹{ltp:,.2f}")
+                # We use ltp_display (Spot) for the values to match Zerodha
+                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_points:>+6.2f} ({day_change:>+5.2f}%) | ₹{ltp_display:,.2f}")
         
         # 3. Active Positions & PnL
         if state.active_positions:
