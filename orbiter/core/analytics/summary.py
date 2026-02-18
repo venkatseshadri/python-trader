@@ -110,11 +110,18 @@ class SummaryManager:
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
-                # B. Calculate Day Change %
+                # B. Calculate Day Change % (with Sanity Filter)
                 ltp = float(data.get('lp', 0))
-                # Open or Prev Close as baseline
+                # Prefer Open ('o'), fallback to Prev Close ('pc')
                 open_price = float(data.get('o') or data.get('pc') or 0)
-                day_change = ((ltp - open_price) / open_price * 100.0) if open_price != 0 else 0.0
+                
+                day_change = 0.0
+                if open_price > 10.0: # Ignore garbage baselines like 0 or 1.0
+                    day_change = ((ltp - open_price) / open_price * 100.0)
+                
+                # Final Sanity: If change is physically impossible (>20% for NFO), reset to 0
+                if abs(day_change) > 20.0:
+                    day_change = 0.0
                 
                 change_emoji = "📈" if day_change >= 0 else "📉"
                 msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_change:>+5.2f}%")
