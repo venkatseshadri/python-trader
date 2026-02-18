@@ -2,7 +2,7 @@
 
 [![Status][status-badge]][status-link] [![Python][python-badge]][python-link] [![License][license-badge]][license-link]
 
-**ORBITER v3.1.0-20260217-9a5be34** - Unified Segment Multi-Market Trader
+**ORBITER v3.2.0-20260218-ce903b5** - Unified Segment Multi-Market Trader
 
 Scans NIFTY/MCX symbols for ORB breakouts, ranks by momentum strength, and executes Option Credit Spreads with margin-efficient leg sequencing.
 
@@ -91,4 +91,4 @@ Before pushing changes, always run the release script to sync versions and check
 ```
 This updates `version.txt`, `main.py`, and regenerates `checksums.txt` for environment parity.
 
-Version 3.1.0-20260218-9d71869 - Feb 2026
+Version 3.1.0-20260218-9c7aa8f - Feb 2026
