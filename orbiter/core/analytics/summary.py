@@ -101,35 +101,34 @@ class SummaryManager:
         # Sort by absolute score descending
         top_10 = sorted(scores, key=lambda x: abs(x[1]), reverse=True)[:10]
         if top_10:
-            msg.append("\n🔝 *Top 10 Scans (Score | Day %):*")
+            msg.append("\n🔝 *Top 10 Scans (Score | Move | LTP):*")
             for token, score in top_10:
                 data = state.client.SYMBOLDICT.get(token, {})
-                full_symbol = data.get('symbol', token)
                 
-                # A. Clean Stock Name (Remove contract dates/suffixes)
+                # A. Robust Name Resolution
+                token_id = token.split('|')[-1]
+                exch = token.split('|')[0]
+                raw_symbol = data.get('symbol') or state.broker.get_symbol(token_id, exchange=exch)
+                
                 import re
-                clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', full_symbol)
+                clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', raw_symbol)
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
                 # B. Calculate Day Change % (with Zerodha Spot Parity)
-                # 🔄 Strategy: Fetch SPOT (NSE Cash) data for points/percentage to match Zerodha
                 ltp_spot = 0.0
                 baseline_price = 0.0
                 
                 try:
-                    # 1. Resolve Spot Token (e.g., 'NTPC' -> 'NSE|11630')
-                    spot_token_id = state.client.get_token(clean_name)
-                    if spot_token_id and not spot_token_id.startswith('NFO'):
-                        # 2. Fetch authoritative Spot Quote
-                        quote = state.client.api.get_quotes(exchange='NSE', token=spot_token_id)
+                    spot_token_id = state.broker.get_token(clean_name)
+                    if spot_token_id and not spot_token_id.startswith('NFO') and not spot_token_id.startswith('MCX'):
+                        quote = state.broker.api.get_quotes(exchange='NSE', token=spot_token_id)
                         if quote:
                             ltp_spot = float(quote.get('lp') or 0)
                             baseline_price = float(quote.get('c') or 0)
                 except:
                     pass
                 
-                # 3. Fallback to Future data ONLY if Spot fetch failed or LTP is 0
                 if ltp_spot == 0 or baseline_price == 0:
                     ltp_display = float(data.get('lp', 0))
                     raw_c = float(data.get('c') or data.get('pc') or 0)
@@ -144,18 +143,22 @@ class SummaryManager:
                     day_points = ltp_display - baseline_price
                     day_change = (day_points / baseline_price * 100.0)
                 
-                # Final Sanity: If change is physically impossible (>20%), reset to 0
                 if abs(day_change) > 20.0:
                     day_change = 0.0
                     day_points = 0.0
                 
-                if day_change > 0:    change_emoji = "📈"
-                elif day_change < 0:  change_emoji = "📉"
-                else:                 change_emoji = "➖"
+                if day_change > 0:    change_emoji = "🟢"
+                elif day_change < 0:  change_emoji = "🔴"
+                else:                 change_emoji = "⚪"
                 
-                # Format: STOCK : [Score] [Points] [Percentage] [LTP]
-                # We use ltp_display (Spot) for the values to match Zerodha
-                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_points:>+6.2f} ({day_change:>+5.2f}%) | ₹{ltp_display:,.2f}")
+                # C. Final "Color Coded" Formatting
+                # Name (Mono) : [Score] | Emoji Points (Pct) | Price
+                row = (
+                    f"- `{clean_name:<10}`: **[{score:>+6.2f}]** | "
+                    f"{change_emoji} `{day_points:>+7.2f}` (`{day_change:>+5.2f}%`) | "
+                    f"`₹{ltp_display:,.2f}`"
+                )
+                msg.append(row)
         
         # 3. Active Positions & PnL
         if state.active_positions:
