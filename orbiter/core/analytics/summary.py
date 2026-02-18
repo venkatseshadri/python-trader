@@ -105,13 +105,17 @@ class SummaryManager:
             for token, score in top_10:
                 data = state.client.SYMBOLDICT.get(token, {})
                 
-                # A. Robust Name Resolution
+                # A. Robust Name Resolution (Check SYMBOLDICT first, then Master)
                 token_id = token.split('|')[-1]
                 exch = token.split('|')[0]
-                raw_symbol = data.get('symbol') or state.broker.get_symbol(token_id, exchange=exch)
+                
+                # Try multiple sources for the symbol name
+                raw_symbol = data.get('symbol') or data.get('tsym')
+                if not raw_symbol or '|' in str(raw_symbol):
+                    raw_symbol = state.broker.get_symbol(token_id, exchange=exch)
                 
                 import re
-                clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', raw_symbol)
+                clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', str(raw_symbol))
                 if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
                 clean_name = clean_name.strip()
 
@@ -147,12 +151,11 @@ class SummaryManager:
                     day_change = 0.0
                     day_points = 0.0
                 
-                if day_change > 0:    change_emoji = "🟢"
-                elif day_change < 0:  change_emoji = "🔴"
-                else:                 change_emoji = "⚪"
+                if day_change > 0:    change_emoji = "🟢 📈"
+                elif day_change < 0:  change_emoji = "🔴 📉"
+                else:                 change_emoji = "⚪ ➖"
                 
                 # C. Final "Color Coded" Formatting
-                # Name (Mono) : [Score] | Emoji Points (Pct) | Price
                 row = (
                     f"- `{clean_name:<10}`: **[{score:>+6.2f}]** | "
                     f"{change_emoji} `{day_points:>+7.2f}` (`{day_change:>+5.2f}%`) | "
