@@ -34,7 +34,7 @@ class Executor:
         for token, score in ranked:
             if token in state.active_positions: continue
 
-            if score >= state.config['TRADE_SCORE'] or score <= -state.config['TRADE_SCORE']:
+            if abs(score) >= state.config['TRADE_SCORE']:
                 data = state.client.SYMBOLDICT.get(token)
                 results = state.filter_results_cache.get(token, {})
                 orb_r = results.get('ef1_orb', {})
@@ -48,15 +48,10 @@ class Executor:
                     base_symbol = base_symbol.strip()
 
                 is_bull = score >= state.config['TRADE_SCORE']
+                sig = None
                 
                 # ✅ MCX: Trade Futures Directly
                 if token.startswith('MCX|'):
-                    if state.verbose_logs:
-                        print(f"DEBUG [Executor] Processing MCX Token: {token} (Bull: {is_bull})")
-                        # 🔥 Diagnostic: Check mapping for a known token
-                        test_id = '477167' # Copper
-                        print(f"DEBUG [Executor] Map check {test_id}: {state.client.TOKEN_TO_SYMBOL.get(test_id)}")
-
                     # Check SYMBOLDICT with both full key and raw ID
                     t_id_raw = token.split('|')[-1]
                     if token not in state.client.SYMBOLDICT and f"MCX|{t_id_raw}" not in state.client.SYMBOLDICT:
@@ -70,9 +65,6 @@ class Executor:
                         price_type=state.config.get('OPTION_PRICE_TYPE')
                     )
                     
-                    if state.verbose_logs:
-                        print(f"DEBUG [Executor] MCX Order Result: {order_res}")
-                    
                     if not order_res.get('ok'):
                         print(f"⚠️ Future order failed for {base_symbol}: {order_res.get('reason')}")
                         continue
@@ -82,7 +74,8 @@ class Executor:
                         'ltp': ltp, 'ltp_display': ltp_display, 'score': score,
                         'strategy': 'FUTURE_LONG' if is_bull else 'FUTURE_SHORT',
                         'dry_run': order_res.get('dry_run', False),
-                        'lot_size': order_res.get('lot_size', 0)
+                        'lot_size': order_res.get('lot_size', 0),
+                        'total_margin': order_res.get('total_margin', 0)
                     }
                     
                     state.active_positions[token] = {
@@ -129,11 +122,12 @@ class Executor:
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
                         'lot_size': spread.get('lot_size', 0), 'config': state.config
                     }
-                print(f"✅ POSITION ADDED: {token} @ {ltp}")
-                send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
-                
-                # 💰 Auto-Margin Update
-                self._send_margin_update()
+
+                if sig:
+                    buy_signals.append(sig)
+                    print(f"✅ POSITION ADDED: {token} @ {ltp}")
+                    send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
+                    self._send_margin_update()
         
         if buy_signals:
             self.log_buy_signals(buy_signals)
