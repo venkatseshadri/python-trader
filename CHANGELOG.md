@@ -1,5 +1,9 @@
 # 📜 Changelog
 
+## [3.6.7-20260218-9de01a9] - 2026-02-18
+### Changed
+- Automated release update.
+
 ## [3.6.6-20260218-55dc209] - 2026-02-18
 ### Changed
 - Automated release update.
