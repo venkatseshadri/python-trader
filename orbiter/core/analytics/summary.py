@@ -2,6 +2,22 @@ import logging
 from typing import Dict, List, Any
 from datetime import datetime
 
+class TaxCalculator:
+    """
+    🧮 Estimates Brokerage, STT, and Exchange Charges.
+    """
+    @staticmethod
+    def estimate_charges(num_orders: int, gross_pnl: float, segment: str) -> float:
+        # Brokerage: ₹20 per executed order leg
+        brokerage = num_orders * 20.0
+        
+        # STT/Exchange/GST (Proxy: 0.05% for NFO, 0.03% for MCX)
+        rate = 0.0005 if segment == 'NFO' else 0.0003
+        statutory = abs(gross_pnl) * rate if gross_pnl != 0 else 0
+        
+        # Total
+        return round(brokerage + statutory, 2)
+
 class SummaryManager:
     """
     📊 Orchestrates Session-Start and Session-End Reporting.
@@ -32,21 +48,17 @@ class SummaryManager:
 
         overnight = [p for p in positions if int(p.get('netqty', 0)) != 0]
         if overnight:
-            msg.append(f"
-📦 *Overnight Positions:* ({len(overnight)})")
+            msg.append(f"\n📦 *Overnight Positions:* ({len(overnight)})")
             for p in overnight:
                 qty = int(p['netqty'])
                 side = "🟢 LONG" if qty > 0 else "🔴 SHORT"
                 mtm = float(p.get('rpnl', 0)) + float(p.get('urpnl', 0))
                 msg.append(f"- {p['tsym']}: {side} {abs(qty)} (PnL: ₹{mtm:,.2f})")
         else:
-            msg.append("
-✅ *No overnight positions found.*")
+            msg.append("\n✅ *No overnight positions found.*")
 
-        msg.append("
-🚀 *Orbiter:* Ready for the session.")
-        return "
-".join(msg)
+        msg.append("\n🚀 *Orbiter:* Ready for the session.")
+        return "\n".join(msg)
 
     def generate_post_session_report(self) -> str:
         """3:30 PM (NFO) / End of MCX Post-Market Debrief."""
@@ -63,8 +75,8 @@ class SummaryManager:
         # 1. Financial Performance
         total_pnl = sum(float(p.get('rpnl', 0)) + float(p.get('urpnl', 0)) for p in positions)
         
-        # 2. Estimated Charges (Proxy: ₹25 per executed order for brokerage/taxes)
-        est_charges = len(executed) * 25.0
+        # 2. Detailed Charges
+        est_charges = TaxCalculator.estimate_charges(len(executed), total_pnl, self.segment)
         net_pnl = total_pnl - est_charges
         
         pnl_emoji = "🟢" if total_pnl >= 0 else "🔴"
@@ -72,20 +84,28 @@ class SummaryManager:
         msg.append(f"💸 *Est. Charges:* ₹{est_charges:,.2f}")
         msg.append(f"📈 *Net PnL (Est):* ₹{net_pnl:,.2f}")
         
-        # 3. Execution Activity
-        msg.append(f"
-🎯 *Activity:* {len(executed)} Orders Executed")
+        # 3. Portfolio Concentration Risk
+        if positions:
+            msg.append("\n📊 *Portfolio Concentration:*")
+            max_pos = None
+            max_val = -1.0
+            for p in positions:
+                pnl = abs(float(p.get('rpnl', 0)) + float(p.get('urpnl', 0)))
+                if pnl > max_val:
+                    max_val = pnl
+                    max_pos = p['tsym']
+            if max_pos:
+                msg.append(f"🔥 *Top Mover:* {max_pos} (₹{max_val:,.2f})")
         
-        # 4. Final Margin Status
+        # 4. Execution Activity
+        msg.append(f"\n🎯 *Activity:* {len(executed)} Orders Executed")
+        
+        # 5. Final Margin & T+1 Estimate
         if limits:
             msg.append(f"💰 *Final Margin:* ₹{limits['available']:,.2f}")
-        
-        # 5. T+1 Estimate (Crude: Add Net PnL to Cash)
-        if limits:
+            # T+1 Estimate: If NFO, profits are usually available next day.
             t1_margin = limits['available'] + net_pnl
             msg.append(f"📅 *T+1 Est. Margin:* ₹{t1_margin:,.2f}")
 
-        msg.append("
-💤 *Orbiter:* Session closed.")
-        return "
-".join(msg)
+        msg.append("\n💤 *Orbiter:* Session closed.")
+        return "\n".join(msg)
