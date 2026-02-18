@@ -91,7 +91,6 @@ class SummaryManager:
         msg.append(f"🔎 *Scanning:* {len(state.symbols)} symbols")
         
         # 2. Top 10 Scans by Score (Absolute)
-        # We look into filter_results_cache which stores results from Evaluator
         scores = []
         for token, results in state.filter_results_cache.items():
             total_score = sum(r.get('score', 0) for r in results.values() if isinstance(r, dict))
@@ -100,12 +99,25 @@ class SummaryManager:
         # Sort by absolute score descending
         top_10 = sorted(scores, key=lambda x: abs(x[1]), reverse=True)[:10]
         if top_10:
-            msg.append("\n🔝 *Top 10 Scans:*")
+            msg.append("\n🔝 *Top 10 Scans (Score | Day %):*")
             for token, score in top_10:
-                symbol = state.client.get_symbol(token.split('|')[-1])
-                # Using company name for better readability if available
-                short_name = symbol.split('27')[0] if '27' in symbol else symbol
-                msg.append(f"- `{short_name}`: *{score:>+5.2f}*")
+                data = state.client.SYMBOLDICT.get(token, {})
+                full_symbol = data.get('symbol', token)
+                
+                # A. Clean Stock Name (Remove contract dates/suffixes)
+                import re
+                clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', full_symbol)
+                if clean_name.endswith('-EQ'): clean_name = clean_name[:-3]
+                clean_name = clean_name.strip()
+
+                # B. Calculate Day Change %
+                ltp = float(data.get('lp', 0))
+                # Open or Prev Close as baseline
+                open_price = float(data.get('o') or data.get('pc') or 0)
+                day_change = ((ltp - open_price) / open_price * 100.0) if open_price != 0 else 0.0
+                
+                change_emoji = "📈" if day_change >= 0 else "📉"
+                msg.append(f"- `{clean_name:<10}`: *{score:>+6.2f}* | {change_emoji}{day_change:>+5.2f}%")
         
         # 3. Active Positions & PnL
         if state.active_positions:
