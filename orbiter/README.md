@@ -91,4 +91,4 @@ Before pushing changes, always run the release script to sync versions and check
 ```
 This updates `version.txt`, `main.py`, and regenerates `checksums.txt` for environment parity.
 
-Version 3.4.1-20260218-6a5144f - Feb 2026
+Version 3.4.2-20260218-ece78d0 - Feb 2026
