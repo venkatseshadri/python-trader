@@ -365,6 +365,12 @@ def log_scan_metrics(metrics):
         except:
             return 0.0
 
+    def get_val(item, side, key):
+        """Helper to safely extract margin fields from span_pe/span_ce dicts"""
+        data = item.get(f'span_{side.lower()}')
+        if not isinstance(data, dict): return 0.0
+        return float(data.get(key, 0.0))
+
     for item in metrics:
         filters_payload = item.get('filters') or {}
         orb = filters_payload.get('ef1_orb', {}) if isinstance(filters_payload.get('ef1_orb', {}), dict) else {}
@@ -387,37 +393,38 @@ def log_scan_metrics(metrics):
             "ORB Low": f"₹{try_float(orb.get('orb_low')):.2f}",
             "LTP": f"₹{try_float(item.get('ltp')):.2f}",
             "Trade Taken": "YES" if item.get('trade_taken') else "NO",
-            "SPAN PE": f"₹{try_float(item.get('span_pe')):.2f}",
-            "Exposure PE": f"₹{try_float(item.get('expo_pe')):.2f}",
-            "Total Margin PE": f"₹{try_float(item.get('total_margin_pe')):.2f}",
-            "Pledged Required PE": f"₹{try_float(item.get('pledged_required_pe')):.2f}",
-            "SPAN Trade PE": f"₹{try_float(item.get('span_trade_pe')):.2f}",
-            "Exposure Trade PE": f"₹{try_float(item.get('expo_trade_pe')):.2f}",
-            "Pre Trade PE": f"₹{try_float(item.get('pre_trade_pe')):.2f}",
-            "Add PE": f"₹{try_float(item.get('add_pe')):.2f}",
-            "Add Trade PE": f"₹{try_float(item.get('add_trade_pe')):.2f}",
-            "Ten PE": f"₹{try_float(item.get('ten_pe')):.2f}",
-            "Ten Trade PE": f"₹{try_float(item.get('ten_trade_pe')):.2f}",
-            "Del PE": f"₹{try_float(item.get('del_pe')):.2f}",
-            "Del Trade PE": f"₹{try_float(item.get('del_trade_pe')):.2f}",
-            "Spl PE": f"₹{try_float(item.get('spl_pe')):.2f}",
-            "Spl Trade PE": f"₹{try_float(item.get('spl_trade_pe')):.2f}",
+            
+            "SPAN PE": f"₹{get_val(item, 'PE', 'span'):.2f}",
+            "Exposure PE": f"₹{get_val(item, 'PE', 'expo'):.2f}",
+            "Total Margin PE": f"₹{get_val(item, 'PE', 'total_margin'):.2f}",
+            "Pledged Required PE": f"₹{get_val(item, 'PE', 'pledged_required'):.2f}",
+            "SPAN Trade PE": f"₹{get_val(item, 'PE', 'span_trade'):.2f}",
+            "Exposure Trade PE": f"₹{get_val(item, 'PE', 'expo_trade'):.2f}",
+            "Pre Trade PE": f"₹{get_val(item, 'PE', 'pre_trade'):.2f}",
+            "Add PE": f"₹{get_val(item, 'PE', 'add'):.2f}",
+            "Add Trade PE": f"₹{get_val(item, 'PE', 'add_trade'):.2f}",
+            "Ten PE": f"₹{get_val(item, 'PE', 'ten'):.2f}",
+            "Ten Trade PE": f"₹{get_val(item, 'PE', 'ten_trade'):.2f}",
+            "Del PE": f"₹{get_val(item, 'PE', 'del'):.2f}",
+            "Del Trade PE": f"₹{get_val(item, 'PE', 'del_trade'):.2f}",
+            "Spl PE": f"₹{get_val(item, 'PE', 'spl'):.2f}",
+            "Spl Trade PE": f"₹{get_val(item, 'PE', 'spl_trade'):.2f}",
 
-            "SPAN CE": f"₹{try_float(item.get('span_ce')):.2f}",
-            "Exposure CE": f"₹{try_float(item.get('expo_ce')):.2f}",
-            "Total Margin CE": f"₹{try_float(item.get('total_margin_ce')):.2f}",
-            "Pledged Required CE": f"₹{try_float(item.get('pledged_required_ce')):.2f}",
-            "SPAN Trade CE": f"₹{try_float(item.get('span_trade_ce')):.2f}",
-            "Exposure Trade CE": f"₹{try_float(item.get('expo_trade_ce')):.2f}",
-            "Pre Trade CE": f"₹{try_float(item.get('pre_trade_ce')):.2f}",
-            "Add CE": f"₹{try_float(item.get('add_ce')):.2f}",
-            "Add Trade CE": f"₹{try_float(item.get('add_trade_ce')):.2f}",
-            "Ten CE": f"₹{try_float(item.get('ten_ce')):.2f}",
-            "Ten Trade CE": f"₹{try_float(item.get('ten_trade_ce')):.2f}",
-            "Del CE": f"₹{try_float(item.get('del_ce')):.2f}",
-            "Del Trade CE": f"₹{try_float(item.get('del_trade_ce')):.2f}",
-            "Spl CE": f"₹{try_float(item.get('spl_ce')):.2f}",
-            "Spl Trade CE": f"₹{try_float(item.get('spl_trade_ce')):.2f}",
+            "SPAN CE": f"₹{get_val(item, 'CE', 'span'):.2f}",
+            "Exposure CE": f"₹{get_val(item, 'CE', 'expo'):.2f}",
+            "Total Margin CE": f"₹{get_val(item, 'CE', 'total_margin'):.2f}",
+            "Pledged Required CE": f"₹{get_val(item, 'CE', 'pledged_required'):.2f}",
+            "SPAN Trade CE": f"₹{get_val(item, 'CE', 'span_trade'):.2f}",
+            "Exposure Trade CE": f"₹{get_val(item, 'CE', 'expo_trade'):.2f}",
+            "Pre Trade CE": f"₹{get_val(item, 'CE', 'pre_trade'):.2f}",
+            "Add CE": f"₹{get_val(item, 'CE', 'add'):.2f}",
+            "Add Trade CE": f"₹{get_val(item, 'CE', 'add_trade'):.2f}",
+            "Ten CE": f"₹{get_val(item, 'CE', 'ten'):.2f}",
+            "Ten Trade CE": f"₹{get_val(item, 'CE', 'ten_trade'):.2f}",
+            "Del CE": f"₹{get_val(item, 'CE', 'del'):.2f}",
+            "Del Trade CE": f"₹{get_val(item, 'CE', 'del_trade'):.2f}",
+            "Spl CE": f"₹{get_val(item, 'CE', 'spl'):.2f}",
+            "Spl Trade CE": f"₹{get_val(item, 'CE', 'spl_trade'):.2f}",
 
             "F1 Score": try_float(orb.get('score')),
             "F2 Score": try_float(ema.get('score')),
@@ -446,6 +453,12 @@ def log_scan_metrics(metrics):
             })
         else:
             new_rows.append(row)
+
+    # Apply updates
+    if updates:
+        sheet.batch_update(updates)
+    if new_rows:
+        sheet.append_rows(new_rows)
 
     print(f"✅ {len(metrics)} scan metrics → Google Sheets @ {timestamp}")
 

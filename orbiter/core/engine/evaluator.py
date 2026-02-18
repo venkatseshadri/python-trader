@@ -182,7 +182,8 @@ class Evaluator:
                 'token': token, 'symbol': symbol_out, 'company_name': company_out,
                 'day_open': day_open, 'day_high': day_high, 'day_low': day_low, 'day_close': day_close,
                 'ltp': ltp, 'filters': filter_results,
-                'span_pe': span_pe, 'span_ce': span_ce
+                'span_pe': span_pe, 'span_ce': span_ce,
+                'trade_taken': token in state.active_positions
             })
 
             if state.verbose_logs:
