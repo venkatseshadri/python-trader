@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 ORBITER v3.4.4-20260218-7d44218 - Unified Segment Multi-Market Trader
+🚀 ORBITER v3.4.5-20260218-2059d34 - Unified Segment Multi-Market Trader
 """
 
 import time
@@ -29,7 +29,7 @@ import filters
 import config.config as global_config
 from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
 
-VERSION = "3.4.4-20260218-7d44218"
+VERSION = "3.4.5-20260218-2059d34"
 
 class LoggerWriter:
     def __init__(self, level, raw=False):
