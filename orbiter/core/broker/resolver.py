@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import calendar
+import time as _time
 from typing import Dict, Optional, Any, List
 from .master import ScripMaster
 
@@ -38,7 +39,7 @@ class ContractResolver:
         # 🔄 EMERGENCY: If still no expiries, force one more download and retry
         # Limit refresh to once per 5 minutes to avoid blocking
         last_refresh = getattr(self.master, '_last_refresh_time', 0)
-        now = time.time()
+        now = _time.time()
         
         if not expiries and (now - last_refresh > 300):
             print(f"🔄 No expiries for {symbol}. Forcing master refresh...")
