@@ -44,6 +44,7 @@ We identified three high-probability technical signatures:
 12. **`generate_comprehensive_report.py`**: Proof-based deep dive generator.
 13. **`analyze_15min_purity.py`**: Quantifies noise across 15m EMA periods.
 14. **`analyze_5min_purity.py`**: Quantifies noise across 5m EMA periods.
+15. **`analyze_ema_recovery.py`**: Calculates recovery rates for EMA breaches.
 
 ### 📊 Consolidated Data Evidence (`backtest_lab/data/`)
 - **`nifty_volatility_stats.csv`**: Heartbeat% ranking for all 105 stocks.
@@ -54,6 +55,7 @@ We identified three high-probability technical signatures:
 - **`reversal_pattern_study.csv`**: Proof of the "1.5% Extension Rule."
 - **`15min_ema_purity.csv`**: The 15m EMA20 stability proof (0.32 breaks).
 - **`5min_ema_purity.csv`**: Evidence of 5m noise (9.6 breaks).
+- **`ema_recovery_study.csv`**: The "Trend Mortality" proof (39% recovery on 15m EMA20).
 - **`intraday1pct/`**: 250,000+ granular 1-min session JSON files.
 
 ### 🖼️ Visual HTML Reports (`backtest_lab/`)

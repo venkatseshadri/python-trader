@@ -93,6 +93,24 @@ We quantified the "Noise" (number of price-to-EMA breaks) across 87 Heartbeat El
 
 ---
 
+## 8. The Law of Trend Mortality (EMA Recovery)
+We analyzed the "Recovery Rate" of EMA breaches to separate "False Dips" from true trend reversals across 87 Heartbeat Elite stocks.
+
+### EMA Recovery Ranking (Higher % = More Fakeouts):
+| Timeframe | EMA | Recovery Rate % | **Interpretation** |
+| :--- | :--- | :--- | :--- |
+| **5 min** | **EMA20** | **62.1%** | 🔴 **HIGH FAKEOUT:** 6 out of 10 breaches are false dips. |
+| **15 min** | **EMA9** | **60.3%** | 🔴 **HIGH FAKEOUT:** Zone of high noise/pullbacks. |
+| **15 min** | **EMA20** | **39.2%** | 🟢 **TRUE REVERSAL:** Trend dies **61%** of the time. |
+
+**Conclusion:** The **15-minute EMA20** is the "Truth Indicator." Unlike lower timeframes or shorter EMAs, a breach of the 15m EMA20 is a statistically significant event. If this level breaks, the high-volatility trend has likely expired.
+
+### Actionable Strategic Rule:
+- **Filter Philosophy:** Ignore breaches on 5m EMA20 or 15m EMA9 (False Dips).
+- **Execution:** Set the **Hard Trend Exit at 15m EMA20**. Because its recovery rate is so low (<40%), you are mathematically correct to exit the trade immediately upon breach.
+
+---
+
 ## 6. Multi-Factor Technical Correlations
 Detailed coefficients from the cross-study of 1,941 events.
 
