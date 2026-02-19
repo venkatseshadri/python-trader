@@ -14,7 +14,7 @@ class OrderExecutor:
 
         if not execute:
             self.logger.info(f"sim_order side={side} exchange={exch} symbol={tsym} qty={lot} product={product_type} remarks=orb_future_{side_name}")
-            return {**future_details, 'dry_run': True, 'side': side, 'lot_size': lot}
+            return {**future_details, 'dry_run': True, 'side': side, 'lot_size': lot, 'ok': True}
 
         # Place Order
         res = self.api.place_order(buy_or_sell=side, product_type=product_type, exchange=exch, tradingsymbol=tsym, 
