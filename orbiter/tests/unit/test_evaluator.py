@@ -59,8 +59,9 @@ class TestEvaluator(unittest.TestCase):
         score = self.evaluator.evaluate_filters(self.state, 'NFO|12345')
 
         # 4. Verify
-        # Base weight for F1 at 10 AM is 1.5. Score 10.0 * 1.5 = 15.0
-        self.assertEqual(score, 15.0)
+        # Since we set ENTRY_WEIGHTS in config, default time-based weights are bypassed
+        # Weight for index 0 is 1.0. Score 10.0 * 1.0 = 10.0
+        self.assertEqual(score, 10.0)
 
     def test_candle_stats_calculation(self):
         """Verify _candle_stats correctly parses OHLC from series"""

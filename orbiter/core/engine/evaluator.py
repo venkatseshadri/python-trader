@@ -111,31 +111,24 @@ class Evaluator:
                 for f in entry_filters: filter_results[f.key] = {'score': 0}
                 total = 0
             else:
-                for f in entry_filters:
-                    res = f.evaluate(data, candle_data, token=websocket_token)
-                    if not isinstance(res, dict): res = {'score': res if isinstance(res, (int, float)) else 0}
-                    filter_results[f.key] = res
-                    scores.append(res.get('score', 0))
-                
                 # 🧠 WEIGHTING LOGIC
-                # Use config weights if available, else fallback to research defaults
                 # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR, F8_SNIPER, F9_FLIP]
                 base_weights = state.config.get('ENTRY_WEIGHTS', [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0, 1.0])
                 
-                # Time-based decay for ORB (F1) only if using default weights
-                if 'ENTRY_WEIGHTS' not in state.config:
-                    now_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-                    if now_time < dt_time(11, 0): orb_w = 1.5    
-                    elif now_time < dt_time(13, 0): orb_w = 0.8 
-                    else: orb_w = 0.3                           
-                    base_weights[0] = orb_w
-                
-                # Align lengths
-                if len(base_weights) < len(scores):
-                    base_weights.extend([1.0] * (len(scores) - len(base_weights)))
+                for i, f in enumerate(entry_filters):
+                    # Only evaluate if weight > 0
+                    weight = base_weights[i] if i < len(base_weights) else 1.0
+                    
+                    if weight > 0:
+                        res = f.evaluate(data, candle_data, token=websocket_token)
+                        if not isinstance(res, dict): res = {'score': res if isinstance(res, (int, float)) else 0}
+                        filter_results[f.key] = res
+                        scores.append(res.get('score', 0) * weight)
+                    else:
+                        filter_results[f.key] = {'score': 0, 'status': 'DISABLED'}
+                        scores.append(0)
 
-                valid_scores = [(w, s) for w, s in zip(base_weights, scores) if not math.isnan(s)]
-                total = round(sum(w * s for w, s in valid_scores), 2) if valid_scores else 0
+                total = round(sum(s for s in scores if not math.isnan(s)), 2) if scores else 0
 
             if not has_live_data and ltp == 0: total = 0
             state.filter_results_cache[token] = {**filter_results, 'total': total}
