@@ -42,6 +42,8 @@ We identified three high-probability technical signatures:
 10. **`backtest_cli.py`**: The high-fidelity simulation engine (v3.9.0+).
 11. **`generate_attribute_html.py`**: Global dashboard generator.
 12. **`generate_comprehensive_report.py`**: Proof-based deep dive generator.
+13. **`analyze_15min_purity.py`**: Quantifies noise across 15m EMA periods.
+14. **`analyze_5min_purity.py`**: Quantifies noise across 5m EMA periods.
 
 ### 📊 Consolidated Data Evidence (`backtest_lab/data/`)
 - **`nifty_volatility_stats.csv`**: Heartbeat% ranking for all 105 stocks.
@@ -50,6 +52,8 @@ We identified three high-probability technical signatures:
 - **`orb_tp_correlation_results.csv`**: The "Total Budget" stable-budget proof.
 - **`gap_exhaustion_study.csv`**: Gap size vs. Pullback depth correlation (0.261).
 - **`reversal_pattern_study.csv`**: Proof of the "1.5% Extension Rule."
+- **`15min_ema_purity.csv`**: The 15m EMA20 stability proof (0.32 breaks).
+- **`5min_ema_purity.csv`**: Evidence of 5m noise (9.6 breaks).
 - **`intraday1pct/`**: 250,000+ granular 1-min session JSON files.
 
 ### 🖼️ Visual HTML Reports (`backtest_lab/`)
