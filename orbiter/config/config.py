@@ -2,9 +2,9 @@ from datetime import time as dt_time
 
 # 🔥 SHARED CONFIGURATION
 TOP_N = 10                    # Execute TOP 10 highest scoring
-TRADE_SCORE = 10.0            # Minimum total score (sum of %pts) to trigger trade
+TRADE_SCORE = 0.50            # Trigger on 0.5% ORB move
 
-ENTRY_WEIGHTS = [0.5, 1.0, 0.5, 0.5, 0.8, 1.2, 0.7]
+ENTRY_WEIGHTS = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 OPTION_EXECUTE = False
 OPTION_PRODUCT_TYPE = 'I'

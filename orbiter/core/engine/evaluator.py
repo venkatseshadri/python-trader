@@ -117,18 +117,23 @@ class Evaluator:
                     filter_results[f.key] = res
                     scores.append(res.get('score', 0))
                 
-                # 🧠 DYNAMIC WEIGHTING LOGIC
-                # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR, F8_SNIPER]
-                base_weights = [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0] 
+                # 🧠 WEIGHTING LOGIC
+                # Use config weights if available, else fallback to research defaults
+                # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR, F8_SNIPER, F9_FLIP]
+                base_weights = state.config.get('ENTRY_WEIGHTS', [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0, 1.0])
                 
-                # Time-based decay for ORB (F1)
-                now_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-                if now_time < dt_time(11, 0): orb_w = 1.5    # Morning: High importance
-                elif now_time < dt_time(13, 0): orb_w = 0.8 # Mid-day: Fading
-                else: orb_w = 0.3                           # Afternoon: Noise
+                # Time-based decay for ORB (F1) only if using default weights
+                if 'ENTRY_WEIGHTS' not in state.config:
+                    now_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+                    if now_time < dt_time(11, 0): orb_w = 1.5    
+                    elif now_time < dt_time(13, 0): orb_w = 0.8 
+                    else: orb_w = 0.3                           
+                    base_weights[0] = orb_w
                 
-                base_weights[0] = orb_w
-                
+                # Align lengths
+                if len(base_weights) < len(scores):
+                    base_weights.extend([1.0] * (len(scores) - len(base_weights)))
+
                 valid_scores = [(w, s) for w, s in zip(base_weights, scores) if not math.isnan(s)]
                 total = round(sum(w * s for w, s in valid_scores), 2) if valid_scores else 0
 
