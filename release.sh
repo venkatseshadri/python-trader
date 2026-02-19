@@ -11,9 +11,10 @@ else
     VERSION_BASE="3.1.0"
 fi
 
+# Use git describe for the official build version string
+GIT_DESC=$(git describe --tags --always --dirty --abbrev=7)
 DATE=$(date +%Y%m%d)
-GIT_HASH=$(git rev-parse --short=7 HEAD)
-FULL_VERSION="${VERSION_BASE}-${DATE}-${GIT_HASH}"
+FULL_VERSION="${GIT_DESC}-${DATE}"
 
 # 0. Pre-Release Test Suite
 echo "🧪 Running mandatory pre-release tests..."
@@ -25,8 +26,8 @@ fi
 
 echo "📦 Preparing release: ${FULL_VERSION}"
 
-# 1. Update version.txt
-echo "${FULL_VERSION}" > version.txt
+# 1. Update version.txt (Source of truth for version number only)
+echo "${VERSION_BASE}" > version.txt
 
 # 2. Update CHANGELOG.md (Add entry if not present)
 if ! grep -q "## \[${FULL_VERSION}\]" CHANGELOG.md; then
@@ -35,7 +36,7 @@ if ! grep -q "## \[${FULL_VERSION}\]" CHANGELOG.md; then
     sed -i '' "3i\\
 ## [${FULL_VERSION}] - $(date +%Y-%m-%d)\\
 ### Changed\\
-- Automated release update.\\
+- Automated release update using git describe.\\
 " CHANGELOG.md
 fi
 
