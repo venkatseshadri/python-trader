@@ -24,3 +24,35 @@ We identified three high-probability technical signatures:
 - Implement "Wick Dominance" as a final entry confirmation filter.
 - Analyze correlation between Gap size and Flip success rates.
 - Expand study to 500 trading days once the 50-day "Pattern Alpha" filters are tuned to positive P&L.
+
+---
+
+## 📂 Research Artifact Index (Feb 19, 2026)
+
+### 🛠️ Extraction & Analysis Tools (`backtest_lab/tools/`)
+1.  **`extract_intraday_movers.py`**: Initial filter for >1% move days.
+2.  **`extract_remaining_intraday.py`**: Batch processing for session extraction.
+3.  **`generate_per_stock_csv.py`**: Creates individual session indices for each stock.
+4.  **`calculate_volatility_stats.py`**: Calculates "Heartbeat%" across the universe.
+5.  **`analyze_orb_correlation.py`**: Massive convergence study (ORB vs 1%).
+6.  **`analyze_orb_tp_correlation.py`**: Tests "Dynamic Alpha" / Budget hypothesis.
+7.  **`analyze_gap_exhaustion.py`**: Correlates gaps with reversals.
+8.  **`analyze_reversal_patterns.py`**: Deep study of profit booking buckets (B1-B4).
+9.  **`pattern_discovery.py`**: Mathematical identification of Top 3 signatures.
+10. **`backtest_cli.py`**: The high-fidelity simulation engine (v3.9.0+).
+11. **`generate_attribute_html.py`**: Global dashboard generator.
+12. **`generate_comprehensive_report.py`**: Proof-based deep dive generator.
+
+### 📊 Consolidated Data Evidence (`backtest_lab/data/`)
+- **`nifty_volatility_stats.csv`**: Heartbeat% ranking for all 105 stocks.
+- **`orb_convergence_study.csv`**: 98.5% capture rate evidence.
+- **`orb_efficiency_stats.csv`**: Launchpad vs. Eatup rankings.
+- **`orb_tp_correlation_results.csv`**: The "Total Budget" stable-budget proof.
+- **`gap_exhaustion_study.csv`**: Gap size vs. Pullback depth correlation (0.261).
+- **`reversal_pattern_study.csv`**: Proof of the "1.5% Extension Rule."
+- **`intraday1pct/`**: 250,000+ granular 1-min session JSON files.
+
+### 🖼️ Visual HTML Reports (`backtest_lab/`)
+- **`attribute_analysis.html`**: Interactive index of all 1,941 mover events.
+- **`abb_full_master_proof.html`**: 50+ property deep-dive with mathematical proofs.
+- **`atgl_35_properties.html`**: Initial reverse-engineering case study.
