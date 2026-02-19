@@ -4,10 +4,20 @@
 2 DECIMAL PLACES - Production ready drop-in replacement
 """
 
+import json
+import os
 from datetime import datetime, timedelta
 import math
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
+
+# 📂 Load Research Master for dynamic weighting
+_base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_weights_path = os.path.join(_base, 'data', 'orb_weights_master.json')
+ORB_RESEARCH_MASTER = {}
+if os.path.exists(_weights_path):
+    with open(_weights_path) as f:
+        ORB_RESEARCH_MASTER = json.load(f)
 
 def calculate_orb_range(ret, token):
     """KEEP EXISTING ORB RANGE CALC (9:15-9:30 1min candles)"""
@@ -106,12 +116,21 @@ def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
     momentum_score = round(mom_pct * 100, 2)  # Raw %pts
     
     # 3️⃣ TOTAL F1 (Sum of %pts)
-    f1_score = round(distance_score + momentum_score, 2)
+    base_f1_score = distance_score + momentum_score
+    
+    # 🧪 APPLY RESEARCH MULTIPLIERS
+    # Extract symbol from token (e.g. 'NSE|SBIN' -> 'SBIN')
+    symbol_name = token.split('|')[-1] if '|' in token else token
+    research = ORB_RESEARCH_MASTER.get(symbol_name, {"reliability": 0.8, "precision": 0.8, "efficiency": 0.5}) # Default conservative
+    
+    # Redefined Formula: f(ORB) = Base * (Rel * Prec * Eff)
+    research_multiplier = research['reliability'] * research['precision'] * research['efficiency']
+    f1_score = round(base_f1_score * research_multiplier, 2)
     
     if VERBOSE_LOGS:
         dist_str = f"{abs(dist_pct*100):.2f}%" if 'dist_pct' in locals() and dist_pct != 0 else "0.00%"
         mom_str = f"{mom_pct*100:.2f}%"
-        print(f"📊 F1_SIMPLE {token}: D={dist_str:>5} M={mom_str:>5} F1={f1_score:>5.2f} {direction}")
+        print(f"📊 F1_REDEFINED {token}: Base={base_f1_score:>5.2f} x Mult={research_multiplier:.3f} -> Final F1={f1_score:>5.2f}")
     
     #return f1_score, round(orb_high, 2), round(orb_low, 2), round(orb_open or 0, 2), round(orbsize, 2)
     return {
