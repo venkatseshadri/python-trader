@@ -49,6 +49,7 @@ find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml
     -not -path "*/__pycache__/*" \
     -not -path "./logs/*" \
     -not -path "./orbiter/logs/*" \
+    -not -path "./backtest_lab/data/*" \
     -not -path "./orbiter/data/span/*" \
     -not -path "./orbiter/data/nse_token_map.json" \
     -not -path "./checksums.txt" \
