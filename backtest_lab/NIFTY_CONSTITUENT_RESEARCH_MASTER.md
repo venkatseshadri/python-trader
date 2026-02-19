@@ -1,4 +1,4 @@
-# 🛡️ NIFTY 1% Mover: Master Research Hub (Feb 19, 2026)
+# 🛡️ NIFTY Constituent Stock Research Master (Feb 19, 2026)
 
 This document is the unified "Source of Truth" for all institutional research, strategy laws, and technical evidence derived from the analysis of 1,941 NIFTY mover events.
 
