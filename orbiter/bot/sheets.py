@@ -517,14 +517,24 @@ def log_closed_positions(closed_data):
     
     rows = []
     for so in closed_data:
-        # Calculate Total PnL for row
-        atm_entry = float(so.get('atm_premium_entry', 0) or 0)
-        hedge_entry = float(so.get('hedge_premium_entry', 0) or 0)
-        atm_exit = float(so.get('atm_premium_exit', 0) or 0)
-        hedge_exit = float(so.get('hedge_premium_exit', 0) or 0)
+        strategy = so.get('strategy', '').upper()
         lot_size = int(so.get('lot_size', 0) or 0)
         
-        pnl_per_share = (atm_entry - hedge_entry) - (atm_exit - hedge_exit)
+        if 'FUTURE' in strategy:
+            entry_price = float(so.get('entry_price', 0) or 0)
+            exit_price = float(so.get('exit_price', 0) or 0)
+            if 'SHORT' in strategy:
+                pnl_per_share = entry_price - exit_price
+            else:
+                pnl_per_share = exit_price - entry_price
+        else:
+            # Calculate Realized PnL: (Entry Spread) - (Exit Spread)
+            atm_entry = float(so.get('atm_premium_entry', 0) or 0)
+            hedge_entry = float(so.get('hedge_premium_entry', 0) or 0)
+            atm_exit = float(so.get('atm_premium_exit', 0) or 0)
+            hedge_exit = float(so.get('hedge_premium_exit', 0) or 0)
+            pnl_per_share = (atm_entry - hedge_entry) - (atm_exit - hedge_exit)
+            
         total_pnl = pnl_per_share * lot_size
 
         row = [
