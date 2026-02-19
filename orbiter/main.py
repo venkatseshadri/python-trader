@@ -33,18 +33,22 @@ from utils.telegram_notifier import send_telegram_msg, TelegramCommandListener
 # Version Loading Logic
 def load_version():
     try:
-        import subprocess
-        # Use git describe to get nearest tag, commit count, and hash
-        # Output format: v1.2.3-4-gabc123 or just abc123 if no tags exist
-        version = subprocess.check_output(
-            ['git', 'describe', '--tags', '--always', '--dirty', '--abbrev=7'],
-            stderr=subprocess.DEVNULL
-        ).decode('ascii').strip()
+        # 1. Read Base Version (e.g., 3.9.6)
+        base_v = "3.9.6"
+        v_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'version.txt')
+        if os.path.exists(v_path):
+            with open(v_path, 'r') as f:
+                base_v = f.read().strip().split('-')[0]
         
+        # 2. Get Live Git Hash and Date
+        import subprocess
+        git_hash = subprocess.check_output(['git', 'rev-parse', '--short=7', 'HEAD'], 
+                                         stderr=subprocess.DEVNULL).decode('ascii').strip()
         date_str = datetime.now().strftime("%Y%m%d")
-        return f"{version}-{date_str}"
+        
+        # 3. Combine to original scheme: 3.9.6-20260219-a1b2c3d
+        return f"{base_v}-{date_str}-{git_hash}"
     except Exception:
-        # Fallback to a static string if git is unavailable
         return "3.9.6-STABLE"
 
 VERSION = load_version()

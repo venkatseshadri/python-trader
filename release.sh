@@ -4,17 +4,16 @@
 # Updates version.txt, main.py, README, and regenerates checksums.
 
 # Read current version base from version.txt (e.g. 3.2.1)
-# If version.txt doesn't exist, default to 3.1.0
 if [ -f "version.txt" ]; then
     VERSION_BASE=$(cat version.txt | cut -d'-' -f1)
 else
     VERSION_BASE="3.1.0"
 fi
 
-# Use git describe for the official build version string
-GIT_DESC=$(git describe --tags --always --dirty --abbrev=7)
+# Construct the full original-scheme version string
 DATE=$(date +%Y%m%d)
-FULL_VERSION="${GIT_DESC}-${DATE}"
+GIT_HASH=$(git rev-parse --short=7 HEAD)
+FULL_VERSION="${VERSION_BASE}-${DATE}-${GIT_HASH}"
 
 # 0. Pre-Release Test Suite
 echo "🧪 Running mandatory pre-release tests..."
@@ -26,7 +25,7 @@ fi
 
 echo "📦 Preparing release: ${FULL_VERSION}"
 
-# 1. Update version.txt (Source of truth for version number only)
+# 1. Update version.txt (Keep it simple, code adds hash at runtime)
 echo "${VERSION_BASE}" > version.txt
 
 # 2. Update CHANGELOG.md (Add entry if not present)
@@ -36,7 +35,7 @@ if ! grep -q "## \[${FULL_VERSION}\]" CHANGELOG.md; then
     sed -i '' "3i\\
 ## [${FULL_VERSION}] - $(date +%Y-%m-%d)\\
 ### Changed\\
-- Automated release update using git describe.\\
+- Automated release update using original versioning scheme.\\
 " CHANGELOG.md
 fi
 

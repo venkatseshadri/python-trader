@@ -1,5 +1,9 @@
 # 📜 Changelog
 
+## [3.9.6-20260219-23f9319] - 2026-02-19
+### Changed
+- Automated release update using original versioning scheme.
+
 ## [93b05d3-dirty-20260219] - 2026-02-19
 ### Changed
 - Automated release update using git describe.
