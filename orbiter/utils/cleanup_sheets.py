@@ -33,7 +33,9 @@ def cleanup_google_sheets(sheet_name="trade_log"):
             (TRADE_LOG_HEADER, "trade_log"),
             (POSITIONS_HEADER, "active_positions"),
             (CLOSED_POSITIONS_HEADER, "closed_positions"),
-            (SCAN_METRICS_HEADER, "scan_metrics")
+            (SCAN_METRICS_HEADER, "scan_metrics"),
+            (SCAN_METRICS_HEADER, "scan_metrics_mcx"),
+            (SCAN_METRICS_HEADER, "scan_metrics_nfo")
         ]
         
         for header, title in targets:
