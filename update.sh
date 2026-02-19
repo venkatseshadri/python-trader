@@ -80,4 +80,7 @@ else
     fi
 fi
 
-echo "✨ Update Complete! Build version: $(cat version.txt 2>/dev/null)"
+BASE_V=$(cat version.txt 2>/dev/null || echo "3.x")
+DATE_STR=$(date +%Y%m%d)
+GIT_HASH=$(git rev-parse --short=7 HEAD)
+echo "✨ Update Complete! Build version: ${BASE_V}-${DATE_STR}-${GIT_HASH}"

@@ -57,3 +57,17 @@ find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml
 
 echo "✅ Release ${FULL_VERSION} ready!"
 echo "Files updated: version.txt, CHANGELOG.md, checksums.txt"
+
+# 4. Commit and Tag
+echo "💾 Committing release files..."
+git add version.txt CHANGELOG.md checksums.txt
+git commit -m "chore: release ${FULL_VERSION}"
+
+TAG_NAME="v${VERSION_BASE}"
+if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+    echo "⚠️ Tag $TAG_NAME already exists. Skipping tag creation."
+else
+    echo "🏷️ Creating Git tag: $TAG_NAME"
+    git tag -a "$TAG_NAME" -m "Release $FULL_VERSION"
+    echo "🚀 Tag created."
+fi
