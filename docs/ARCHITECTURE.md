@@ -93,5 +93,20 @@ We faced persistent `future_not_found` errors because `place_future_order` was r
     - **Captures Lot Size** and saves to `data/mcx_futures_map.json`.
     - Updates `config/mcx/config.py` with the universe list.
 
+## 📈 Transparency & Monitoring
+
+The bot provides high-resolution logging to allow for forensic audit of every decision:
+
+### 1. Dual-Metric Position Tracking
+To troubleshoot "Leverage Divergence" (where stock price moves slightly but option premium swings wildly), the logs now display both layers of data:
+- **Futures:** Logs the current underlying LTP.
+- **Credit Spreads (NFO):** Logs the underlying stock LTP **AND** the option spread components (`[ATM: x.x HDG: y.y NET: z.z]`).
+- **Purpose:** This identifies if an exit was triggered by a genuine stock move or an erratic spike in option premiums (implied volatility).
+
+### 2. Consolidated Alerts
+Individual SL/TP hits are now aggregated into a single, detailed Telegram message per scan cycle, reducing notification noise while providing full PnL and LTP data.
+
+---
+
 ## ⚠️ Gotchas
 - **`core/client.py` is DEPRECATED.** It is a monolithic legacy file. Do not edit it. The active code is in `core/broker/`.

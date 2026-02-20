@@ -63,5 +63,18 @@ The bot now treats its memory as a persistent asset:
 
 ---
 
-## 6. Final Verdict
+## 6. Forensic Data Layer (Transparency)
+
+### The Problem: Invisible Volatility
+Prior to `v3.9.6`, the bot only logged the overall PnL %. It was impossible to tell if a trade closed because the stock actually reversed or because the option premium "spiked" due to erratic bid-ask spreads.
+
+### The Solution: High-Resolution Component Logging
+Every position scan now logs the full data stack:
+- **LTP:** The real-time price of the underlying stock.
+- **ATM/Hedge/Net:** The individual premium values making up the spread.
+- **Impact:** This allows for a **Forensic Audit** (as seen in the AXISBANK post-mortem), proving whether an exit was rational (based on stock move) or "dumb" (based on temporary option noise).
+
+---
+
+## 7. Final Verdict
 This design shifts the bot from a "Scalper" (reacting to 1-minute noise) to a "Trend Follower" (aligned with institutional 15-minute flows). It maximizes profit by staying in trades longer and minimizes costs by stopping the churn loop.
