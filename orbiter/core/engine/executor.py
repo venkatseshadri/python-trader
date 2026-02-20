@@ -49,34 +49,42 @@ class Executor:
                 ltp, ltp_display, symbol_full = safe_ltp(data, token)
                 
                 # 🔥 NEW: Trend-State Guards
-                candle_data = data.get('candles', []) if data else []
-                entry_atr = 0
-                if len(candle_data) >= 15:
-                    import talib
-                    closes_raw = [safe_float(c.get('intc')) for c in candle_data if c.get('stat')=='Ok']
-                    highs_raw = [safe_float(c.get('inth')) for c in candle_data if c.get('stat')=='Ok']
-                    lows_raw = [safe_float(c.get('intl')) for c in candle_data if c.get('stat')=='Ok']
-                    atrs = talib.ATR(np.array(highs_raw), np.array(lows_raw), np.array(closes_raw), timeperiod=14)
-                    entry_atr = float(atrs[-1]) if not np.isnan(atrs[-1]) else 0
+                try:
+                    candle_data = data.get('candles', []) if data else []
+                    entry_atr = 0
+                    if len(candle_data) >= 15:
+                        import talib
+                        # Strict filtering for valid candle data
+                        valid_candles = [c for c in candle_data if c.get('stat')=='Ok' and c.get('intc') and c.get('inth') and c.get('intl')]
+                        
+                        if len(valid_candles) < 15:
+                            print(f"🛡️ Guard: {symbol_full} insufficient valid candles ({len(valid_candles)} < 15). Skipping.")
+                            continue
 
-                    # 1. Slope Guard (EMA5 rising)
-                    closes = np.array(closes_raw, dtype=float)
-                    ema5 = talib.EMA(closes, timeperiod=5)
-                    if len(ema5) >= 6 and ema5[-1] <= ema5[-6]: # Negative/flat slope over last 5 mins
-                        print(f"🛡️ Guard: {symbol_full} slope negative ({ema5[-1]:.2f} <= {ema5[-6]:.2f}). Skipping.")
+                        closes_raw = np.array([safe_float(c.get('intc')) for c in valid_candles], dtype=float)
+                        highs_raw = np.array([safe_float(c.get('inth')) for c in valid_candles], dtype=float)
+                        lows_raw = np.array([safe_float(c.get('intl')) for c in valid_candles], dtype=float)
+                        
+                        atrs = talib.ATR(highs_raw, lows_raw, closes_raw, timeperiod=14)
+                        entry_atr = float(atrs[-1]) if not np.isnan(atrs[-1]) else 0
+
+                        # 1. Slope Guard (EMA5 rising)
+                        ema5 = talib.EMA(closes_raw, timeperiod=5)
+                        if len(ema5) >= 6 and (np.isnan(ema5[-1]) or np.isnan(ema5[-6]) or ema5[-1] <= ema5[-6]):
+                            print(f"🛡️ Guard: {symbol_full} slope negative or NaN. Skipping.")
+                            continue
+                        
+                        # 2. Freshness Guard (Near RECENT high)
+                        recent_high = np.max(highs_raw[-15:]) 
+                        freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
+                        if ltp < recent_high * freshness_limit:
+                            print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
+                            continue
+                    else:
+                        print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
                         continue
-                    
-                    # 2. Freshness Guard (Near RECENT high)
-                    # Use last 15 mins high instead of absolute Day High
-                    recent_high = max(highs_raw[-15:]) 
-                    
-                    # 🔥 Relaxed for MCX (0.5%) vs NFO (0.2%)
-                    freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
-                    if ltp < recent_high * freshness_limit:
-                        print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
-                        continue
-                else:
-                    print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
+                except Exception as e:
+                    print(f"⚠️ Guard Error for {symbol_full}: {e}")
                     continue
 
                 base_symbol = data.get('company_name') or symbol_full
