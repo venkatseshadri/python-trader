@@ -48,6 +48,21 @@ To maintain 99.9% uptime during market hours, the project enforces a strict boun
 
 ---
 
+## 🧠 State Memory & Guarded Execution
+
+To prevent high-frequency trade churn ("Again and Again" re-entries), the system implements a state-aware execution layer:
+
+### 1. Exit Cooldown (Memory)
+- **Mechanism:** `OrbiterState.exit_history` tracks the timestamp of every technical exit (SL/TP).
+- **Logic:** The `Executor` blocks re-entry into any symbol for **15 minutes** post-exit, allowing the price noise to settle.
+
+### 2. Trend-State Entry Guards
+Even if a signal score is high, the `Executor` performs two "Real-time Sanity Checks" before opening a position:
+- **Slope Guard:** Uses a 1-minute EMA5. Re-entry is blocked unless the current EMA5 is higher than its level 5 minutes ago (`EMA5_now > EMA5_prev`). This ensures the trend is actively moving up.
+- **Freshness Guard:** Blocks entries if the current price is stagnant. Price must be within **0.2% of the session high** to qualify as a fresh breakout.
+
+---
+
 ## 🧠 Critical Logic: MCX Token Resolution
 
 We faced persistent `future_not_found` errors because `place_future_order` was receiving prefixed tokens (`MCX|477167`) but the map only contained raw IDs (`477167`), or vice-versa.

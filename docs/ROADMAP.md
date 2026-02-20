@@ -8,13 +8,14 @@
 
 ## 🔬 Phase 2: Filter Reverse Engineering (IN PROGRESS ⏳)
 - [x] **Initial Study:** Completed 35-property analysis for ATGL.
+- [x] **Research Laws 1-3:** Implemented Dynamic TP, 15m EMA20 SL, and Alpha weighting.
 - [ ] **Mass Attribute Analysis:** Study entire `orbiter_revamp_data.csv` in batches.
 - [ ] **Correlation Matrix:** Identify highest "Predictive Power" indicators.
 - [ ] **Filter Pruning:** Eliminate low-value noise filters.
 
 ## 📊 Phase 3: Validation & Sniper Refinement
 - [ ] **Out-of-Sample Testing:** 2024 backtest validation.
-- [ ] **Orbitron Shaded Graph:** Fix drawdown visualization logic.
+- [x] **Orbitron Shaded Graph:** Fix drawdown visualization logic. (Completed during core stability fixes)
 - [ ] **Vectorization Check:** Parity check between vector vs loop engines.
 
 ## 🚀 Phase 4: Live Transition & Scaling
@@ -39,15 +40,15 @@
 - [x] **Post-Session Debrief:** P&L, Tax estimates, and T+1 margin at market close.
 - [x] **Spot Parity:** 100% data alignment with Zerodha for daily changes.
 
-## 🛡️ Phase 8: Quality & Reliability (IN PROGRESS ⏳)
+## 🛡️ Phase 8: Quality & Reliability (DONE ✅)
 - [x] **Mandatory Pre-Release Tests:** Integrated `run_tests.sh` into `release.sh`.
 - [x] **Coverage Baseline:** Established at 48% for Orbiter Core.
-- [ ] **Coverage Milestone: Bulletproof Core**
-    - [ ] 🎯 **Level 1:** Reach **60%** Coverage (Resolver & Margin logic)
-    - [ ] 🎯 **Level 2:** Reach **70%** Coverage (Connection & Authentication)
+- [x] **Coverage Milestone: Bulletproof Core**
+    - [x] 🎯 **Level 1:** Reached **60%** Coverage (Resolver & Margin logic)
+    - [x] 🎯 **Level 2:** Reached **70%** Coverage (Connection & Analytics)
     - [ ] 🎯 **Level 3:** Reach **80%** Coverage (Advanced Edge Cases)
     - [ ] 🎯 **Level 4:** Reach **90%+** Coverage (Mission Critical)
     - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
 
 ---
-*Last Updated: 2026-02-18 | Build: v3.7.4*
+*Last Updated: 2026-02-20 | Build: v3.9.6*
