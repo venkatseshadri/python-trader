@@ -14,15 +14,6 @@ class Executor:
         self.tp_filters = tp_filters
         self.summary = summary_manager
 
-    def _send_margin_update(self):
-        """Helper to send concise margin status to Telegram"""
-        if self.summary:
-            try:
-                msg = self.summary.generate_margin_status()
-                send_telegram_msg(msg)
-            except Exception as e:
-                print(f"⚠️ Could not send margin update: {e}")
-
     def rank_signals(self, state: OrbiterState, scores, syncer):
         """Process signals and place orders"""
         buy_signals = []
@@ -170,15 +161,30 @@ class Executor:
                         'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75)
                     }
 
-                if sig:
-                    buy_signals.append(sig)
-                    print(f"✅ POSITION ADDED: {token} @ {ltp}")
-                    send_telegram_msg(f"✅ *Position Opened*\nSymbol: `{symbol_full}`\nStrategy: `{sig['strategy']}`\nLTP: `{ltp}`\nScore: `{score}`")
-                    self._send_margin_update()
-        
         if buy_signals:
             self.log_buy_signals(buy_signals)
             syncer.sync_active_positions_to_sheets(state)
+            
+            # 🔥 NEW: Smart Batch Entry Notification
+            lines = []
+            for sig in buy_signals:
+                v_str = state.opening_scores.get(sig['token'], 0)
+                velocity = sig['score'] - v_str if v_str != 0 else 0
+                lines.append(f"• `{sig['symbol']}` @ {sig['ltp']} [Score: {sig['score']:.2f} ({velocity:+.2f})]")
+            
+            summary = "\n".join(lines)
+            try:
+                # Get current margin for the final line
+                margin_data = self.summary.get_current_funds()
+                available = margin_data.get('available_margin', 0)
+                
+                msg = (f"🚀 *Positions Opened*\n\n{summary}\n\n"
+                       f"💰 *Liquidity:* ₹{available/100000:.2f}L Available")
+                send_telegram_msg(msg)
+            except Exception as e:
+                print(f"⚠️ UX Alert Failed: {e}")
+                send_telegram_msg(f"🚀 *Positions Opened*\n\n{summary}")
+
         return buy_signals
 
     def square_off_all(self, state: OrbiterState, reason="EOD EXIT"):
