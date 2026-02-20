@@ -69,7 +69,7 @@ To ensure stability across system restarts and prevent over-trading, the system 
 ### 3. Trend-State Entry Guards
 Even if a signal score is high, the `Executor` performs two "Real-time Sanity Checks" before opening a position:
 - **Slope Guard:** Uses a 1-minute EMA5. Re-entry is blocked unless the current EMA5 is higher than its level 5 minutes ago (`EMA5_now > EMA5_prev`). This ensures the trend is actively moving up.
-- **Freshness Guard:** Blocks entries if the current price is stagnant. Price must be within **0.2% of the session high** to qualify as a fresh breakout.
+- **Relative Freshness Guard:** Blocks entries if the current price is stagnant. Price must be within **0.2% of the last 15 minutes' high** to qualify as a fresh breakout. This prevents the "Day High" from paralyzing late-session trades.
 
 ---
 
