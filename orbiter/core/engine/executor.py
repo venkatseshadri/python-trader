@@ -279,7 +279,7 @@ class Executor:
                 port_pnl += pos_pnl
                 
                 if state.verbose_logs:
-                    print(f"📈 FUT {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
+                    print(f"📈 FUT {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) [LTP: {ltp:.2f}] Max={info.get('max_profit_pct', 0.0):.2f}%")
                 
                 # For compatibility with legacy filters
                 atm_ltp, hdg_ltp = 0, 0 
@@ -300,7 +300,7 @@ class Executor:
                         info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
                         port_pnl += pos_pnl
                         if state.verbose_logs:
-                            print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) Max={info.get('max_profit_pct', 0.0):.2f}%")
+                            print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) [ATM: {atm_ltp:.2f} HDG: {hdg_ltp:.2f} NET: {current_net:.2f}] Max={info.get('max_profit_pct', 0.0):.2f}%")
             
             evaluated.append((token, info, ltp, data, atm_ltp, hdg_ltp))
 
