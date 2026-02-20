@@ -118,7 +118,9 @@ class Executor:
                         'lot_size': sig['lot_size'],
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
-                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000)
+                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
+                        'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
+                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75)
                     }
 
                 # ✅ NFO (or others): Use Credit Spreads
@@ -161,7 +163,9 @@ class Executor:
                         'lot_size': spread.get('lot_size', 0),
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
-                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000)
+                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
+                        'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
+                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75)
                     }
 
                 if sig:
