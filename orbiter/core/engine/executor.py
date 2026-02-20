@@ -209,13 +209,17 @@ class Executor:
                                                        exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
                                                        price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_{rem}')
 
+                # Calculate final spread for logging/alerts
+                exit_net = (atm_p_exit - hdg_p_exit) if (atm_p_exit and hdg_p_exit) else 0
+                
                 to_square.append({
                     'token': token, 'symbol': info.get('symbol'), 'company_name': info.get('company_name'),
                     'entry_price': info.get('entry_price'), 'exit_price': float(ltp), 'pct_change': pct, 'reason': reason,
                     'strategy': info.get('strategy'), 'expiry': info.get('expiry'), 'atm_strike': info.get('atm_strike'),
                     'hedge_strike': info.get('hedge_strike'), 'atm_symbol': info.get('atm_symbol'), 'hedge_symbol': info.get('hedge_symbol'),
                     'atm_premium_entry': info.get('atm_premium_entry'), 'hedge_premium_entry': info.get('hedge_premium_entry'),
-                    'atm_premium_exit': atm_p_exit, 'hedge_premium_exit': hdg_p_exit, 'lot_size': info.get('lot_size', 0),
+                    'atm_premium_exit': atm_p_exit, 'hedge_premium_exit': hdg_p_exit, 
+                    'exit_net_premium': exit_net, 'lot_size': info.get('lot_size', 0),
                     'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
                 })
 
@@ -241,6 +245,7 @@ class Executor:
                     exit_p = float(pos.get('exit_price', 0))
                     if 'SHORT' in strategy: pnl_val = (entry - exit_p) * lot_size
                     else: pnl_val = (exit_p - entry) * lot_size
+                    price_details = f"[LTP: {exit_p}]"
                 else:
                     # Spread
                     atm_e = float(pos.get('atm_premium_entry', 0) or 0)
@@ -249,9 +254,12 @@ class Executor:
                     hdg_x = float(pos.get('hedge_premium_exit', 0) or 0)
                     if atm_x and hdg_x:
                         pnl_val = ((atm_e - hdg_e) - (atm_x - hdg_x)) * lot_size
+                    
+                    exit_net = pos.get('exit_net_premium', 0)
+                    price_details = f"[LTP: {pos.get('exit_price')}] [Spread: {exit_net:.2f}]"
                 
                 total_pnl += pnl_val
-                lines.append(f"• `{pos['symbol']}`: {pos['pct_change']:.2f}% (₹{pnl_val:.2f})")
+                lines.append(f"• `{pos['symbol']}`: {pos['pct_change']:.2f}% (₹{pnl_val:.2f}) {price_details}")
 
             summary = "\n".join(lines)
             send_telegram_msg(f"⏹️ *Mass Square Off Complete*\nReason: `{reason}`\nTotal PnL: ₹{total_pnl:.2f}\n\n*Positions:*\n{summary}")
@@ -345,6 +353,9 @@ class Executor:
                                                        exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
                                                        price_type='MKT', price=0, retention='DAY', remarks=f'SLTP_{rem}')
 
+                # Calculate final spread for logging/alerts
+                exit_net = (atm_exit - hdg_exit) if (atm_exit and hdg_exit) else 0
+
                 so = {
                     'token': token, 'symbol': info.get('symbol'), 'company_name': info.get('company_name'),
                     'entry_price': info.get('entry_price'), 'exit_price': float(ltp), 'pct_change': res.get('pct', 0),
@@ -352,7 +363,7 @@ class Executor:
                     'atm_strike': info.get('atm_strike'), 'hedge_strike': info.get('hedge_strike'), 'atm_symbol': info.get('atm_symbol'),
                     'hedge_symbol': info.get('hedge_symbol'), 'atm_premium_entry': info.get('atm_premium_entry'),
                     'hedge_premium_entry': info.get('hedge_premium_entry'), 'atm_premium_exit': atm_exit,
-                    'hedge_premium_exit': hdg_exit, 'lot_size': info.get('lot_size', 0),
+                    'hedge_premium_exit': hdg_exit, 'exit_net_premium': exit_net, 'lot_size': info.get('lot_size', 0),
                     'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
                 }
                 to_square.append(so)

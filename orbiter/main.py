@@ -348,6 +348,7 @@ class Orbiter:
                                 exit_p = float(hit.get('exit_price', 0))
                                 if 'SHORT' in strategy: pnl_val = (entry - exit_p) * lot_size
                                 else: pnl_val = (exit_p - entry) * lot_size
+                                price_details = f"[LTP: {exit_p}]"
                             else:
                                 # Spread
                                 atm_e = float(hit.get('atm_premium_entry', 0) or 0)
@@ -356,8 +357,11 @@ class Orbiter:
                                 hdg_x = float(hit.get('hedge_premium_exit', 0) or 0)
                                 if atm_x and hdg_x:
                                     pnl_val = ((atm_e - hdg_e) - (atm_x - hdg_x)) * lot_size
+                                
+                                exit_net = hit.get('exit_net_premium', 0)
+                                price_details = f"[LTP: {hit.get('exit_price')}] [Spread: {exit_net:.2f}]"
                             
-                            lines.append(f"• `{hit.get('symbol')}`: {hit.get('reason', 'SL/TP')} (₹{pnl_val:.2f}) @ {hit.get('exit_price')}")
+                            lines.append(f"• `{hit.get('symbol')}`: {hit.get('reason', 'SL/TP')} (₹{pnl_val:.2f}) {price_details}")
                         
                         summary = "\n".join(lines)
                         send_telegram_msg(f"🎯 *Positions Closed*\n\n{summary}")
