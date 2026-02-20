@@ -95,7 +95,6 @@ class BrokerClient:
         if not symbols: return
         print(f"⏳ Priming {len(symbols)} symbols with last {lookback_mins}m data...")
         
-        import time as _time
         from datetime import datetime, timedelta
         import pytz
         
@@ -104,8 +103,15 @@ class BrokerClient:
         start_dt = end_dt - timedelta(minutes=lookback_mins + 15) # extra buffer for indicators
         
         success_count = 0
-        for key in symbols:
+        for item in symbols:
             try:
+                # Resolve key (EXCHANGE|TOKEN)
+                if '|' in item: key = item
+                else:
+                    token = self.get_token(item)
+                    exch = 'MCX' if self.segment_name == 'mcx' else 'NSE'
+                    key = f"{exch}|{token}"
+                
                 ex, tk = key.split('|')
                 res = self.api.get_time_price_series(exchange=ex, token=tk, starttime=int(start_dt.timestamp()), endtime=int(end_dt.timestamp()), interval=1)
                 
@@ -121,8 +127,10 @@ class BrokerClient:
                     
                     self.SYMBOLDICT[key]['candles'] = res
                     success_count += 1
+                else:
+                    print(f"⚠️ No history returned for {key}")
             except Exception as e:
-                print(f"⚠️ Failed to prime {key}: {e}")
+                print(f"⚠️ Failed to prime {item}: {e}")
         
         print(f"✅ Primed {success_count}/{len(symbols)} symbols successfully.")
 
