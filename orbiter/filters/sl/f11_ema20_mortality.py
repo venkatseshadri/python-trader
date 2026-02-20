@@ -1,5 +1,6 @@
 import pandas as pd
-import pandas_ta as ta
+import talib
+import numpy as np
 from utils.utils import safe_float
 
 def resample_to_15min(minute_candles):
@@ -11,19 +12,19 @@ def resample_to_15min(minute_candles):
 
     df = pd.DataFrame(minute_candles)
     
-    # Ensure numeric columns
-    cols = ['into', 'inth', 'intl', 'intc', 'v']
-    # Map API keys if needed (ss keys usually: into, inth, intl, intc, v)
-    # Check first row keys
-    first = minute_candles[0]
-    if 'time' in first: # Shoonya format
+    # Map Shoonya keys
+    # Keys usually: ssboe, into, inth, intl, intc, v, time
+    if 'time' in df.columns:
         df['time'] = pd.to_datetime(df['time'], format='%d-%m-%Y %H:%M:%S')
-    elif 'time' not in first and 'ssboe' in first:
-        # Fallback or different format handling
+    elif 'ssboe' in df.columns:
+        # ssboe is seconds since epoch
+        df['time'] = pd.to_datetime(df['ssboe'], unit='s')
+    else:
         return pd.DataFrame()
         
     for c in ['into', 'inth', 'intl', 'intc', 'v']:
-        df[c] = pd.to_numeric(df[c], errors='coerce')
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors='coerce')
 
     df = df.set_index('time')
     
@@ -36,8 +37,6 @@ def resample_to_15min(minute_candles):
         'v': 'sum'
     }
     
-    # Identify closed candles only? 
-    # For now, resample everything. We will drop the last row if it's incomplete in the logic.
     df_15 = df.resample('15min').agg(ohlc_dict).dropna()
     
     return df_15
@@ -48,27 +47,26 @@ def trend_mortality_sl(position, ltp, data):
     Law: If 15m candle closes below EMA20, the trend is dead (61% probability).
     """
     raw_candles = data.get('candles', [])
-    if not raw_candles or len(raw_candles) < 60: # Need enough for 15m resampling
+    if not raw_candles or len(raw_candles) < 60: 
         return {'hit': False}
 
     # 1. Resample to 15-min
     df_15 = resample_to_15min(raw_candles)
     
-    if len(df_15) < 20: # Need at least 20 bars for EMA20
+    if len(df_15) < 20: 
         return {'hit': False}
 
-    # 2. Calculate EMA 20
-    df_15['EMA20'] = ta.ema(df_15['intc'], length=20)
+    # 2. Calculate EMA 20 using TALIB
+    closes = df_15['intc'].values.astype(float)
+    try:
+        talib.set_compatibility(1) # Metastock compatibility
+        ema_series = talib.EMA(closes, timeperiod=20)
+    finally:
+        talib.set_compatibility(0)
+        
+    df_15['EMA20'] = ema_series
     
     # 3. Check Last COMPLETED Candle
-    # The last row in df_15 might be the current forming candle.
-    # We want the 'Close' of the *previous* fully formed 15m candle.
-    
-    # Check timestamp of last row vs current time?
-    # Simple heuristic: look at the second to last row [-2] to be safe it's closed.
-    # OR look at [-1] if we trust resampling cuts off correctly.
-    # Let's use [-2] (Previous completed 15m period) to avoid exiting mid-candle.
-    
     if len(df_15) < 2:
         return {'hit': False}
         
@@ -77,7 +75,7 @@ def trend_mortality_sl(position, ltp, data):
     close_price = last_completed['intc']
     ema_val = last_completed['EMA20']
     
-    if pd.isna(ema_val):
+    if np.isnan(ema_val):
         return {'hit': False}
 
     strategy = position.get('strategy', 'PUT_CREDIT_SPREAD')
