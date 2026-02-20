@@ -42,9 +42,16 @@ class OrbiterState:
                     return obj.isoformat()
                 raise TypeError(f"Type {type(obj)} not serializable")
 
+            # 🔥 Deep copy and sanitize active_positions to remove non-serializable objects
+            sanitized_positions = {}
+            for token, info in self.active_positions.items():
+                pos_copy = info.copy()
+                if 'config' in pos_copy: del pos_copy['config'] # 🔥 Remove non-serializable config
+                sanitized_positions[token] = pos_copy
+
             data = {
                 'last_updated': datetime.now().timestamp(),
-                'active_positions': self.active_positions,
+                'active_positions': sanitized_positions,
                 'exit_history': self.exit_history,
                 'opening_scores': self.opening_scores
             }
