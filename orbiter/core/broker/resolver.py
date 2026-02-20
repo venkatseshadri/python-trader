@@ -23,11 +23,11 @@ class ContractResolver:
         return [row for row in self.master.DERIVATIVE_OPTIONS if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('expiry') == expiry_str and row.get('exchange') == exchange]
 
     def _select_expiry(self, symbol: str, expiry_type: str, instrument: str) -> Optional[datetime.date]:
-        if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master("NFO"); self.master.download_scrip_master("MCX")
+        exchange = 'MCX' if instrument == 'OPTCOM' else 'NFO'
+        if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         
         def find_exp():
             exps = set()
-            exchange = 'MCX' if instrument == 'OPTCOM' else 'NFO'
             for row in self.master.DERIVATIVE_OPTIONS:
                 if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('exchange') == exchange:
                     exp = self.master._parse_expiry_date(row.get('expiry'))
