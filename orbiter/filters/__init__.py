@@ -58,7 +58,7 @@ FILTERS = [
     # Stop Loss Filters
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
     # Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),
-    Filter('sf3_st_reversal', 'sl', sl_supertrend_reversal),
+    # Filter('sf3_st_reversal', 'sl', sl_supertrend_reversal),
     Filter('sf11_trend_mortality', 'sl', trend_mortality_sl),
     # Take Profit Filters
     Filter('tf1_premium_decay_10', 'tp', lambda position, ltp, data: tp_premium_decay_10(position, ltp, data)),
