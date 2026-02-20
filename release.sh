@@ -41,7 +41,7 @@ fi
 
 # 3. Regenerate checksums.txt (MUST BE DONE AFTER VERSION UPDATES)
 echo "🧮 Regenerating checksums.txt..."
-find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" -o -name "Dockerfile" -o -name "*.sh" -o -name "*.service" -o -name "*.env" \) \
+find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "Dockerfile" -o -name "*.sh" -o -name "*.service" -o -name "*.env" \) \
     -not -path "*/.*" \
     -not -path "./.venv/*" \
     -not -path "./shoonya_env/*" \
@@ -50,8 +50,8 @@ find . -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" -o -name "*.yml
     -not -path "./logs/*" \
     -not -path "./orbiter/logs/*" \
     -not -path "./backtest_lab/data/*" \
+    -not -path "./orbiter/data/*.json" \
     -not -path "./orbiter/data/span/*" \
-    -not -path "./orbiter/data/nse_token_map.json" \
     -not -path "./checksums.txt" \
     -exec shasum -a 256 {} + | sed 's|  \./|  |' | sort > checksums.txt
 
