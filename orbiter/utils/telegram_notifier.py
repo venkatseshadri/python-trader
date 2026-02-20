@@ -107,6 +107,10 @@ class TelegramCommandListener:
             if "margin" in self.callbacks:
                 msg = self.callbacks["margin"]()
                 send_telegram_msg(msg)
+        elif text == "/pnl":
+            if "pnl" in self.callbacks:
+                msg = self.callbacks["pnl"]()
+                send_telegram_msg(msg)
         elif text == "/status":
              if "status" in self.callbacks:
                 msg = self.callbacks["status"]()
@@ -124,6 +128,8 @@ class TelegramCommandListener:
                 "🤖 *Orbiter C2 - Command Reference*",
                 "---",
                 "📊 `/status` - *The Big Picture:* Shows total buying power, collateral vs ledger cash, and any overnight positions.",
+                "",
+                "💰 `/pnl` - *Live Profits:* Concise snapshot of active positions and current floating PnL (₹).",
                 "",
                 "💰 `/margin` - *Wallet Check:* Concise snapshot of available margin and current utilization.",
                 "",
