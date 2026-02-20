@@ -2,7 +2,8 @@ from datetime import datetime
 import time
 import pytz
 import re
-from utils.utils import safe_ltp
+import numpy as np
+from utils.utils import safe_ltp, safe_float
 from utils.telegram_notifier import send_telegram_msg
 from .state import OrbiterState
 
@@ -49,20 +50,30 @@ class Executor:
                 
                 # 🔥 NEW: Trend-State Guards
                 candle_data = data.get('candles', []) if data else []
-                if len(candle_data) >= 10:
-                    # 1. Slope Guard (EMA5 rising)
+                entry_atr = 0
+                if len(candle_data) >= 15:
                     import talib
-                    closes = np.array([safe_float(c.get('intc')) for c in candle_data if c.get('stat')=='Ok'], dtype=float)
+                    closes_raw = [safe_float(c.get('intc')) for c in candle_data if c.get('stat')=='Ok']
+                    highs_raw = [safe_float(c.get('inth')) for c in candle_data if c.get('stat')=='Ok']
+                    lows_raw = [safe_float(c.get('intl')) for c in candle_data if c.get('stat')=='Ok']
+                    atrs = talib.ATR(np.array(highs_raw), np.array(lows_raw), np.array(closes_raw), timeperiod=14)
+                    entry_atr = float(atrs[-1]) if not np.isnan(atrs[-1]) else 0
+
+                    # 1. Slope Guard (EMA5 rising)
+                    closes = np.array(closes_raw, dtype=float)
                     ema5 = talib.EMA(closes, timeperiod=5)
                     if len(ema5) >= 6 and ema5[-1] <= ema5[-6]: # Negative/flat slope over last 5 mins
-                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} slope negative. Skipping.")
+                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} slope negative ({ema5[-1]:.2f} <= {ema5[-6]:.2f}). Skipping.")
                         continue
                     
                     # 2. Freshness Guard (Near session high)
-                    day_high = max([safe_float(c.get('inth')) for c in candle_data if c.get('stat')=='Ok'])
+                    day_high = max(highs_raw)
                     if ltp < day_high * 0.998: # More than 0.2% below high
-                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (below high). Skipping.")
+                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < High {day_high} * 0.998). Skipping.")
                         continue
+                else:
+                    if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
+                    continue
 
                 base_symbol = data.get('company_name') or symbol_full
                 if isinstance(base_symbol, str):
@@ -112,8 +123,11 @@ class Executor:
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
-                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75)
+                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75),
+                        'entry_atr': entry_atr,
+                        'atr_sl_mult': 1.5 # Standard for Futures
                     }
+                    buy_signals.append(sig) # 🔥 Capture signal for summary alert
 
                 # ✅ NFO (or others): Use Credit Spreads
                 else:
@@ -158,8 +172,11 @@ class Executor:
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
-                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75)
+                        'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75),
+                        'entry_atr': entry_atr,
+                        'atr_sl_mult': 0.25 # Tight for Premium Spreads
                     }
+                    buy_signals.append(sig) # 🔥 Capture signal for summary alert
 
         if buy_signals:
             self.log_buy_signals(buy_signals)
