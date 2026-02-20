@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.10.9-20260220-b873975] - 2026-02-20
+### Changed
+- Automated release update using original versioning scheme.
+
 ## [3.10.8-20260220-12bde07] - 2026-02-20
 ### Changed
 - Automated release update using original versioning scheme.
