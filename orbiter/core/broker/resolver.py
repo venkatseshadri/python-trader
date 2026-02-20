@@ -17,9 +17,9 @@ class ContractResolver:
         return d == last_date
 
     def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str):
-        if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master("NFO"); self.master.download_scrip_master("MCX")
-        expiry_str = expiry.isoformat()
         exchange = 'MCX' if instrument == 'OPTCOM' else 'NFO'
+        if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
+        expiry_str = expiry.isoformat()
         return [row for row in self.master.DERIVATIVE_OPTIONS if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('expiry') == expiry_str and row.get('exchange') == exchange]
 
     def _select_expiry(self, symbol: str, expiry_type: str, instrument: str) -> Optional[datetime.date]:
@@ -41,10 +41,10 @@ class ContractResolver:
         last_refresh = getattr(self.master, '_last_refresh_time', 0)
         now = _time.time()
         
-        if not expiries and (now - last_refresh > 300):
-            print(f"🔄 No expiries for {symbol}. Forcing master refresh...")
-            self.master.download_scrip_master("NFO")
-            self.master.download_scrip_master("MCX")
+        if not exps and (now - last_refresh > 300):
+            target_exch = 'MCX' if instrument == 'OPTCOM' else 'NFO'
+            print(f"🔄 No expiries for {symbol}. Forcing {target_exch} master refresh...")
+            self.master.download_scrip_master(target_exch)
             self.master._last_refresh_time = now
             expiries = find_exp()
 

@@ -15,6 +15,7 @@
         - `master/`: Loads Scrip Masters and Custom Maps.
         - `executor/`: Handles Order Placement logic.
         - `resolver/`: Resolves Symbols (Future/Option chains).
+            - **Isolated Resolution:** Implements segment-specific master refreshing. If an MCX symbol fails to resolve, it ONLY refreshes the MCX master, preventing massive NFO downloads from pausing the commodity session.
 
 3.  **`core/engine/executor.py`:**
     - Consumes signals and routes orders.
