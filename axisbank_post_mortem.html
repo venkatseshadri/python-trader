@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Post-Mortem: AXISBANK Trade Analysis</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 40px auto; padding: 0 20px; background-color: #f9f9f9; }
+        h1 { color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
+        h2 { color: #1976d2; margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f5f5f5; font-weight: 600; }
+        .profit { color: #2e7d32; font-weight: bold; }
+        .loss { color: #c62828; font-weight: bold; }
+        .highlight { background-color: #fff9c4; padding: 2px 4px; border-radius: 3px; }
+        .summary-box { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin: 20px 0; }
+        .verdict { background: #ffebee; border-left: 5px solid #f44336; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>📉 Post-Mortem: AXISBANK Profit Erosion</h1>
+    <div class="summary-box">
+        <strong>Trade ID:</strong> NFO|59215 <br>
+        <strong>Strategy:</strong> PUT_CREDIT_SPREAD <br>
+        <strong>Outcome:</strong> <span class="loss">Negative Exit (₹-31.25)</span> after <span class="profit">+5.23% Peak Profit</span>.
+    </div>
+
+    <h2>1. Step-by-Step Execution Log</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Action</th>
+                <th>Underlying LTP</th>
+                <th>PnL %</th>
+                <th>Logic / Decision</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>13:56:55</td>
+                <td><strong>OPEN</strong></td>
+                <td>1372.20</td>
+                <td>0.00%</td>
+                <td>Breakout Entry confirmed.</td>
+            </tr>
+            <tr class="highlight">
+                <td>13:57:22</td>
+                <td>PEAK</td>
+                <td>1373.00</td>
+                <td class="profit">+5.23%</td>
+                <td><strong>Trail Activated!</strong> Floor set at 0.23% (Max - 5%).</td>
+            </tr>
+            <tr>
+                <td>13:58:15</td>
+                <td>MONITOR</td>
+                <td>1372.50</td>
+                <td class="profit">+3.92%</td>
+                <td>Holding. Profit fell but stayed above floor (0.23%).</td>
+            </tr>
+            <tr class="highlight">
+                <td>13:59:27</td>
+                <td>TRIGGER</td>
+                <td>1372.10</td>
+                <td class="loss">-0.65%</td>
+                <td><strong>SL Hit!</strong> Price plummeted through the 0.23% threshold.</td>
+            </tr>
+            <tr>
+                <td>13:59:27</td>
+                <td><strong>EXIT</strong></td>
+                <td>1372.10</td>
+                <td class="loss">-0.65%</td>
+                <td>Final Simulated Result: <strong>₹-31.25</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Technical Failure Analysis</h2>
+    
+    <h3>A. The "Amnesia" Factor (The Give-back)</h3>
+    <p>The <code>tf2_trailing_sl</code> logic used a static <strong>5.0% buffer</strong>. Because the bot waited for a full 5% drop from the peak to exit, it allowed the trade to round-trip from a significant gain back into a loss. For highly leveraged Credit Spreads, 5% is a "mile wide" and offers zero protection.</p>
+
+    <h3>B. Execution Latency (The 5s Blind Spot)</h3>
+    <p>The price move from +3.92% to -0.65% happened in a single scan cycle. The bot was "blind" during the critical moments of the reversal.</p>
+
+    <div class="verdict">
+        <h2>3. The "Stupid Logic" Verdict</h2>
+        <p>Using a <strong>5% Trailing Buffer</strong> on an instrument that only moves 1-2% a day is like having a seatbelt that only clicks in <em>after</em> the crash. The logic is too loose for the high-gamma environment of NFO options.</p>
+    </div>
+
+    <h2>4. Corrective Design: "Profit Guard Pro"</h2>
+    <ul>
+        <li><strong>Tighter Activation:</strong> Start trailing at 1.0% profit (instead of 5.0%).</li>
+        <li><strong>Tighter Buffer:</strong> Use a 0.5% - 0.75% trailing gap.</li>
+        <li><strong>Peak Lock:</strong> Once profit exceeds 3.0%, the bot should NEVER allow the trade to go red. It must lock in at least 50% of the peak.</li>
+    </ul>
+</body>
+</html>

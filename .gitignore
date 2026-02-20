@@ -23,10 +23,18 @@ shoonya_env/
 backtest_lab/data/
 backtest_lab/reports/
 backtest_lab/reports/*.html
+backtest_lab/research/
 backtest_lab/scenarios_best/
 backtest_lab/scenarios/master_suite/
 backtest_lab/orbiter_revamp_data.csv
 backtest_lab/nifty_1pct_movers_detailed.csv
+*.csv
+*.CSV
+*.zip
+*.json
+!orbiter/data/*.json # Keep config JSONs
+!orbiter/data/span/cache.json
+!backtest_results/*.xlsx
 
 # Application Logs & Cache
 logs/
