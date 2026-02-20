@@ -55,15 +55,18 @@ To ensure stability across system restarts and prevent over-trading, the system 
 ### 1. Session Persistence (Disk-based Memory)
 - **Mechanism:** `OrbiterState.save_session()` and `load_session()`.
 - **Storage:** `orbiter/data/session_state.json`.
-- **Flow:**
-    - **Startup:** The bot reads the state file to recover `active_positions` and `exit_history`.
-    - **Execution:** Every loop iteration (5s) persists the current state to disk.
+- **Containers:** 
+    - `active_positions`: Current trades.
+    - `exit_history`: Cooldown timestamps.
+    - `opening_scores`: The first valid score of the day for each stock (baseline for Velocity).
 - **Freshness Protocol:** 
-    - **Expiry:** If the state file is >30 minutes old, it is considered "stale" and discarded to prevent trading on outdated data.
-    - **Silent Recovery:** Recovered positions do NOT trigger new Telegram notifications, eliminating "Notification Storms" during restarts.
+    - **Expiry:** If the state file is >30 minutes old, it is considered "stale" and discarded.
+    - **Silent Recovery:** Recovered positions do NOT trigger new Telegram notifications.
 
-### 2. Exit Cooldown (Memory)
-- **Logic:** The `Executor` blocks re-entry into any symbol for **15 minutes** post-exit, allowing the price noise to settle. This history is preserved across restarts via the Persistence Layer.
+### 2. Score Velocity (Momentum Tracking)
+- **Logic:** The `Executor` compares the current signal score against the `opening_score`.
+- **Log Format:** `Score: 1.25 (+0.20)` indicates the stock is becoming "trendier" as the session progresses.
+- **Purpose:** Identifies if momentum is accelerating (positive velocity) or fading (negative velocity).
 
 ### 3. Trend-State Entry Guards
 Even if a signal score is high, the `Executor` performs two "Real-time Sanity Checks" before opening a position:

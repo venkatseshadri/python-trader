@@ -10,6 +10,7 @@
 ## 🔬 Phase 2: Filter Reverse Engineering (IN PROGRESS ⏳)
 - [x] **Initial Study:** Completed 35-property analysis for ATGL.
 - [x] **Research Laws 1-3:** Implemented Dynamic TP, 15m EMA20 SL, and Alpha weighting.
+- [x] **Score Velocity:** Real-time momentum trend tracking (Morning vs Now).
 - [ ] **Mass Attribute Analysis:** Study entire `orbiter_revamp_data.csv` in batches.
 - [ ] **Correlation Matrix:** Identify highest "Predictive Power" indicators.
 - [ ] **Filter Pruning:** Eliminate low-value noise filters.
