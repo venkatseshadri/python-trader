@@ -12,6 +12,7 @@ class OrbiterState:
         
         # position_info = {'entry_price', 'entry_time', 'symbol', 'company_name', ...}
         self.active_positions = {}
+        self.exit_history = {} # 🔥 Track last exit time for cooldowns
         self.last_scan_metrics = []
         self.last_scan_log_ts = 0
         self.filter_results_cache = {}

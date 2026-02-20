@@ -34,6 +34,11 @@ class Executor:
         for token, score in ranked:
             if token in state.active_positions: continue
 
+            # 🔥 NEW: Entry Guards (Cooldown & Trend State)
+            now_ts = time.time()
+            if token in state.exit_history and (now_ts - state.exit_history[token] < 900): # 15 min cooldown
+                continue
+
             if abs(score) >= state.config['TRADE_SCORE']:
                 data = state.client.SYMBOLDICT.get(token)
                 results = state.filter_results_cache.get(token, {})
@@ -41,6 +46,23 @@ class Executor:
                 ema_r = results.get('ef2_price_above_5ema', {})
                 ltp, ltp_display, symbol_full = safe_ltp(data, token)
                 
+                # 🔥 NEW: Trend-State Guards
+                candle_data = data.get('candles', []) if data else []
+                if len(candle_data) >= 10:
+                    # 1. Slope Guard (EMA5 rising)
+                    import talib
+                    closes = np.array([safe_float(c.get('intc')) for c in candle_data if c.get('stat')=='Ok'], dtype=float)
+                    ema5 = talib.EMA(closes, timeperiod=5)
+                    if len(ema5) >= 6 and ema5[-1] <= ema5[-6]: # Negative/flat slope over last 5 mins
+                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} slope negative. Skipping.")
+                        continue
+                    
+                    # 2. Freshness Guard (Near session high)
+                    day_high = max([safe_float(c.get('inth')) for c in candle_data if c.get('stat')=='Ok'])
+                    if ltp < day_high * 0.998: # More than 0.2% below high
+                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (below high). Skipping.")
+                        continue
+
                 base_symbol = data.get('company_name') or symbol_full
                 if isinstance(base_symbol, str):
                     base_symbol = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', base_symbol)
@@ -198,7 +220,11 @@ class Executor:
                 })
 
         state.active_positions.clear()
+        now_ts = time.time()
         if to_square:
+            for pos in to_square:
+                state.exit_history[pos['token']] = now_ts # Record exit time
+            
             if self.log_closed_positions:
                 self.log_closed_positions(to_square)
             
@@ -330,8 +356,9 @@ class Executor:
                     'entry_time': info.get('entry_time').strftime("%Y-%m-%d %H:%M:%S IST") if info.get('entry_time') else "N/A"
                 }
                 to_square.append(so)
-                if token in state.active_positions: del state.active_positions[token]
-
+                if token in state.active_positions: 
+                    del state.active_positions[token]
+                    state.exit_history[token] = time.time() # 🔥 Record exit for cooldown
         if to_square:
             if self.log_closed_positions: self.log_closed_positions(to_square)
             syncer.sync_active_positions_to_sheets(state)
