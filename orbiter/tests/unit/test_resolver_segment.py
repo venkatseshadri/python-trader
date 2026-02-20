@@ -13,9 +13,9 @@ class TestResolverSegmentIsolation(unittest.TestCase):
         
         # Mock _time.time to bypass the 5-minute limit
         with patch('orbiter.core.broker.resolver._time.time', return_value=2000000000):
-            # Try to select expiry for an MCX instrument (FUTCOM or OPTCOM)
-            # Use 'OPTCOM' which is currently handled, and 'FUTCOM' which is failing
-            resolver._select_expiry('CRUDEOIL', 'monthly', 'FUTCOM')
+            # Test with OPTFUT (used in MCX config) and FUTCOM
+            resolver._select_expiry('CRUDEOIL', 'monthly', 'OPTFUT')
+            resolver._select_expiry('SILVER', 'monthly', 'FUTCOM')
             
             # VERIFY: Should have called download_scrip_master with 'MCX'
             # FAILURE CASE: It was previously defaulting to 'NFO'
