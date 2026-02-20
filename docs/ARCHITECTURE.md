@@ -99,11 +99,11 @@ We faced persistent `future_not_found` errors because `place_future_order` was r
 
 The bot provides high-resolution logging to allow for forensic audit of every decision:
 
-### 1. Dual-Metric Position Tracking
-To troubleshoot "Leverage Divergence" (where stock price moves slightly but option premium swings wildly), the logs now display both layers of data:
-- **Futures:** Logs the current underlying LTP.
-- **Credit Spreads (NFO):** Logs the underlying stock LTP **AND** the option spread components (`[ATM: x.x HDG: y.y NET: z.z]`).
-- **Purpose:** This identifies if an exit was triggered by a genuine stock move or an erratic spike in option premiums (implied volatility).
+### 1. Dual-Metric Position Tracking (Smart SL V2)
+To eliminate "Leverage Divergence" (where tiny stock moves trigger huge option premium swings), the system uses a split-source risk model:
+- **Trend Gauge (Underlying %):** Technical Stop Losses (EMA20, SuperTrend) are calculated using the **Underlying Stock Price (LTP)**. This ensures exits are based on genuine price action, not option premium noise.
+- **Profit Gauge (Cash PnL ₹):** Trailing Stop Losses are calculated using **Hard Cash (Rupee) values**. Milestone-based trailing (e.g., lock in ₹500 once ₹2000 is hit) provides stable risk management that matches the trader's bank ledger.
+- **Forensics:** Logs for NFO spreads display both layers: `[Stock %] (₹PnL) [LTP: x] [Spread: y]`.
 
 ### 2. Consolidated Alerts
 Individual SL/TP hits are now aggregated into a single, detailed Telegram message per scan cycle, reducing notification noise while providing full PnL and LTP data.

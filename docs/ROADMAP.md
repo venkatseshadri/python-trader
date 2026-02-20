@@ -11,6 +11,7 @@
 - [x] **Initial Study:** Completed 35-property analysis for ATGL.
 - [x] **Research Laws 1-3:** Implemented Dynamic TP, 15m EMA20 SL, and Alpha weighting.
 - [x] **Score Velocity:** Real-time momentum trend tracking (Morning vs Now).
+- [x] **Smart SL V2:** Underlying-aware risk (Stock % + Cash PnL ₹).
 - [ ] **Mass Attribute Analysis:** Study entire `orbiter_revamp_data.csv` in batches.
 - [ ] **Correlation Matrix:** Identify highest "Predictive Power" indicators.
 - [ ] **Filter Pruning:** Eliminate low-value noise filters.
