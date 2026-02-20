@@ -83,10 +83,15 @@ class BrokerClient:
         def _tick_handler(msg, tk, ex):
             key = f"{ex}|{tk}"
             sym = self.get_symbol(tk, exchange=ex)
+            
+            # 🔥 Preserve primed history if it exists
+            existing_candles = self.SYMBOLDICT.get(key, {}).get('candles', [])
+            
             self.SYMBOLDICT[key] = {
                 **msg, 'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
                 'token': tk, 'exchange': ex, 'ltp': float(msg['lp']),
-                'high': float(msg.get('h', 0)), 'low': float(msg.get('l', 0)), 'volume': int(msg.get('v', 0))
+                'high': float(msg.get('h', 0)), 'low': float(msg.get('l', 0)), 'volume': int(msg.get('v', 0)),
+                'candles': existing_candles # Re-inject preserved candles
             }
         self.conn.start_live_feed(symbols, _tick_handler)
 
