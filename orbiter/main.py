@@ -253,6 +253,8 @@ class Orbiter:
         ok = self.client.login()
         if not ok: return False
         self.client.start_live_feed(self.state.symbols)
+        # 🔥 NEW: Automatic Priming
+        self.client.prime_candles(self.state.symbols)
         return True
 
     def _get_ai_context(self):

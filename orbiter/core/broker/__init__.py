@@ -87,6 +87,42 @@ class BrokerClient:
             }
         self.conn.start_live_feed(symbols, _tick_handler)
 
+    def prime_candles(self, symbols: List[str], lookback_mins: int = 30):
+        """Fetch historical 1-minute candles to satisfy entry guards immediately on startup"""
+        if not symbols: return
+        print(f"⏳ Priming {len(symbols)} symbols with last {lookback_mins}m data...")
+        
+        import time as _time
+        from datetime import datetime, timedelta
+        import pytz
+        
+        ist = pytz.timezone('Asia/Kolkata')
+        end_dt = datetime.now(ist)
+        start_dt = end_dt - timedelta(minutes=lookback_mins + 15) # extra buffer for indicators
+        
+        success_count = 0
+        for key in symbols:
+            try:
+                ex, tk = key.split('|')
+                res = self.api.get_time_price_series(exchange=ex, token=tk, starttime=int(start_dt.timestamp()), endtime=int(end_dt.timestamp()), interval=1)
+                
+                if res and isinstance(res, list):
+                    if key not in self.SYMBOLDICT:
+                        sym = self.get_symbol(tk, exchange=ex)
+                        self.SYMBOLDICT[key] = {
+                            'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
+                            'token': tk, 'exchange': ex, 'ltp': float(res[-1]['intc']),
+                            'high': float(res[-1].get('inth', 0)), 'low': float(res[-1].get('intl', 0)), 
+                            'volume': int(res[-1].get('v', 0))
+                        }
+                    
+                    self.SYMBOLDICT[key]['candles'] = res
+                    success_count += 1
+            except Exception as e:
+                print(f"⚠️ Failed to prime {key}: {e}")
+        
+        print(f"✅ Primed {success_count}/{len(symbols)} symbols successfully.")
+
     def close(self): self.conn.close()
     def load_symbol_mapping(self): self.master.load_mappings(self.segment_name)
     def download_scrip_master(self, exchange): self.master.download_scrip_master(exchange)

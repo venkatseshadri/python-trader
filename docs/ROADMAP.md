@@ -7,6 +7,7 @@
 - [x] **Persistence:** Restart-proof state management via `session_state.json`.
 - [x] **UX Refactor (P1):** Consolidated batch entry alerts and suppressed margin spam.
 - [x] **Segment Isolation:** Prevent cross-segment master stalls (MCX vs NFO).
+- [x] **Automatic Priming:** Fast-start candle pre-filling (eliminates 15m blind spot).
 - [x] **MCX Integration:** Full futures mapping and lot size resolution.
 
 ## 🔬 Phase 2: Filter Reverse Engineering (IN PROGRESS ⏳)

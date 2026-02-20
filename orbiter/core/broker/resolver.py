@@ -41,7 +41,7 @@ class ContractResolver:
         last_refresh = getattr(self.master, '_last_refresh_time', 0)
         now = _time.time()
         
-        if not exps and (now - last_refresh > 300):
+        if not expiries and (now - last_refresh > 300):
             target_exch = 'MCX' if instrument == 'OPTCOM' else 'NFO'
             print(f"🔄 No expiries for {symbol}. Forcing {target_exch} master refresh...")
             self.master.download_scrip_master(target_exch)
