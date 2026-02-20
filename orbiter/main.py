@@ -333,8 +333,30 @@ class Orbiter:
                     exit_hits = self.executor.check_sl(self.state, self.syncer)
                     if exit_hits:
                         logger.info(f"🔔 SL/TP Hits: {len(exit_hits)} positions squared off")
+                        lines = []
                         for hit in exit_hits:
-                            send_telegram_msg(f"🎯 *Position Closed*\nSymbol: `{hit.get('symbol')}`\nReason: `{hit.get('reason', 'SL/TP')}`")
+                            # Calculate PnL for message
+                            strategy = hit.get('strategy', '')
+                            lot_size = int(hit.get('lot_size', 0))
+                            pnl_val = 0.0
+                            if 'FUTURE' in strategy:
+                                entry = float(hit.get('entry_price', 0))
+                                exit_p = float(hit.get('exit_price', 0))
+                                if 'SHORT' in strategy: pnl_val = (entry - exit_p) * lot_size
+                                else: pnl_val = (exit_p - entry) * lot_size
+                            else:
+                                # Spread
+                                atm_e = float(hit.get('atm_premium_entry', 0) or 0)
+                                hdg_e = float(hit.get('hedge_premium_entry', 0) or 0)
+                                atm_x = float(hit.get('atm_premium_exit', 0) or 0)
+                                hdg_x = float(hit.get('hedge_premium_exit', 0) or 0)
+                                if atm_x and hdg_x:
+                                    pnl_val = ((atm_e - hdg_e) - (atm_x - hdg_x)) * lot_size
+                            
+                            lines.append(f"• `{hit.get('symbol')}`: {hit.get('reason', 'SL/TP')} (₹{pnl_val:.2f}) @ {hit.get('exit_price')}")
+                        
+                        summary = "\n".join(lines)
+                        send_telegram_msg(f"🎯 *Positions Closed*\n\n{summary}")
                     last_sl_check = now_ts
                 
                 # Scan Metrics Logging

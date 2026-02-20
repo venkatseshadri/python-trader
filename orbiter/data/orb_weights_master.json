@@ -1,632 +1,632 @@
 {
-  "ENRIN": {
-    "reliability": 0.967,
-    "precision": 1.0,
-    "efficiency": 0.472,
-    "last_updated": "2026-02-19"
-  },
-  "ADANIENSOL": {
-    "reliability": 0.943,
-    "precision": 1.0,
-    "efficiency": 0.517,
-    "last_updated": "2026-02-19"
-  },
-  "MOTHERSON": {
-    "reliability": 0.98,
-    "precision": 0.999,
-    "efficiency": 0.513,
-    "last_updated": "2026-02-19"
-  },
-  "ADANIPOWER": {
-    "reliability": 0.933,
-    "precision": 0.999,
-    "efficiency": 0.532,
-    "last_updated": "2026-02-19"
-  },
-  "CHOLAFIN": {
-    "reliability": 0.969,
-    "precision": 0.998,
-    "efficiency": 0.527,
-    "last_updated": "2026-02-19"
-  },
-  "JINDALSTEL": {
-    "reliability": 0.988,
-    "precision": 0.998,
-    "efficiency": 0.545,
-    "last_updated": "2026-02-19"
-  },
-  "JSWENERGY": {
-    "reliability": 0.979,
-    "precision": 0.998,
-    "efficiency": 0.552,
-    "last_updated": "2026-02-19"
-  },
-  "SHRIRAMFIN": {
-    "reliability": 0.976,
-    "precision": 0.998,
-    "efficiency": 0.511,
-    "last_updated": "2026-02-19"
-  },
-  "BHEL": {
-    "reliability": 0.989,
-    "precision": 0.997,
-    "efficiency": 0.556,
-    "last_updated": "2026-02-19"
-  },
-  "DLF": {
-    "reliability": 0.992,
-    "precision": 0.997,
-    "efficiency": 0.573,
-    "last_updated": "2026-02-19"
-  },
-  "LODHA": {
-    "reliability": 0.953,
-    "precision": 0.997,
-    "efficiency": 0.464,
-    "last_updated": "2026-02-19"
-  },
-  "ADANIENT": {
-    "reliability": 0.984,
-    "precision": 0.997,
-    "efficiency": 0.575,
-    "last_updated": "2026-02-19"
-  },
-  "VBL": {
-    "reliability": 0.935,
-    "precision": 0.995,
-    "efficiency": 0.5,
-    "last_updated": "2026-02-19"
-  },
-  "CANBK": {
-    "reliability": 0.99,
-    "precision": 0.995,
-    "efficiency": 0.573,
-    "last_updated": "2026-02-19"
-  },
-  "NAUKRI": {
-    "reliability": 0.957,
-    "precision": 0.994,
-    "efficiency": 0.511,
-    "last_updated": "2026-02-19"
-  },
-  "JSWSTEEL": {
-    "reliability": 0.988,
-    "precision": 0.994,
-    "efficiency": 0.53,
-    "last_updated": "2026-02-19"
-  },
-  "BANKBARODA": {
-    "reliability": 0.992,
-    "precision": 0.994,
-    "efficiency": 0.566,
-    "last_updated": "2026-02-19"
-  },
-  "VEDL": {
-    "reliability": 0.978,
-    "precision": 0.994,
-    "efficiency": 0.526,
-    "last_updated": "2026-02-19"
-  },
-  "ADANIGREEN": {
-    "reliability": 0.902,
-    "precision": 0.994,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "PFC": {
-    "reliability": 0.99,
-    "precision": 0.993,
-    "efficiency": 0.55,
-    "last_updated": "2026-02-19"
-  },
-  "PNB": {
-    "reliability": 0.986,
-    "precision": 0.993,
-    "efficiency": 0.559,
-    "last_updated": "2026-02-19"
-  },
-  "HINDALCO": {
-    "reliability": 0.986,
-    "precision": 0.993,
-    "efficiency": 0.518,
-    "last_updated": "2026-02-19"
-  },
-  "ZYDUSLIFE": {
-    "reliability": 0.977,
-    "precision": 0.993,
-    "efficiency": 0.517,
-    "last_updated": "2026-02-19"
-  },
-  "UNITDSPR": {
-    "reliability": 0.982,
-    "precision": 0.992,
-    "efficiency": 0.536,
-    "last_updated": "2026-02-19"
-  },
-  "ICICIPRULI": {
-    "reliability": 0.972,
-    "precision": 0.992,
-    "efficiency": 0.508,
-    "last_updated": "2026-02-19"
-  },
-  "GODREJCP": {
-    "reliability": 0.967,
-    "precision": 0.992,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "ABB": {
-    "reliability": 0.978,
-    "precision": 0.992,
-    "efficiency": 0.526,
-    "last_updated": "2026-02-19"
-  },
-  "RECLTD": {
-    "reliability": 0.986,
-    "precision": 0.991,
-    "efficiency": 0.539,
-    "last_updated": "2026-02-19"
-  },
-  "INDHOTEL": {
-    "reliability": 0.977,
-    "precision": 0.991,
-    "efficiency": 0.543,
-    "last_updated": "2026-02-19"
-  },
-  "IOC": {
-    "reliability": 0.975,
-    "precision": 0.991,
-    "efficiency": 0.502,
-    "last_updated": "2026-02-19"
-  },
-  "SIEMENS": {
-    "reliability": 0.979,
-    "precision": 0.991,
-    "efficiency": 0.536,
-    "last_updated": "2026-02-19"
-  },
-  "TRENT": {
-    "reliability": 0.974,
-    "precision": 0.99,
-    "efficiency": 0.543,
-    "last_updated": "2026-02-19"
-  },
-  "INDIGO": {
-    "reliability": 0.969,
-    "precision": 0.99,
-    "efficiency": 0.494,
-    "last_updated": "2026-02-19"
-  },
-  "BPCL": {
-    "reliability": 0.98,
-    "precision": 0.99,
-    "efficiency": 0.5,
-    "last_updated": "2026-02-19"
-  },
-  "TVSMOTOR": {
-    "reliability": 0.977,
-    "precision": 0.99,
-    "efficiency": 0.513,
-    "last_updated": "2026-02-19"
-  },
-  "TECHM": {
-    "reliability": 0.963,
-    "precision": 0.99,
-    "efficiency": 0.481,
-    "last_updated": "2026-02-19"
-  },
-  "HAVELLS": {
-    "reliability": 0.978,
-    "precision": 0.989,
-    "efficiency": 0.515,
-    "last_updated": "2026-02-19"
-  },
-  "TATASTEEL": {
-    "reliability": 0.982,
-    "precision": 0.989,
-    "efficiency": 0.531,
-    "last_updated": "2026-02-19"
-  },
-  "HAL": {
-    "reliability": 0.964,
-    "precision": 0.989,
-    "efficiency": 0.504,
-    "last_updated": "2026-02-19"
-  },
-  "GAIL": {
-    "reliability": 0.972,
-    "precision": 0.988,
-    "efficiency": 0.501,
-    "last_updated": "2026-02-19"
-  },
-  "BEL": {
-    "reliability": 0.978,
-    "precision": 0.988,
-    "efficiency": 0.543,
-    "last_updated": "2026-02-19"
-  },
-  "TMPV": {
-    "reliability": 0.979,
-    "precision": 0.988,
-    "efficiency": 0.523,
-    "last_updated": "2026-02-19"
-  },
-  "ADANIPORTS": {
-    "reliability": 0.987,
-    "precision": 0.988,
-    "efficiency": 0.53,
-    "last_updated": "2026-02-19"
-  },
-  "GRASIM": {
-    "reliability": 0.986,
-    "precision": 0.986,
-    "efficiency": 0.524,
-    "last_updated": "2026-02-19"
-  },
-  "ICICIGI": {
-    "reliability": 0.971,
-    "precision": 0.986,
-    "efficiency": 0.49,
-    "last_updated": "2026-02-19"
-  },
-  "TORNTPHARM": {
-    "reliability": 0.971,
-    "precision": 0.986,
-    "efficiency": 0.485,
-    "last_updated": "2026-02-19"
-  },
-  "DIVISLAB": {
-    "reliability": 0.975,
-    "precision": 0.985,
-    "efficiency": 0.505,
-    "last_updated": "2026-02-19"
-  },
-  "ATGL": {
-    "reliability": 0.935,
-    "precision": 0.985,
-    "efficiency": 0.482,
-    "last_updated": "2026-02-19"
-  },
-  "SOLARINDS": {
-    "reliability": 0.942,
-    "precision": 0.985,
-    "efficiency": 0.527,
-    "last_updated": "2026-02-19"
-  },
-  "TATACONSUM": {
-    "reliability": 0.977,
-    "precision": 0.984,
-    "efficiency": 0.527,
-    "last_updated": "2026-02-19"
-  },
-  "TATAPOWER": {
-    "reliability": 0.981,
-    "precision": 0.982,
-    "efficiency": 0.535,
-    "last_updated": "2026-02-19"
-  },
-  "SHREECEM": {
-    "reliability": 0.972,
-    "precision": 0.981,
-    "efficiency": 0.51,
-    "last_updated": "2026-02-19"
-  },
-  "APOLLOHOSP": {
-    "reliability": 0.968,
-    "precision": 0.981,
-    "efficiency": 0.475,
-    "last_updated": "2026-02-19"
-  },
-  "MM": {
-    "reliability": 0.981,
-    "precision": 0.98,
-    "efficiency": 0.506,
-    "last_updated": "2026-02-19"
-  },
-  "INDUSINDBK": {
-    "reliability": 0.988,
-    "precision": 0.98,
-    "efficiency": 0.523,
-    "last_updated": "2026-02-19"
-  },
-  "AMBUJACEM": {
-    "reliability": 0.989,
-    "precision": 0.98,
-    "efficiency": 0.539,
-    "last_updated": "2026-02-19"
-  },
-  "EICHERMOT": {
-    "reliability": 0.971,
-    "precision": 0.98,
-    "efficiency": 0.501,
-    "last_updated": "2026-02-19"
-  },
-  "BAJAJFINSV": {
-    "reliability": 0.98,
-    "precision": 0.98,
-    "efficiency": 0.529,
-    "last_updated": "2026-02-19"
-  },
-  "HYUNDAI": {
-    "reliability": 0.954,
-    "precision": 0.977,
-    "efficiency": 0.461,
-    "last_updated": "2026-02-19"
-  },
-  "ONGC": {
-    "reliability": 0.972,
-    "precision": 0.977,
-    "efficiency": 0.493,
-    "last_updated": "2026-02-19"
-  },
-  "HDFCLIFE": {
-    "reliability": 0.974,
-    "precision": 0.977,
-    "efficiency": 0.498,
-    "last_updated": "2026-02-19"
-  },
-  "DMART": {
-    "reliability": 0.958,
-    "precision": 0.977,
-    "efficiency": 0.504,
-    "last_updated": "2026-02-19"
-  },
-  "BAJFINANCE": {
-    "reliability": 0.961,
-    "precision": 0.976,
-    "efficiency": 0.543,
-    "last_updated": "2026-02-19"
-  },
-  "HEROMOTOCO": {
-    "reliability": 0.968,
-    "precision": 0.975,
-    "efficiency": 0.484,
-    "last_updated": "2026-02-19"
-  },
-  "SBILIFE": {
-    "reliability": 0.959,
-    "precision": 0.975,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "BHARTIARTL": {
-    "reliability": 0.977,
-    "precision": 0.975,
-    "efficiency": 0.508,
-    "last_updated": "2026-02-19"
-  },
-  "PIDILITIND": {
-    "reliability": 0.978,
-    "precision": 0.975,
-    "efficiency": 0.505,
-    "last_updated": "2026-02-19"
-  },
-  "TITAN": {
-    "reliability": 0.978,
-    "precision": 0.973,
-    "efficiency": 0.502,
-    "last_updated": "2026-02-19"
-  },
-  "HCLTECH": {
-    "reliability": 0.966,
-    "precision": 0.972,
-    "efficiency": 0.468,
-    "last_updated": "2026-02-19"
-  },
-  "JIOFIN": {
-    "reliability": 0.959,
-    "precision": 0.972,
-    "efficiency": 0.51,
-    "last_updated": "2026-02-19"
-  },
-  "HINDZINC": {
-    "reliability": 0.956,
-    "precision": 0.972,
-    "efficiency": 0.509,
-    "last_updated": "2026-02-19"
-  },
-  "AXISBANK": {
-    "reliability": 0.989,
-    "precision": 0.972,
-    "efficiency": 0.536,
-    "last_updated": "2026-02-19"
-  },
-  "LTIM": {
-    "reliability": 0.958,
-    "precision": 0.971,
-    "efficiency": 0.48,
-    "last_updated": "2026-02-19"
-  },
-  "NHPC": {
-    "reliability": 0.961,
-    "precision": 0.968,
-    "efficiency": 0.545,
-    "last_updated": "2026-02-19"
-  },
-  "BOSCHLTD": {
-    "reliability": 0.972,
-    "precision": 0.968,
-    "efficiency": 0.535,
-    "last_updated": "2026-02-19"
-  },
-  "POWERGRID": {
-    "reliability": 0.971,
-    "precision": 0.967,
-    "efficiency": 0.493,
-    "last_updated": "2026-02-19"
-  },
-  "CIPLA": {
-    "reliability": 0.972,
-    "precision": 0.965,
-    "efficiency": 0.491,
-    "last_updated": "2026-02-19"
-  },
-  "NTPC": {
-    "reliability": 0.981,
-    "precision": 0.965,
-    "efficiency": 0.523,
-    "last_updated": "2026-02-19"
-  },
-  "SUNPHARMA": {
-    "reliability": 0.976,
-    "precision": 0.964,
-    "efficiency": 0.514,
-    "last_updated": "2026-02-19"
-  },
-  "BAJAJHLDNG": {
-    "reliability": 0.938,
-    "precision": 0.962,
-    "efficiency": 0.503,
-    "last_updated": "2026-02-19"
-  },
-  "IRCTC": {
-    "reliability": 0.944,
-    "precision": 0.961,
-    "efficiency": 0.566,
-    "last_updated": "2026-02-19"
-  },
-  "COALINDIA": {
-    "reliability": 0.979,
-    "precision": 0.961,
-    "efficiency": 0.516,
-    "last_updated": "2026-02-19"
-  },
-  "DRREDDY": {
-    "reliability": 0.97,
-    "precision": 0.961,
-    "efficiency": 0.491,
-    "last_updated": "2026-02-19"
-  },
-  "ULTRACEMCO": {
-    "reliability": 0.98,
-    "precision": 0.959,
-    "efficiency": 0.507,
-    "last_updated": "2026-02-19"
-  },
-  "DABUR": {
-    "reliability": 0.978,
-    "precision": 0.959,
-    "efficiency": 0.508,
-    "last_updated": "2026-02-19"
-  },
-  "BRITANNIA": {
-    "reliability": 0.973,
-    "precision": 0.958,
-    "efficiency": 0.491,
-    "last_updated": "2026-02-19"
-  },
-  "BAJAJ-AUTO": {
-    "reliability": 0.967,
-    "precision": 0.957,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "LT": {
-    "reliability": 0.983,
-    "precision": 0.956,
-    "efficiency": 0.533,
-    "last_updated": "2026-02-19"
-  },
-  "ASIANPAINT": {
-    "reliability": 0.974,
-    "precision": 0.955,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "SBIN": {
-    "reliability": 0.992,
-    "precision": 0.951,
-    "efficiency": 0.582,
-    "last_updated": "2026-02-19"
-  },
-  "WIPRO": {
-    "reliability": 0.967,
-    "precision": 0.944,
-    "efficiency": 0.483,
-    "last_updated": "2026-02-19"
-  },
-  "KOTAKBANK": {
-    "reliability": 0.98,
-    "precision": 0.941,
-    "efficiency": 0.522,
-    "last_updated": "2026-02-19"
-  },
-  "ICICIBANK": {
-    "reliability": 0.99,
-    "precision": 0.94,
-    "efficiency": 0.556,
-    "last_updated": "2026-02-19"
-  },
-  "INFY": {
-    "reliability": 0.972,
-    "precision": 0.939,
-    "efficiency": 0.486,
-    "last_updated": "2026-02-19"
-  },
-  "IRFC": {
-    "reliability": 0.933,
-    "precision": 0.937,
-    "efficiency": 0.48,
-    "last_updated": "2026-02-19"
-  },
-  "NESTLEIND": {
-    "reliability": 0.97,
-    "precision": 0.931,
-    "efficiency": 0.499,
-    "last_updated": "2026-02-19"
-  },
-  "TCS": {
-    "reliability": 0.973,
-    "precision": 0.925,
-    "efficiency": 0.487,
-    "last_updated": "2026-02-19"
-  },
-  "MARUTI": {
-    "reliability": 0.974,
-    "precision": 0.924,
-    "efficiency": 0.53,
-    "last_updated": "2026-02-19"
-  },
-  "RELIANCE": {
-    "reliability": 0.99,
-    "precision": 0.922,
-    "efficiency": 0.546,
-    "last_updated": "2026-02-19"
-  },
-  "HINDUNILVR": {
-    "reliability": 0.979,
-    "precision": 0.92,
-    "efficiency": 0.51,
-    "last_updated": "2026-02-19"
-  },
-  "ITC": {
-    "reliability": 0.979,
-    "precision": 0.901,
-    "efficiency": 0.527,
-    "last_updated": "2026-02-19"
-  },
-  "LICI": {
-    "reliability": 0.975,
-    "precision": 0.891,
-    "efficiency": 0.529,
-    "last_updated": "2026-02-19"
-  },
-  "HDFCBANK": {
-    "reliability": 0.986,
-    "precision": 0.848,
-    "efficiency": 0.542,
-    "last_updated": "2026-02-19"
-  },
-  "NIFTY BANK": {
-    "reliability": 0.997,
-    "precision": 0.657,
-    "efficiency": 0.626,
-    "last_updated": "2026-02-19"
-  },
-  "NIFTY 50": {
-    "reliability": 0.998,
-    "precision": 0.43,
-    "efficiency": 0.67,
-    "last_updated": "2026-02-19"
-  }
+    "ENRIN": {
+        "reliability": 0.967,
+        "precision": 1.0,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "ADANIENSOL": {
+        "reliability": 0.943,
+        "precision": 1.0,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "MOTHERSON": {
+        "reliability": 0.98,
+        "precision": 0.999,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ADANIPOWER": {
+        "reliability": 0.933,
+        "precision": 0.999,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "CHOLAFIN": {
+        "reliability": 0.969,
+        "precision": 0.998,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "JINDALSTEL": {
+        "reliability": 0.988,
+        "precision": 0.998,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "JSWENERGY": {
+        "reliability": 0.979,
+        "precision": 0.998,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "SHRIRAMFIN": {
+        "reliability": 0.976,
+        "precision": 0.998,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BHEL": {
+        "reliability": 0.989,
+        "precision": 0.997,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "DLF": {
+        "reliability": 0.992,
+        "precision": 0.997,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "LODHA": {
+        "reliability": 0.953,
+        "precision": 0.997,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "ADANIENT": {
+        "reliability": 0.984,
+        "precision": 0.997,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "VBL": {
+        "reliability": 0.935,
+        "precision": 0.995,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "CANBK": {
+        "reliability": 0.99,
+        "precision": 0.995,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "NAUKRI": {
+        "reliability": 0.957,
+        "precision": 0.994,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "JSWSTEEL": {
+        "reliability": 0.988,
+        "precision": 0.994,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BANKBARODA": {
+        "reliability": 0.992,
+        "precision": 0.994,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "VEDL": {
+        "reliability": 0.978,
+        "precision": 0.994,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ADANIGREEN": {
+        "reliability": 0.902,
+        "precision": 0.994,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "PFC": {
+        "reliability": 0.99,
+        "precision": 0.993,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "PNB": {
+        "reliability": 0.986,
+        "precision": 0.993,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "HINDALCO": {
+        "reliability": 0.986,
+        "precision": 0.993,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ZYDUSLIFE": {
+        "reliability": 0.977,
+        "precision": 0.993,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "UNITDSPR": {
+        "reliability": 0.982,
+        "precision": 0.992,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ICICIPRULI": {
+        "reliability": 0.972,
+        "precision": 0.992,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "GODREJCP": {
+        "reliability": 0.967,
+        "precision": 0.992,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "ABB": {
+        "reliability": 0.978,
+        "precision": 0.992,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "RECLTD": {
+        "reliability": 0.986,
+        "precision": 0.991,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "INDHOTEL": {
+        "reliability": 0.977,
+        "precision": 0.991,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "IOC": {
+        "reliability": 0.975,
+        "precision": 0.991,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "SIEMENS": {
+        "reliability": 0.979,
+        "precision": 0.991,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TRENT": {
+        "reliability": 0.974,
+        "precision": 0.99,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "INDIGO": {
+        "reliability": 0.969,
+        "precision": 0.99,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "BPCL": {
+        "reliability": 0.98,
+        "precision": 0.99,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TVSMOTOR": {
+        "reliability": 0.977,
+        "precision": 0.99,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TECHM": {
+        "reliability": 0.963,
+        "precision": 0.99,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "HAVELLS": {
+        "reliability": 0.978,
+        "precision": 0.989,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TATASTEEL": {
+        "reliability": 0.982,
+        "precision": 0.989,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HAL": {
+        "reliability": 0.964,
+        "precision": 0.989,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "GAIL": {
+        "reliability": 0.972,
+        "precision": 0.988,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BEL": {
+        "reliability": 0.978,
+        "precision": 0.988,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TMPV": {
+        "reliability": 0.979,
+        "precision": 0.988,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ADANIPORTS": {
+        "reliability": 0.987,
+        "precision": 0.988,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "GRASIM": {
+        "reliability": 0.986,
+        "precision": 0.986,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ICICIGI": {
+        "reliability": 0.971,
+        "precision": 0.986,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "TORNTPHARM": {
+        "reliability": 0.971,
+        "precision": 0.986,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "DIVISLAB": {
+        "reliability": 0.975,
+        "precision": 0.985,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ATGL": {
+        "reliability": 0.935,
+        "precision": 0.985,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "SOLARINDS": {
+        "reliability": 0.942,
+        "precision": 0.985,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TATACONSUM": {
+        "reliability": 0.977,
+        "precision": 0.984,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TATAPOWER": {
+        "reliability": 0.981,
+        "precision": 0.982,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "SHREECEM": {
+        "reliability": 0.972,
+        "precision": 0.981,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "APOLLOHOSP": {
+        "reliability": 0.968,
+        "precision": 0.981,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "MM": {
+        "reliability": 0.981,
+        "precision": 0.98,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "INDUSINDBK": {
+        "reliability": 0.988,
+        "precision": 0.98,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "AMBUJACEM": {
+        "reliability": 0.989,
+        "precision": 0.98,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "EICHERMOT": {
+        "reliability": 0.971,
+        "precision": 0.98,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BAJAJFINSV": {
+        "reliability": 0.98,
+        "precision": 0.98,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HYUNDAI": {
+        "reliability": 0.954,
+        "precision": 0.977,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "ONGC": {
+        "reliability": 0.972,
+        "precision": 0.977,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "HDFCLIFE": {
+        "reliability": 0.974,
+        "precision": 0.977,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "DMART": {
+        "reliability": 0.958,
+        "precision": 0.977,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BAJFINANCE": {
+        "reliability": 0.961,
+        "precision": 0.976,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HEROMOTOCO": {
+        "reliability": 0.968,
+        "precision": 0.975,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "SBILIFE": {
+        "reliability": 0.959,
+        "precision": 0.975,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "BHARTIARTL": {
+        "reliability": 0.977,
+        "precision": 0.975,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "PIDILITIND": {
+        "reliability": 0.978,
+        "precision": 0.975,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "TITAN": {
+        "reliability": 0.978,
+        "precision": 0.973,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HCLTECH": {
+        "reliability": 0.966,
+        "precision": 0.972,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "JIOFIN": {
+        "reliability": 0.959,
+        "precision": 0.972,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HINDZINC": {
+        "reliability": 0.956,
+        "precision": 0.972,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "AXISBANK": {
+        "reliability": 0.989,
+        "precision": 0.972,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "LTIM": {
+        "reliability": 0.958,
+        "precision": 0.971,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "NHPC": {
+        "reliability": 0.961,
+        "precision": 0.968,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BOSCHLTD": {
+        "reliability": 0.972,
+        "precision": 0.968,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "POWERGRID": {
+        "reliability": 0.971,
+        "precision": 0.967,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "CIPLA": {
+        "reliability": 0.972,
+        "precision": 0.965,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "NTPC": {
+        "reliability": 0.981,
+        "precision": 0.965,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "SUNPHARMA": {
+        "reliability": 0.976,
+        "precision": 0.964,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BAJAJHLDNG": {
+        "reliability": 0.938,
+        "precision": 0.962,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "IRCTC": {
+        "reliability": 0.944,
+        "precision": 0.961,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "COALINDIA": {
+        "reliability": 0.979,
+        "precision": 0.961,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "DRREDDY": {
+        "reliability": 0.97,
+        "precision": 0.961,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "ULTRACEMCO": {
+        "reliability": 0.98,
+        "precision": 0.959,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "DABUR": {
+        "reliability": 0.978,
+        "precision": 0.959,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "BRITANNIA": {
+        "reliability": 0.973,
+        "precision": 0.958,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "BAJAJ-AUTO": {
+        "reliability": 0.967,
+        "precision": 0.957,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "LT": {
+        "reliability": 0.983,
+        "precision": 0.956,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ASIANPAINT": {
+        "reliability": 0.974,
+        "precision": 0.955,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "SBIN": {
+        "reliability": 0.992,
+        "precision": 0.951,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "WIPRO": {
+        "reliability": 0.967,
+        "precision": 0.944,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "KOTAKBANK": {
+        "reliability": 0.98,
+        "precision": 0.941,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ICICIBANK": {
+        "reliability": 0.99,
+        "precision": 0.94,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "INFY": {
+        "reliability": 0.972,
+        "precision": 0.939,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "IRFC": {
+        "reliability": 0.933,
+        "precision": 0.937,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "NESTLEIND": {
+        "reliability": 0.97,
+        "precision": 0.931,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "TCS": {
+        "reliability": 0.973,
+        "precision": 0.925,
+        "efficiency": 0.8,
+        "last_updated": "2026-02-19"
+    },
+    "MARUTI": {
+        "reliability": 0.974,
+        "precision": 0.924,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "RELIANCE": {
+        "reliability": 0.99,
+        "precision": 0.922,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HINDUNILVR": {
+        "reliability": 0.979,
+        "precision": 0.92,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "ITC": {
+        "reliability": 0.979,
+        "precision": 0.901,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "LICI": {
+        "reliability": 0.975,
+        "precision": 0.891,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "HDFCBANK": {
+        "reliability": 0.986,
+        "precision": 0.848,
+        "efficiency": 1.0,
+        "last_updated": "2026-02-19"
+    },
+    "NIFTY BANK": {
+        "reliability": 0.997,
+        "precision": 0.657,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    },
+    "NIFTY 50": {
+        "reliability": 0.998,
+        "precision": 0.43,
+        "efficiency": 1.2,
+        "last_updated": "2026-02-19"
+    }
 }

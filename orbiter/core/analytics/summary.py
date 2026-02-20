@@ -86,7 +86,10 @@ class SummaryManager:
 
     def generate_live_scan_report(self, state) -> str:
         """🔍 Real-time report of scans and active positions."""
-        msg = [f"📊 *{self.segment} LIVE STATUS*"]
+        is_sim = state.config.get('SIMULATION', False)
+        mode_tag = " [SIMULATION]" if is_sim else ""
+        
+        msg = [f"📊 *{self.segment} LIVE STATUS{mode_tag}*"]
         msg.append("-" * 25)
 
         # 1. Scan Stats
@@ -165,7 +168,8 @@ class SummaryManager:
         
         # 3. Active Positions & PnL
         if state.active_positions:
-            msg.append(f"\n💼 *Active Positions:* ({len(state.active_positions)})")
+            pos_title = "🧪 *Active Simulations:*" if is_sim else "💼 *Active Positions:*"
+            msg.append(f"\n{pos_title} ({len(state.active_positions)})")
             total_pnl = 0.0
             for token, info in state.active_positions.items():
                 ltp = state.client.get_ltp(token) or info.get('entry_price', 0)
@@ -192,7 +196,8 @@ class SummaryManager:
             
             msg.append("-" * 20)
             pnl_emoji = "💰" if total_pnl >= 0 else "💸"
-            msg.append(f"{pnl_emoji} *Total PnL:* ₹{total_pnl:,.2f}")
+            pnl_label = "*Total PnL (Simulated):*" if is_sim else "*Total PnL:*"
+            msg.append(f"{pnl_emoji} {pnl_label} ₹{total_pnl:,.2f}")
         else:
             msg.append("\n✅ *No active positions.*")
 

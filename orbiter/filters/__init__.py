@@ -24,7 +24,8 @@ from .sl.f7_red_candle import sl_red_candle_weakness
 from .sl.f8_below_vwap import sl_below_vwap
 from .sl.f9_macd_bearish import sl_macd_bearish
 from .sl.f10_support_broken import sl_support_broken
-
+from .tp.f4_dynamic_budget import DynamicBudgetTP
+from .sl.f11_ema20_mortality import trend_mortality_sl
 
 class Filter:
     def __init__(self, key, filter_type, evaluate):
@@ -41,6 +42,9 @@ def _hit_result(hit, reason=None, pct=None):
         result['reason'] = reason
     return result
 
+# Initialize Stateful Filters
+_dynamic_tp = DynamicBudgetTP()
+
 FILTERS = [
     Filter('ef1_orb', 'entry', orb_filter),
     Filter('ef2_price_above_5ema', 'entry', price_above_5ema_filter),
@@ -53,12 +57,14 @@ FILTERS = [
     Filter('ef9_institutional_flip', 'entry', institutional_flip_filter),
     # Stop Loss Filters
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
-    Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),
+    # Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),
     Filter('sf3_st_reversal', 'sl', sl_supertrend_reversal),
+    Filter('sf11_trend_mortality', 'sl', trend_mortality_sl),
     # Take Profit Filters
     Filter('tf1_premium_decay_10', 'tp', lambda position, ltp, data: tp_premium_decay_10(position, ltp, data)),
     Filter('tf2_trailing_sl', 'tp', lambda position, ltp, data: tp_trailing_sl(position, ltp, data)),
     Filter('tf3_retracement_sl', 'tp', lambda position, ltp, data: tp_retracement_sl(position, ltp, data)),
+    Filter('tf4_dynamic_budget', 'tp', _dynamic_tp.evaluate),
 ]
 
 

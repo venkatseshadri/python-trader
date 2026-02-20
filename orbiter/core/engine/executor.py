@@ -72,6 +72,7 @@ class Executor:
                     sig = {
                         'token': token, 'symbol': symbol_full, 'company_name': base_symbol,
                         'ltp': ltp, 'ltp_display': ltp_display, 'score': score,
+                        'orb_high': orb_r.get('orb_high', 0), 'orb_low': orb_r.get('orb_low', 0),
                         'strategy': 'FUTURE_LONG' if is_bull else 'FUTURE_SHORT',
                         'dry_run': order_res.get('dry_run', False),
                         'lot_size': order_res.get('lot_size', 0),
@@ -81,6 +82,7 @@ class Executor:
                     state.active_positions[token] = {
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                         'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
+                        'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'lot_size': sig['lot_size'], 'config': state.config
                     }
 
@@ -119,6 +121,7 @@ class Executor:
                         'atm_symbol': sig['atm_symbol'], 'hedge_symbol': sig['hedge_symbol'],
                         'expiry': sig['expiry'], 'atm_strike': sig['atm_strike'], 'hedge_strike': sig['hedge_strike'],
                         'atm_premium_entry': atm_p, 'hedge_premium_entry': hdg_p,
+                        'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
                         'lot_size': spread.get('lot_size', 0), 'config': state.config
                     }
@@ -200,8 +203,32 @@ class Executor:
                 self.log_closed_positions(to_square)
             
             # Send summary to Telegram
-            summary = "\n".join([f"• {pos['symbol']}: {pos['pct_change']:.2f}%" for pos in to_square])
-            send_telegram_msg(f"⏹️ *Mass Square Off Complete*\nReason: `{reason}`\n\n*Positions:*\n{summary}")
+            lines = []
+            total_pnl = 0.0
+            for pos in to_square:
+                strategy = pos.get('strategy', '')
+                lot_size = int(pos.get('lot_size', 0))
+                pnl_val = 0.0
+                
+                if 'FUTURE' in strategy:
+                    entry = float(pos.get('entry_price', 0))
+                    exit_p = float(pos.get('exit_price', 0))
+                    if 'SHORT' in strategy: pnl_val = (entry - exit_p) * lot_size
+                    else: pnl_val = (exit_p - entry) * lot_size
+                else:
+                    # Spread
+                    atm_e = float(pos.get('atm_premium_entry', 0) or 0)
+                    hdg_e = float(pos.get('hedge_premium_entry', 0) or 0)
+                    atm_x = float(pos.get('atm_premium_exit', 0) or 0)
+                    hdg_x = float(pos.get('hedge_premium_exit', 0) or 0)
+                    if atm_x and hdg_x:
+                        pnl_val = ((atm_e - hdg_e) - (atm_x - hdg_x)) * lot_size
+                
+                total_pnl += pnl_val
+                lines.append(f"• `{pos['symbol']}`: {pos['pct_change']:.2f}% (₹{pnl_val:.2f})")
+
+            summary = "\n".join(lines)
+            send_telegram_msg(f"⏹️ *Mass Square Off Complete*\nReason: `{reason}`\nTotal PnL: ₹{total_pnl:.2f}\n\n*Positions:*\n{summary}")
         return to_square
 
     def check_sl(self, state: OrbiterState, syncer):
