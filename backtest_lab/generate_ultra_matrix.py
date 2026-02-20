@@ -77,7 +77,7 @@ class UltraDefenseEngine:
                 self.active_positions[c['name']] = {'in': c['ltp'], 'type': c['side'], 'entry_time': c['time'], 'max_pnl_rs': 0}
 
 def generate_ultra_matrix():
-    stocks_dir = "python-trader/backtest_lab/data/stocks/"
+    stocks_dir = "backtest_lab/data/stocks/"
     top_stocks = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "SBIN", "LT", "AXISBANK", "BHARTIARTL", "KOTAKBANK", "BOSCHLTD", "ABB", "ADANIENT", "ASIANPAINT", "BAJFINANCE"]
     sample_df = pd.read_csv(os.path.join(stocks_dir, "RELIANCE_minute.csv"))
     all_dates = sorted(pd.to_datetime(sample_df['date']).dt.date.unique())[-7:]
@@ -110,8 +110,8 @@ def generate_ultra_matrix():
 
     df_matrix = pd.DataFrame.from_dict(matrix_data, orient='index')
     df_matrix['Total'] = df_matrix.sum(axis=1)
-    df_matrix.to_html("python-trader/backtest_lab/reports/ultra_defense_matrix.html")
-    print(f"✅ Ultra Matrix generated: python-trader/backtest_lab/reports/ultra_defense_matrix.html")
+    df_matrix.to_html("backtest_lab/reports/ultra_defense_matrix.html")
+    print(f"✅ Ultra Matrix generated: backtest_lab/reports/ultra_defense_matrix.html")
 
 if __name__ == "__main__":
     generate_ultra_matrix()

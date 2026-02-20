@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import threading
+import traceback
 
 # Path to find credentials
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,18 +26,24 @@ def send_telegram_msg(message: str):
             print("❌ Telegram Error: Token or Chat ID missing in cred.yml")
             return False
 
+        # 🔥 Debug: Log where we are sending
+        safe_token = f"{token[:5]}...{token[-5:]}" if token else "None"
+        print(f"📤 Telegram Sending to {chat_id} via {safe_token}")
+
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {
             "chat_id": chat_id,
             "text": message,
-            "parse_mode": "Markdown"
+            "parse_mode": "HTML" # 🔥 Switched to HTML for maximum reliability
         }
 
         response = requests.post(url, data=payload, timeout=10)
+        if response.status_code != 200:
+            print(f"❌ Telegram API Error {response.status_code}: {response.text}")
         return response.status_code == 200
 
     except Exception as e:
-        print(f"❌ Telegram Error: {e}")
+        print(f"❌ Telegram Exception: {e}")
         return False
 
 class TelegramCommandListener:
@@ -77,6 +84,8 @@ class TelegramCommandListener:
                         # Only handle commands from the authorized chat_id
                         if from_id == str(self.chat_id):
                             self._handle_command(text.strip())
+                        else:
+                            print(f"🚫 Unauthorized Telegram access attempt from ID: {from_id} (Expected: {self.chat_id})")
                 
             except Exception as e:
                 print(f"⚠️ Telegram Listener Error: {e}")
@@ -86,85 +95,86 @@ class TelegramCommandListener:
     def _handle_command(self, text):
         now = time.time()
         print(f"📥 Telegram Command Received: {text}")
+        cmd = text.lower().split()[0] if text else ""
         
-        if text.startswith("/q"):
-            question = text[2:].strip()
-            print(f"🤔 AI Query Question: {question}")
-            if not question:
-                send_telegram_msg("❓ *Usage:* `/q why was trade not taken for RELIANCE?`")
-                return
-            if "query" in self.callbacks:
-                print("🤖 Calling AI Query Callback...")
-                send_telegram_msg("🤖 *Thinking...*")
-                try:
-                    msg = self.callbacks["query"](question)
-                    print(f"✅ AI Response Length: {len(msg)}")
+        try:
+            if cmd == "/q":
+                question = text[2:].strip()
+                if not question:
+                    send_telegram_msg("❓ <b>Usage:</b> <code>/q why was trade not taken for RELIANCE?</code>")
+                    return
+                if "query" in self.callbacks:
+                    send_telegram_msg("🤖 <b>Thinking...</b>")
+                    try:
+                        msg = self.callbacks["query"](question)
+                        send_telegram_msg(msg)
+                    except Exception as ai_err:
+                        print(f"❌ AI Callback Error: {ai_err}")
+                        send_telegram_msg(f"❌ <b>AI Error:</b> {ai_err}")
+            elif cmd == "/margin":
+                if "margin" in self.callbacks:
+                    msg = self.callbacks["margin"]()
                     send_telegram_msg(msg)
-                except Exception as e:
-                    print(f"❌ AI Callback Error: {e}")
-                    send_telegram_msg(f"❌ AI Error: {str(e)}")
-        elif text == "/margin":
-            if "margin" in self.callbacks:
-                msg = self.callbacks["margin"]()
-                send_telegram_msg(msg)
-        elif text == "/pnl":
-            if "pnl" in self.callbacks:
-                msg = self.callbacks["pnl"]()
-                send_telegram_msg(msg)
-        elif text == "/status":
-             if "status" in self.callbacks:
-                msg = self.callbacks["status"]()
-                send_telegram_msg(msg)
-        elif text == "/version":
-            if "version" in self.callbacks:
-                msg = self.callbacks["version"]()
-                send_telegram_msg(msg)
-        elif text == "/scan":
-             if "scan" in self.callbacks:
-                msg = self.callbacks["scan"]()
-                send_telegram_msg(msg)
-        elif text == "/help":
-            msg = [
-                "🤖 *Orbiter C2 - Command Reference*",
-                "---",
-                "📊 `/status` - *The Big Picture:* Shows total buying power, collateral vs ledger cash, and any overnight positions.",
-                "",
-                "💰 `/pnl` - *Live Profits:* Concise snapshot of active positions and current floating PnL (₹).",
-                "",
-                "💰 `/margin` - *Wallet Check:* Concise snapshot of available margin and current utilization.",
-                "",
-                "🔍 `/scan` - *Market Pulse:* Live count of scanned symbols, Top 10 movers by score, and real-time P&L of open positions.",
-                "",
-                "🤖 `/q <question>` - *AI Explainer:* Ask the bot why a trade was taken (or not), analyze scores, or get a performance summary.",
-                "",
-                "ℹ️ `/version` - *Bot Version:* Returns the currently running version of the Orbiter engine.",
-                "",
-                "🧹 `/cleanup` - *Reset Logs:* Clears trade logs and metrics in Google Sheets. (Blocked during active sessions; requires 2-step confirmation).",
-                "",
-                "ℹ️ *Note:* Commands are only accepted from authorized users."
-            ]
-            send_telegram_msg("\n".join(msg))
-        elif text == "/cleanup":
-            self._cleanup_pending = True
-            self._cleanup_timestamp = now
-            send_telegram_msg("⚠️ *CRITICAL:* This will delete ALL trade logs and scan metrics.\nSend `/confirm_cleanup` within 60s to proceed.")
-        elif text == "/confirm_cleanup":
-            if self._cleanup_pending and (now - self._cleanup_timestamp < 60):
-                self._cleanup_pending = False
-                send_telegram_msg("🧹 *Cleanup in progress...*")
-                if "cleanup" in self.callbacks:
-                    self.callbacks["cleanup"]()
-                    send_telegram_msg("✨ *Google Sheets Cleanup Complete!*")
-            else:
-                self._cleanup_pending = False
-                send_telegram_msg("❌ *Cleanup Cancelled:* No pending request or time expired.")
+            elif cmd == "/pnl":
+                if "pnl" in self.callbacks:
+                    msg = self.callbacks["pnl"]()
+                    send_telegram_msg(msg)
+            elif cmd == "/status":
+                 if "status" in self.callbacks:
+                    msg = self.callbacks["status"]()
+                    send_telegram_msg(msg)
+            elif cmd == "/version":
+                if "version" in self.callbacks:
+                    msg = self.callbacks["version"]()
+                    send_telegram_msg(msg)
+            elif cmd == "/scan":
+                 if "scan" in self.callbacks:
+                    msg = self.callbacks["scan"]()
+                    send_telegram_msg(msg)
+            elif cmd == "/help":
+                msg = [
+                    "🤖 <b>Orbiter C2 - Command Reference</b>",
+                    "---",
+                    "📊 <code>/status</code> - <b>The Big Picture:</b> Shows buying power and overnight status.",
+                    "",
+                    "💰 <code>/pnl</code> - <b>Live Profits:</b> Snapshot of active positions and floating PnL (₹).",
+                    "",
+                    "💰 <code>/margin</code> - <b>Wallet Check:</b> snapshot of available margin and utilization.",
+                    "",
+                    "🔍 <code>/scan</code> - <b>Market Pulse:</b> Live scan count and Top 10 movers.",
+                    "",
+                    "🤖 <code>/q &lt;question&gt;</code> - <b>AI Explainer:</b> Ask why a trade was taken.",
+                    "",
+                    "ℹ️ <code>/version</code> - <b>Bot Version</b>",
+                    "",
+                    "🧹 <code>/cleanup</code> - <b>Reset Logs</b>"
+                ]
+                send_telegram_msg("\n".join(msg))
+            elif text == "/cleanup":
+                self._cleanup_pending = True
+                self._cleanup_timestamp = now
+                send_telegram_msg("⚠️ <b>CRITICAL:</b> This will delete ALL trade logs.\nSend <code>/confirm_cleanup</code> within 60s.")
+            elif text == "/confirm_cleanup":
+                if self._cleanup_pending and (now - self._cleanup_timestamp < 60):
+                    self._cleanup_pending = False
+                    send_telegram_msg("🧹 <b>Cleanup in progress...</b>")
+                    if "cleanup" in self.callbacks:
+                        self.callbacks["cleanup"]()
+                        send_telegram_msg("✨ <b>Google Sheets Cleanup Complete!</b>")
+                else:
+                    self._cleanup_pending = False
+                    send_telegram_msg("❌ <b>Cleanup Cancelled:</b> Request expired.")
+        except Exception as e:
+            print(f"❌ Telegram Command Logic Crash: {e}")
+            print(traceback.format_exc())
+            send_telegram_msg(f"❌ <b>Internal Error:</b> Command handler crashed.")
 
 if __name__ == "__main__":
     # Test script if run directly
     if len(sys.argv) > 1:
         msg = " ".join(sys.argv[1:])
     else:
-        msg = "🚀 *Orbiter Test Notification*\nSystem is online and connected!"
+        msg = "🚀 <b>Orbiter Test Notification</b>\nSystem is online and connected!"
     
     if send_telegram_msg(msg):
         print("✅ Telegram message sent successfully!")

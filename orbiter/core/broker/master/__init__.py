@@ -51,9 +51,20 @@ class ScripMaster:
 
         # If caches are empty or failed, force download
         if not f_ok or not o_ok:
-            print("📦 Derivative caches empty. Downloading masters...")
-            self.download_scrip_master("NFO")
-            self.download_scrip_master("MCX")
+            # Check if we can avoid the download via disk cache from today
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            cache_file = os.path.join(base_dir, 'orbiter', 'data', 'futures_master.json')
+            from datetime import date
+            is_fresh = os.path.exists(cache_file) and date.fromtimestamp(os.path.getmtime(cache_file)) == date.today()
+            
+            if not is_fresh:
+                print("📦 Derivative caches empty/stale. Downloading masters...")
+                self.download_scrip_master("NFO")
+                self.download_scrip_master("MCX")
+            else:
+                # Still load them into memory if caches were somehow reported empty
+                self.futures.load_cache()
+                self.options.load_cache()
 
         # 3. Load local futures mapping (Primary source for lot sizes)
         self.load_segment_futures_map(segment_name)
@@ -101,11 +112,48 @@ class ScripMaster:
         return False
 
     def download_scrip_master(self, exchange: str):
-        """Unified downloader proxy"""
+        """Unified downloader proxy with cache check"""
+        # 🔥 CRITICAL: Prevent network calls in Test Mode
+        if os.environ.get('ORBITER_TEST_MODE') == '1':
+            if self.verbose: print(f"🧪 Test Mode: Skipping download for {exchange}")
+            # Try loading from disk if available, but never hit network
+            if exchange == "NSE": self.equity.load_nse_mapping()
+            else: 
+                self.futures.load_cache()
+                self.options.load_cache()
+            return True
+
+        # 🔥 Optimization: Skip if already loaded in memory
+        if exchange == "NFO" and len(self.futures.DATA) > 0: return
+        if exchange == "MCX" and any(r.get('exchange') == 'MCX' for r in self.futures.DATA): return
+        if exchange == "NSE" and len(self.equity.TOKEN_TO_SYMBOL) > 0: return
+
+        # 🔥 Optimization: Skip if local cache file is from today
+        from datetime import date
+        import time
+        
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        # Map exchange to internal cache file
+        cache_file = None
+        if exchange == "NSE": cache_file = os.path.join(base_dir, 'orbiter', 'data', 'nse_token_map.json')
+        elif exchange == "NFO": cache_file = os.path.join(base_dir, 'orbiter', 'data', 'futures_master.json')
+        elif exchange == "MCX": cache_file = os.path.join(base_dir, 'orbiter', 'data', 'futures_master.json')
+
+        if cache_file and os.path.exists(cache_file):
+            mtime = date.fromtimestamp(os.path.getmtime(cache_file))
+            if mtime == date.today():
+                if self.verbose: print(f"♻️  Using local {exchange} cache from today.")
+                # Ensure data is loaded from cache if it exists
+                if exchange == "NSE": self.equity.load_nse_mapping()
+                else: 
+                    self.futures.load_cache()
+                    self.options.load_cache()
+                return True
+
         if exchange == "NSE":
-            self._download_nse()
+            return self._download_nse()
         else:
-            self._download_derivative_exchange(exchange)
+            return self._download_derivative_exchange(exchange)
 
     def _download_nse(self):
         url = "https://api.shoonya.com/NSE_symbols.txt.zip"

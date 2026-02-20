@@ -57,16 +57,17 @@ class TestBrokerFacade(unittest.TestCase):
     @patch('requests.get')
     def test_scrip_master_download_proxy(self, mock_get):
         """Verify downloader proxy call"""
-        master = ScripMaster()
-        # Mock the internal download methods to avoid full zip parsing in this unit test
-        master._download_nse = MagicMock()
-        master._download_derivative_exchange = MagicMock()
-        
-        master.download_scrip_master("NSE")
-        master._download_nse.assert_called_once()
-        
-        master.download_scrip_master("NFO")
-        master._download_derivative_exchange.assert_called_with("NFO")
+        with patch.dict('os.environ', {'ORBITER_TEST_MODE': '0'}):
+            master = ScripMaster()
+            # Mock the internal download methods to avoid full zip parsing in this unit test
+            master._download_nse = MagicMock()
+            master._download_derivative_exchange = MagicMock()
+            
+            master.download_scrip_master("NSE")
+            master._download_nse.assert_called_once()
+            
+            master.download_scrip_master("NFO")
+            master._download_derivative_exchange.assert_called_with("NFO")
 
     def test_client_facade_methods(self):
         """Verify BrokerClient facade methods return correct data"""

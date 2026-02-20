@@ -41,8 +41,8 @@ class TestConnectionAndDebrief(unittest.TestCase):
         
         report = summary.generate_post_session_report()
         self.assertIn("NFO SESSION DEBRIEF", report)
-        self.assertIn("Gross PnL:* ₹1,000.00", report)
-        self.assertIn("Net PnL (Est):* ₹979.50", report) # 1000 - (1*20 + 1000*0.0005) = 1000 - 20.5 = 979.5
+        self.assertIn("Gross PnL:</b> ₹1,000.00", report)
+        self.assertIn("Net PnL (Est):</b> ₹979.50", report) # 1000 - (1*20 + 1000*0.0005) = 1000 - 20.5 = 979.5
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,6 +7,7 @@ echo "🔍 Running Orbiter Test Suite..."
 
 # Set paths
 export PYTHONPATH=$PYTHONPATH:$(pwd)/orbiter:$(pwd)/ShoonyaApi-py
+export ORBITER_TEST_MODE=1
 
 # 1. Run unit tests with coverage
 ./.venv/bin/python3 -m coverage run --source=orbiter/core -m unittest discover -s orbiter/tests -p "test_*.py"

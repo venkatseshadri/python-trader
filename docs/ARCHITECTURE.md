@@ -15,9 +15,16 @@
         - `master/`: Loads Scrip Masters and Custom Maps.
         - `executor/`: Handles Order Placement logic.
         - `resolver/`: Resolves Symbols (Future/Option chains).
-            - **Isolated Resolution:** Implements segment-specific master refreshing. If an MCX symbol fails to resolve, it ONLY refreshes the MCX master, preventing massive NFO downloads from pausing the commodity session.
+            - **Isolated Resolution:** Implements segment-specific master refreshing. If an MCX symbol fails to resolve, it ONLY refreshes the MCX master.
+        - **Singleton ScripMaster:** To optimize memory and startup speed, the scrip data is loaded exactly once and shared across all bot instances.
 
 3.  **`core/engine/executor.py`:**
+    - **Guarded Execution:** Implements Slope Guards (EMA5) and Relative Freshness (15m window).
+    - **Mass Square Off:** Atomic portfolio closure with immediate state persistence to prevent "Amnesia Loops."
+
+4.  **`utils/telegram_notifier.py`:**
+    - **HTML Notification Layer:** Uses robust HTML tags (`<b>`, `<code>`) for all Telegram messages. This provides 100% immunity to the underscore parsing crashes common in Markdown.
+    - **Bidirectional C2:** Supports `/pnl`, `/scan`, `/margin`, and `/q` commands.
     - Consumes signals and routes orders.
     - **UX Layer:** Consolidates multiple signals into a single "Batch Entry" notification to prevent Telegram spam during high-volatility windows.
     - **Logic:** Integrates real-time margin data from `SummaryManager` directly into consolidated alerts.

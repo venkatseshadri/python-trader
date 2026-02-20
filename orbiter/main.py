@@ -194,20 +194,21 @@ class Orbiter:
             return True
 
         def handle_ai_query(q):
-            if not self.state: return "🤖 *Orbiter:* System is currently hibernating. Full state context is unavailable."
+            if not hasattr(self, 'state') or not self.state: return "🤖 <b>Orbiter:</b> System is currently initializing. Full state context is unavailable."
             try:
                 return self.ai.ask(q, self._get_ai_context())
             except Exception as e:
                 logger.error(f"❌ AI Query Error: {e}")
-                return f"❌ AI Error: Internal state processing failed ({str(e)})"
+                return f"❌ <b>AI Error:</b> Internal state processing failed ({str(e)})"
 
         callbacks = {
-            "margin": lambda: self.summary.generate_margin_status() if self.summary else "💤 *Orbiter:* Hibernating. Margin data unavailable.",
-            "status": lambda: self.summary.generate_pre_session_report() if self.summary else "💤 *Orbiter:* Hibernating. Session report unavailable.",
-            "scan": lambda: self.summary.generate_live_scan_report(self.state) if self.summary and self.state else "💤 *Orbiter:* Hibernating. No active scans.",
+            "margin": lambda: self.summary.generate_margin_status() if hasattr(self, 'summary') and self.summary else "💤 <b>Orbiter:</b> Initializing. Margin data unavailable.",
+            "status": lambda: self.summary.generate_pre_session_report() if hasattr(self, 'summary') and self.summary else "💤 <b>Orbiter:</b> Initializing. Session report unavailable.",
+            "pnl": lambda: self.summary.generate_pnl_report(self.state) if hasattr(self, 'summary') and hasattr(self, 'state') and self.summary and self.state else "💤 <b>Orbiter:</b> Initializing. PnL data unavailable.",
+            "scan": lambda: self.summary.generate_live_scan_report(self.state) if hasattr(self, 'summary') and hasattr(self, 'state') and self.summary and self.state else "💤 <b>Orbiter:</b> Initializing. No active scans.",
             "cleanup": safe_cleanup,
             "query": handle_ai_query,
-            "version": lambda: f"🤖 *Orbiter v{VERSION}*"
+            "version": lambda: f"🤖 <b>Orbiter v{VERSION}</b>"
         }
         listener = TelegramCommandListener(callbacks)
         listener.start()

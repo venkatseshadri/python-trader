@@ -87,10 +87,10 @@ class SummaryManager:
     def generate_pnl_report(self, state) -> str:
         """Concise report of only active positions and floating PnL."""
         if not state.active_positions:
-            return "✅ *No active positions.*"
+            return "✅ <b>No active positions.</b>"
             
         is_sim = state.config.get('SIMULATION', False)
-        msg = [f"💰 *Running PnL ({self.segment})*{' [SIM]' if is_sim else ''}"]
+        msg = [f"💰 <b>Running PnL ({self.segment})</b>{' [SIM]' if is_sim else ''}"]
         msg.append("-" * 25)
         
         total_pnl = 0.0
@@ -121,14 +121,14 @@ class SummaryManager:
                 
                 total_pnl += pos_pnl
                 emoji = "🟢" if pos_pnl >= 0 else "🔴"
-                msg.append(f"{emoji} `{info.get('symbol', token)}`: **₹{pos_pnl:,.2f}** ({stock_move:+.2f}%)")
+                msg.append(f"{emoji} <code>{info.get('symbol', token)}</code>: <b>₹{pos_pnl:,.2f}</b> ({stock_move:+.2f}%)")
             except Exception as e:
-                msg.append(f"⚠️ `{info.get('symbol', token)}`: Calculation Error")
+                msg.append(f"⚠️ <code>{info.get('symbol', token)}</code>: Calculation Error")
                 print(f"❌ PnL Calc Error for {token}: {e}")
         
         msg.append("-" * 20)
         pnl_emoji = "📈" if total_pnl >= 0 else "📉"
-        msg.append(f"{pnl_emoji} *Total Floating:* **₹{total_pnl:,.2f}**")
+        msg.append(f"{pnl_emoji} <b>Total Floating:</b> <b>₹{total_pnl:,.2f}</b>")
         return "\n".join(msg)
 
     def generate_live_scan_report(self, state) -> str:
@@ -136,11 +136,11 @@ class SummaryManager:
         is_sim = state.config.get('SIMULATION', False)
         mode_tag = " [SIMULATION]" if is_sim else ""
         
-        msg = [f"📊 *{self.segment} LIVE STATUS{mode_tag}*"]
+        msg = [f"📊 <b>{self.segment} LIVE STATUS{mode_tag}</b>"]
         msg.append("-" * 25)
 
         # 1. Scan Stats
-        msg.append(f"🔎 *Scanning:* {len(state.symbols)} symbols")
+        msg.append(f"🔎 <b>Scanning:</b> {len(state.symbols)} symbols")
         
         # 2. Top 10 Scans by Score (Absolute)
         scores = []
@@ -151,7 +151,7 @@ class SummaryManager:
         # Sort by absolute score descending
         top_10 = sorted(scores, key=lambda x: abs(x[1]), reverse=True)[:10]
         if top_10:
-            msg.append("\n🔝 *Top 10 Scans (Score | Move | LTP):*")
+            msg.append("\n🔝 <b>Top 10 Scans (Score | Move | LTP):</b>")
             for token, score in top_10:
                 data = state.client.SYMBOLDICT.get(token, {})
                 
@@ -162,7 +162,7 @@ class SummaryManager:
                 # Try multiple sources for the symbol name
                 raw_symbol = data.get('symbol') or data.get('tsym')
                 if not raw_symbol or '|' in str(raw_symbol):
-                    raw_symbol = state.broker.get_symbol(token_id, exchange=exch)
+                    raw_symbol = self.broker.get_symbol(token_id, exchange=exch)
                 
                 import re
                 clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', str(raw_symbol))
@@ -174,9 +174,9 @@ class SummaryManager:
                 baseline_price = 0.0
                 
                 try:
-                    spot_token_id = state.broker.get_token(clean_name)
+                    spot_token_id = self.broker.get_token(clean_name)
                     if spot_token_id and not spot_token_id.startswith('NFO') and not spot_token_id.startswith('MCX'):
-                        quote = state.broker.api.get_quotes(exchange='NSE', token=spot_token_id)
+                        quote = self.broker.api.get_quotes(exchange='NSE', token=spot_token_id)
                         if quote:
                             ltp_spot = float(quote.get('lp') or 0)
                             baseline_price = float(quote.get('c') or 0)
@@ -207,15 +207,15 @@ class SummaryManager:
                 
                 # C. Final "Color Coded" Formatting
                 row = (
-                    f"- `{clean_name:<10}`: **[{score:>+6.2f}]** | "
-                    f"{change_emoji} `{day_points:>+7.2f}` (`{day_change:>+5.2f}%`) | "
-                    f"`₹{ltp_display:,.2f}`"
+                    f"- <code>{clean_name:<10}</code>: <b>[{score:>+6.2f}]</b> | "
+                    f"{change_emoji} <code>{day_points:>+7.2f}</code> (<code>{day_change:>+5.2f}%</code>) | "
+                    f"<code>₹{ltp_display:,.2f}</code>"
                 )
                 msg.append(row)
         
         # 3. Active Positions & PnL
         if state.active_positions:
-            pos_title = "🧪 *Active Simulations:*" if is_sim else "💼 *Active Positions:*"
+            pos_title = "🧪 <b>Active Simulations:</b>" if is_sim else "💼 <b>Active Positions:</b>"
             msg.append(f"\n{pos_title} ({len(state.active_positions)})")
             total_pnl = 0.0
             for token, info in state.active_positions.items():
@@ -225,7 +225,7 @@ class SummaryManager:
                 # PnL Calculation
                 pos_pnl = 0.0
                 if 'FUTURE' in strategy:
-                    profit_pct = ((float(ltp) - info['entry_price']) / info['entry_price'] * 100.0)
+                    profit_pct = ((float(ltp) - info['entry_price']) / (info['entry_price'] or 1) * 100.0)
                     if 'SHORT' in strategy: profit_pct = -profit_pct
                     pos_pnl = (profit_pct / 100.0) * info['entry_price'] * info.get('lot_size', 0)
                 else:
@@ -239,14 +239,14 @@ class SummaryManager:
                 
                 total_pnl += pos_pnl
                 emoji = "🟢" if pos_pnl >= 0 else "🔴"
-                msg.append(f"{emoji} `{info['symbol']}`: ₹{pos_pnl:,.2f}")
+                msg.append(f"{emoji} <code>{info['symbol']}</code>: ₹{pos_pnl:,.2f}")
             
             msg.append("-" * 20)
             pnl_emoji = "💰" if total_pnl >= 0 else "💸"
-            pnl_label = "*Total PnL (Simulated):*" if is_sim else "*Total PnL:*"
-            msg.append(f"{pnl_emoji} {pnl_label} ₹{total_pnl:,.2f}")
+            pnl_label = "<b>Total PnL (Simulated):</b>" if is_sim else "<b>Total PnL:</b>"
+            msg.append(f"{pnl_emoji} {pnl_label} <b>₹{total_pnl:,.2f}</b>")
         else:
-            msg.append("\n✅ *No active positions.*")
+            msg.append("\n✅ <b>No active positions.</b>")
 
         return "\n".join(msg)
 
@@ -259,7 +259,7 @@ class SummaryManager:
         # Filter for executed orders only
         executed = [o for o in orders if o.get('status') == 'COMPLETE']
         
-        msg = [f"🌇 *{self.segment} SESSION DEBRIEF*"]
+        msg = [f"🌇 <b>{self.segment} SESSION DEBRIEF</b>"]
         msg.append("-" * 25)
         
         # 1. Financial Performance
@@ -270,13 +270,13 @@ class SummaryManager:
         net_pnl = total_pnl - est_charges
         
         pnl_emoji = "🟢" if total_pnl >= 0 else "🔴"
-        msg.append(f"{pnl_emoji} *Gross PnL:* ₹{total_pnl:,.2f}")
-        msg.append(f"💸 *Est. Charges:* ₹{est_charges:,.2f}")
-        msg.append(f"📈 *Net PnL (Est):* ₹{net_pnl:,.2f}")
+        msg.append(f"{pnl_emoji} <b>Gross PnL:</b> ₹{total_pnl:,.2f}")
+        msg.append(f"💸 <b>Est. Charges:</b> ₹{est_charges:,.2f}")
+        msg.append(f"📈 <b>Net PnL (Est):</b> ₹{net_pnl:,.2f}")
         
         # 3. Portfolio Concentration Risk
         if positions:
-            msg.append("\n📊 *Portfolio Concentration:*")
+            msg.append("\n📊 <b>Portfolio Concentration:</b>")
             max_pos = None
             max_val = -1.0
             for p in positions:
@@ -285,17 +285,17 @@ class SummaryManager:
                     max_val = pnl
                     max_pos = p['tsym']
             if max_pos:
-                msg.append(f"🔥 *Top Mover:* {max_pos} (₹{max_val:,.2f})")
+                msg.append(f"🔥 <b>Top Mover:</b> {max_pos} (₹{max_val:,.2f})")
         
         # 4. Execution Activity
-        msg.append(f"\n🎯 *Activity:* {len(executed)} Orders Executed")
+        msg.append(f"\n🎯 <b>Activity:</b> {len(executed)} Orders Executed")
         
         # 5. Final Margin & T+1 Estimate
         if limits:
-            msg.append(f"💰 *Final Margin:* ₹{limits['available']:,.2f}")
+            msg.append(f"💰 <b>Final Margin:</b> ₹{limits['available']:,.2f}")
             # T+1 Estimate: If NFO, profits are usually available next day.
             t1_margin = limits['available'] + net_pnl
-            msg.append(f"📅 *T+1 Est. Margin:* ₹{t1_margin:,.2f}")
+            msg.append(f"📅 <b>T+1 Est. Margin:</b> ₹{t1_margin:,.2f}")
 
-        msg.append("\n💤 *Orbiter:* Session closed.")
+        msg.append("\n💤 <b>Orbiter:</b> Session closed.")
         return "\n".join(msg)
