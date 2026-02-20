@@ -117,6 +117,7 @@ class Executor:
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'lot_size': sig['lot_size'],
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
+                        'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
@@ -162,6 +163,7 @@ class Executor:
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
                         'lot_size': spread.get('lot_size', 0),
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
+                        'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
@@ -295,40 +297,45 @@ class Executor:
             if ltp == 0: continue
 
             strategy = info.get('strategy', '')
-            
-            # ✅ PnL for Futures
+            # ✅ Always calculate Stock Move % (The "Truth")
+            stock_move_pct = ((ltp - info['entry_price']) / info['entry_price'] * 100.0)
+            if 'SHORT' in strategy or 'PUT_CREDIT' in strategy: # PUT Spread is Bullish, but we track stock move
+                pass # Stock Move is positive for long/bullish
+            if 'FUTURE_SHORT' in strategy or 'CALL_CREDIT' in strategy:
+                # We'll keep stock_move_pct as absolute stock change for SL filters
+                pass
+
+            # ✅ Calculate Cash PnL
             if 'FUTURE' in strategy:
-                profit_pct = ((ltp - info['entry_price']) / info['entry_price'] * 100.0)
+                profit_pct = stock_move_pct
                 if 'SHORT' in strategy: profit_pct = -profit_pct
-                
-                info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), profit_pct)
                 pos_pnl = (profit_pct / 100.0) * info['entry_price'] * info.get('lot_size', 0)
+                info['pnl_rs'] = pos_pnl
                 info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
                 port_pnl += pos_pnl
                 
                 if state.verbose_logs:
-                    print(f"📈 FUT {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) [LTP: {ltp:.2f}] Max={info.get('max_profit_pct', 0.0):.2f}%")
+                    print(f"📈 FUT {token}: PnL=₹{pos_pnl:.2f} [Stock: {stock_move_pct:+.2f}%] [LTP: {ltp:.2f}]")
                 
-                # For compatibility with legacy filters
+                # For compatibility
                 atm_ltp, hdg_ltp = 0, 0 
 
-            # ✅ PnL for Spreads
             else:
+                # Spread
                 atm_ltp = state.client.get_option_ltp_by_symbol(info.get('atm_symbol'))
                 hdg_ltp = state.client.get_option_ltp_by_symbol(info.get('hedge_symbol'))
                 
                 if atm_ltp and hdg_ltp:
                     current_net = atm_ltp - hdg_ltp
                     data['current_net_premium'] = current_net
-                    entry_net, basis = info.get('entry_net_premium', 0), info.get('atm_premium_entry', 0)
-                    if entry_net != 0 and basis != 0:
-                        profit_pct = (entry_net - current_net) / abs(basis) * 100.0
-                        info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), profit_pct)
-                        pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
-                        info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
-                        port_pnl += pos_pnl
-                        if state.verbose_logs:
-                            print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} ({profit_pct:.2f}%) [LTP: {ltp:.2f}] [ATM: {atm_ltp:.2f} HDG: {hdg_ltp:.2f} NET: {current_net:.2f}] Max={info.get('max_profit_pct', 0.0):.2f}%")
+                    entry_net = info.get('entry_net_premium', 0)
+                    pos_pnl = (entry_net - current_net) * info.get('lot_size', 0)
+                    info['pnl_rs'] = pos_pnl
+                    info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pos_pnl)
+                    port_pnl += pos_pnl
+                    
+                    if state.verbose_logs:
+                        print(f"📈 POS {token}: PnL=₹{pos_pnl:.2f} [Stock: {stock_move_pct:+.2f}%] [LTP: {ltp:.2f}] [Spread: {current_net:.2f}]")
             
             evaluated.append((token, info, ltp, data, atm_ltp, hdg_ltp))
 

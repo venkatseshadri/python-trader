@@ -23,7 +23,7 @@ def check_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] 
             
             # 2️⃣ Total Cash Check (STOP_LOSS_RS)
             total_pnl = (entry_net - current_net) * lot_size
-            stop_loss_rs = position.get('config', {}).get('STOP_LOSS_RS', 0)
+            stop_loss_rs = position.get('stop_loss_rs', 0)
             if not result['hit'] and stop_loss_rs > 0 and total_pnl <= -stop_loss_rs:
                 result['hit'] = True
                 result['reason'] = f"Stop Loss hit: Total PnL -₹{abs(total_pnl):.2f} <= -₹{stop_loss_rs}"

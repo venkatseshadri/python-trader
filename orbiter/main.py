@@ -339,16 +339,20 @@ class Orbiter:
                         logger.info(f"🔔 SL/TP Hits: {len(exit_hits)} positions squared off")
                         lines = []
                         for hit in exit_hits:
-                            # Calculate PnL for message
+                            # Calculate PnL and Stock Move for message
                             strategy = hit.get('strategy', '')
                             lot_size = int(hit.get('lot_size', 0))
                             pnl_val = 0.0
+                            
+                            # Underlying Move
+                            entry_ltp = float(hit.get('entry_price', 0))
+                            exit_ltp = float(hit.get('exit_price', 0))
+                            stock_move = ((exit_ltp - entry_ltp) / entry_ltp * 100.0)
+                            
                             if 'FUTURE' in strategy:
-                                entry = float(hit.get('entry_price', 0))
-                                exit_p = float(hit.get('exit_price', 0))
-                                if 'SHORT' in strategy: pnl_val = (entry - exit_p) * lot_size
-                                else: pnl_val = (exit_p - entry) * lot_size
-                                price_details = f"[LTP: {exit_p}]"
+                                if 'SHORT' in strategy: pnl_val = (entry_ltp - exit_ltp) * lot_size
+                                else: pnl_val = (exit_ltp - entry_ltp) * lot_size
+                                price_details = f"[Stock: {stock_move:+.2f}%] [LTP: {exit_ltp}]"
                             else:
                                 # Spread
                                 atm_e = float(hit.get('atm_premium_entry', 0) or 0)
@@ -359,7 +363,7 @@ class Orbiter:
                                     pnl_val = ((atm_e - hdg_e) - (atm_x - hdg_x)) * lot_size
                                 
                                 exit_net = hit.get('exit_net_premium', 0)
-                                price_details = f"[LTP: {hit.get('exit_price')}] [Spread: {exit_net:.2f}]"
+                                price_details = f"[Stock: {stock_move:+.2f}%] [LTP: {exit_ltp}] [Spread: {exit_net:.2f}]"
                             
                             lines.append(f"• `{hit.get('symbol')}`: {hit.get('reason', 'SL/TP')} (₹{pnl_val:.2f}) {price_details}")
                         

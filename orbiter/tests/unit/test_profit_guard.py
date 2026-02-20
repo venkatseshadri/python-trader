@@ -2,46 +2,36 @@ import unittest
 from orbiter.filters.tp.f2_trailing_sl import check_trailing_sl
 
 class TestProfitGuardPro(unittest.TestCase):
-    def test_tight_trailing_hit(self):
-        """Test the 'BAJFINANCE scenario': 5.64% peak should exit early with 0.75% gap"""
-        position = {
-            'symbol': 'BAJFINANCE',
-            'atm_premium_entry': 10.0,
-            'entry_net_premium': 9.0,
-            'max_profit_pct': 5.64, # Peak reached
-            'tp_trail_activation': 1.5,
-            'tp_trail_gap': 0.75
-        }
-        
-        # Scenario: Profit drops to 4.80% (Gap is 0.75%, so threshold is 5.64 - 0.75 = 4.89%)
-        # At 4.80% profit, it should be a HIT.
-        current_net = 8.52 # (9.0 - 8.52) / 10.0 * 100 = 4.80%
-        data = {'current_net_premium': current_net}
-        
-        res = check_trailing_sl(position, 1000.0, data)
-        self.assertTrue(res['hit'])
-        self.assertIn("Profit Guard Pro hit", res['reason'])
-        self.assertIn("Trail-Floor 4.89", res['reason'])
-
-    def test_peak_lock_mechanism(self):
-        """Test that if profit > 3%, SL never falls below 1.0% (guaranteed green)"""
+    def test_cash_trailing_hit(self):
+        """Test the 'Smart SL scenario': Peak ₹2000, 40% retracement means exit at ₹1200"""
         position = {
             'symbol': 'TEST',
-            'atm_premium_entry': 10.0,
-            'entry_net_premium': 9.0,
-            'max_profit_pct': 3.1, # Crossed the 3% peak-lock threshold
-            'tp_trail_activation': 1.5,
-            'tp_trail_gap': 5.0 # Even if gap is huge (dumb legacy value)
+            'max_pnl_rs': 2000.0,
+            'pnl_rs': 1100.0, # Below the ₹1200 floor
+            'tsl_retracement_pct': 40,
+            'tsl_activation_rs': 1000
         }
         
-        # 3.1 - 5.0 = -1.9 (Red), but Peak-Lock should force it to +1.0% (Green)
-        # Current profit drops to 0.5% (Should be hit because floor is 1.0%)
-        current_net = 8.95 # (9.0 - 8.95) / 10.0 * 100 = 0.5%
-        data = {'current_net_premium': current_net}
-        
-        res = check_trailing_sl(position, 1000.0, data)
+        res = check_trailing_sl(position, 1000.0, {})
         self.assertTrue(res['hit'])
-        self.assertIn("Trail-Floor 1.00", res['reason'])
+        self.assertIn("Cash TSL Hit", res['reason'])
+        self.assertIn("Floor ₹1200", res['reason'])
+
+    def test_cash_peak_lock_mechanism(self):
+        """Test that if Peak PnL > ₹2000, SL never falls below ₹500 (guaranteed green)"""
+        position = {
+            'symbol': 'TEST',
+            'max_pnl_rs': 2500.0,
+            'pnl_rs': 400.0, # Below the ₹500 floor-lock
+            'tsl_retracement_pct': 90, # Huge gap would normally mean exit at ₹250
+            'tsl_activation_rs': 1000
+        }
+        
+        # 90% of 2500 is 2250 drop. 2500 - 2250 = ₹250 floor.
+        # But Peak-Lock forces floor to ₹500.
+        res = check_trailing_sl(position, 1000.0, {})
+        self.assertTrue(res['hit'])
+        self.assertIn("Floor ₹500", res['reason'])
 
 if __name__ == "__main__":
     unittest.main()
