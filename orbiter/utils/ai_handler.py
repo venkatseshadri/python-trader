@@ -1,4 +1,4 @@
-import google.generativeai as genai
+from google import genai
 import yaml
 import os
 import json
@@ -6,10 +6,9 @@ import json
 class OrbiterAI:
     def __init__(self, cred_path):
         self.api_key = self._load_key(cred_path)
-        self.model = None
+        self.client = None
         if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
+            self.client = genai.Client(api_key=self.api_key)
 
     def _load_key(self, path):
         if not os.path.exists(path):
@@ -19,8 +18,8 @@ class OrbiterAI:
         return creds.get('gemini_api_key')
 
     def ask(self, question, state_context):
-        if not self.api_key:
-            return "⚠️ AI Error: Gemini API key not found in credentials."
+        if not self.api_key or not self.client:
+            return "⚠️ AI Error: Gemini API key not found or client initialization failed."
 
         prompt = f"""
 You are the AI Expert for the 'Orbiter' Trading Bot.
@@ -36,11 +35,13 @@ Please provide a concise, professional, and data-driven explanation in Markdown.
 If the question is about why a trade wasn't taken, analyze the filter scores vs the TRADE_SCORE threshold.
 """
         # Try working models only to prevent long hangs
-        for model_name in ['gemini-3-flash-preview', 'gemini-2.0-flash']:
+        for model_name in ['gemini-2.0-flash', 'gemini-1.5-flash']:
             try:
                 print(f"🤖 AI Attempting Model: {model_name}...")
-                model = genai.GenerativeModel(model_name)
-                response = model.generate_content(prompt)
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
                 print(f"✅ AI Success with {model_name}")
                 return response.text
             except Exception as e:
@@ -48,7 +49,6 @@ If the question is about why a trade wasn't taken, analyze the filter scores vs 
                 # If we hit a quota (429), try the next model
                 if "429" in str(e):
                     continue
-                # If it's a 404 or other error, log and try next
                 continue
         
         return "❌ AI Error: All models failed (likely due to quota limits or 404s). Please try again in a few minutes."
