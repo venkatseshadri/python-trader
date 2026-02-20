@@ -50,8 +50,10 @@ class OrbiterState:
             }
             
             os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
-            with open(self.state_file, 'w') as f:
+            tmp_file = self.state_file + ".tmp"
+            with open(tmp_file, 'w') as f:
                 json.dump(data, f, indent=4, default=json_serial)
+            os.replace(tmp_file, self.state_file) # 🔥 Atomic Swap to prevent corruption
             
         except Exception as e:
             print(f"⚠️ Failed to save session: {e}")
@@ -66,7 +68,19 @@ class OrbiterState:
         try:
             with open(self.state_file, 'r') as f:
                 data = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"⚠️ Corrupted session file detected: {e}")
+            backup_path = self.state_file + ".corrupt"
+            try:
+                os.replace(self.state_file, backup_path)
+                print(f"💾 Corrupted file moved to {backup_path} for investigation.")
+            except: pass
+            return
+        except Exception as e:
+            print(f"⚠️ Failed to load session: {e}")
+            return
 
+        try:
             # 1. Freshness Check (30 minutes expiry)
             last_ts = data.get('last_updated', 0)
             if (datetime.now().timestamp() - last_ts) > 1800:

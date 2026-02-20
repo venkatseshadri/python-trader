@@ -12,9 +12,8 @@ def check_retracement_sl(position: Dict[str, Any], current_ltp: float, data: Dic
         entry_net = position.get('entry_net_premium', 0)
         current_net = data.get('current_net_premium') if data else None
         lot_size = position.get('lot_size', 0)
-        config_obj = position.get('config', {})
-        retracement_pct = config_obj.get('TSL_RETREACEMENT_PCT', 50)
-        activation_rs = config_obj.get('TSL_ACTIVATION_RS', 1000)
+        retracement_pct = position.get('tsl_retracement_pct', 50)
+        activation_rs = position.get('tsl_activation_rs', 1000)
         
         if entry_net == 0 or current_net is None or lot_size == 0:
             return result

@@ -23,7 +23,7 @@ def check_tp(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] 
             
             # 2️⃣ Total Cash Check (TARGET_PROFIT_RS)
             total_pnl = (entry_net - current_net) * lot_size
-            target_profit_rs = position.get('config', {}).get('TARGET_PROFIT_RS', 0)
+            target_profit_rs = position.get('target_profit_rs', 0)
             if not result['hit'] and target_profit_rs > 0 and total_pnl >= target_profit_rs:
                 result['hit'] = True
                 result['reason'] = f"Profit Target hit: Total PnL ₹{total_pnl:.2f} >= ₹{target_profit_rs}"

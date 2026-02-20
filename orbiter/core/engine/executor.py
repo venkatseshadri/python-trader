@@ -115,7 +115,10 @@ class Executor:
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                         'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
-                        'lot_size': sig['lot_size'], 'config': state.config
+                        'lot_size': sig['lot_size'],
+                        'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
+                        'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
+                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000)
                     }
 
                 # ✅ NFO (or others): Use Credit Spreads
@@ -155,7 +158,10 @@ class Executor:
                         'atm_premium_entry': atm_p, 'hedge_premium_entry': hdg_p,
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
-                        'lot_size': spread.get('lot_size', 0), 'config': state.config
+                        'lot_size': spread.get('lot_size', 0),
+                        'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
+                        'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
+                        'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000)
                     }
 
                 if sig:
