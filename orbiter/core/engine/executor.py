@@ -28,11 +28,21 @@ class Executor:
         buy_signals = []
         ranked = sorted(scores.items(), key=lambda x: abs(x[1]), reverse=True)[:state.config['TOP_N']]
         
-        if state.verbose_logs and scores:
-            print(f"🔍 Evaluated {len(scores)} symbols. Top Signal: {ranked[0][0] if ranked else 'None'} Score: {ranked[0][1] if ranked else 0}")
-
-        for token, score in ranked:
+        for i, (token, score) in enumerate(ranked):
             if token in state.active_positions: continue
+
+            # 🔥 NEW: Score Velocity Tracking
+            if token not in state.opening_scores and abs(score) > 0.1:
+                state.opening_scores[token] = score
+            
+            opening = state.opening_scores.get(token, score)
+            velocity = score - opening
+            velocity_str = f"({'+' if velocity >= 0 else ''}{velocity:.2f})"
+
+            if state.verbose_logs and i == 0:
+                data = state.client.SYMBOLDICT.get(token)
+                symbol_full = data.get('ts') if data else token
+                print(f"🔍 Evaluated {len(scores)} symbols. Top Signal: {symbol_full} Score: {score:.2f} {velocity_str}")
 
             # 🔥 NEW: Entry Guards (Cooldown & Trend State)
             now_ts = time.time()

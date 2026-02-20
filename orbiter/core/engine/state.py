@@ -14,6 +14,7 @@ class OrbiterState:
         # position_info = {'entry_price', 'entry_time', 'symbol', 'company_name', ...}
         self.active_positions = {}
         self.exit_history = {} # 🔥 Track last exit time for cooldowns
+        self.opening_scores = {} # 🔥 Track first score of the day
         self.last_scan_metrics = []
         self.last_scan_log_ts = 0
         self.filter_results_cache = {}
@@ -44,7 +45,8 @@ class OrbiterState:
             data = {
                 'last_updated': datetime.now().timestamp(),
                 'active_positions': self.active_positions,
-                'exit_history': self.exit_history
+                'exit_history': self.exit_history,
+                'opening_scores': self.opening_scores
             }
             
             os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
@@ -79,6 +81,7 @@ class OrbiterState:
                 self.active_positions[token] = info
             
             self.exit_history = data.get('exit_history', {})
+            self.opening_scores = data.get('opening_scores', {})
             
             if self.active_positions:
                 print(f"🧠 Recovered {len(self.active_positions)} active positions from disk.")
