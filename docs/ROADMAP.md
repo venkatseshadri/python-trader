@@ -4,6 +4,7 @@
 - [x] **Telegram Integration:** Heartbeat, Alerts, and Error Watcher.
 - [x] **Emergency Kill-Switch:** Manual RPi shell access.
 - [x] **Session Lifecycle:** Hibernation/Smart Rest logic.
+- [x] **Persistence:** Restart-proof state management via `session_state.json`.
 - [x] **MCX Integration:** Full futures mapping and lot size resolution.
 
 ## 🔬 Phase 2: Filter Reverse Engineering (IN PROGRESS ⏳)
@@ -51,4 +52,4 @@
     - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
 
 ---
-*Last Updated: 2026-02-20 | Build: v3.9.6*
+*Last Updated: 2026-02-20 | Build: v3.9.6 (STABLE)*

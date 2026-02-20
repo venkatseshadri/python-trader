@@ -49,5 +49,19 @@ The bot no longer enters based solely on morning ORB levels. It now verifies the
 
 ---
 
-## 4. Final Verdict
+## 5. The Persistence Layer (Anti-Amnesia)
+
+### The Problem: The Restart Storm
+Prior to version `v3.9.6`, every time the bot or Raspberry Pi restarted (due to updates or connection drops), the bot lost its in-memory record of active trades. 
+- **Consequence:** On the first scan post-restart, the bot would see all signals as "New" and re-open 10+ positions, triggering a massive storm of Telegram alerts and duplicate log entries.
+
+### The Solution: `session_state.json`
+The bot now treats its memory as a persistent asset:
+1.  **Continuous Saving:** Current positions and exit timestamps are flushed to disk every 5 seconds.
+2.  **State Re-hydration:** On startup, the bot "re-hydrates" its memory. If a position was already active before the crash, it is silently resumed.
+3.  **Freshness Check:** To avoid "Zombies" (recovering trades from hours ago when the market has moved), the bot implements a **30-minute expiry**. If the last save was over 30 minutes ago, the state is wiped for safety.
+
+---
+
+## 6. Final Verdict
 This design shifts the bot from a "Scalper" (reacting to 1-minute noise) to a "Trend Follower" (aligned with institutional 15-minute flows). It maximizes profit by staying in trades longer and minimizes costs by stopping the churn loop.

@@ -50,13 +50,22 @@ To maintain 99.9% uptime during market hours, the project enforces a strict boun
 
 ## 🧠 State Memory & Guarded Execution
 
-To prevent high-frequency trade churn ("Again and Again" re-entries), the system implements a state-aware execution layer:
+To ensure stability across system restarts and prevent over-trading, the system implements a persistent state-aware execution layer:
 
-### 1. Exit Cooldown (Memory)
-- **Mechanism:** `OrbiterState.exit_history` tracks the timestamp of every technical exit (SL/TP).
-- **Logic:** The `Executor` blocks re-entry into any symbol for **15 minutes** post-exit, allowing the price noise to settle.
+### 1. Session Persistence (Disk-based Memory)
+- **Mechanism:** `OrbiterState.save_session()` and `load_session()`.
+- **Storage:** `orbiter/data/session_state.json`.
+- **Flow:**
+    - **Startup:** The bot reads the state file to recover `active_positions` and `exit_history`.
+    - **Execution:** Every loop iteration (5s) persists the current state to disk.
+- **Freshness Protocol:** 
+    - **Expiry:** If the state file is >30 minutes old, it is considered "stale" and discarded to prevent trading on outdated data.
+    - **Silent Recovery:** Recovered positions do NOT trigger new Telegram notifications, eliminating "Notification Storms" during restarts.
 
-### 2. Trend-State Entry Guards
+### 2. Exit Cooldown (Memory)
+- **Logic:** The `Executor` blocks re-entry into any symbol for **15 minutes** post-exit, allowing the price noise to settle. This history is preserved across restarts via the Persistence Layer.
+
+### 3. Trend-State Entry Guards
 Even if a signal score is high, the `Executor` performs two "Real-time Sanity Checks" before opening a position:
 - **Slope Guard:** Uses a 1-minute EMA5. Re-entry is blocked unless the current EMA5 is higher than its level 5 minutes ago (`EMA5_now > EMA5_prev`). This ensures the trend is actively moving up.
 - **Freshness Guard:** Blocks entries if the current price is stagnant. Price must be within **0.2% of the session high** to qualify as a fresh breakout.
