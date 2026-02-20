@@ -36,18 +36,6 @@ class ContractResolver:
 
         expiries = find_exp()
         
-        # 🔄 EMERGENCY: If still no expiries, force one more download and retry
-        # Limit refresh to once per 5 minutes to avoid blocking
-        last_refresh = getattr(self.master, '_last_refresh_time', 0)
-        now = _time.time()
-        
-        if not expiries and (now - last_refresh > 300):
-            target_exch = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT', 'FUTIDX') else 'NFO'
-            print(f"🔄 No expiries for {symbol}. Forcing {target_exch} master refresh...")
-            self.master.download_scrip_master(target_exch)
-            self.master._last_refresh_time = now
-            expiries = find_exp()
-
         if not expiries: return None
         today = datetime.date.today()
         valid = sorted(d for d in expiries if d >= today)

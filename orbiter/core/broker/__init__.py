@@ -37,6 +37,9 @@ class BrokerClient:
         self.span_cache_path = None
         self._span_cache = None
         
+        # 🔥 NEW: Force load master immediately to prevent mid-session stalls
+        self.download_scrip_master('MCX' if self.segment_name == 'mcx' else 'NFO')
+        
         # Load only relevant mappings for this segment
         self.load_symbol_mapping()
 
