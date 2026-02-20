@@ -63,17 +63,20 @@ class Executor:
                     closes = np.array(closes_raw, dtype=float)
                     ema5 = talib.EMA(closes, timeperiod=5)
                     if len(ema5) >= 6 and ema5[-1] <= ema5[-6]: # Negative/flat slope over last 5 mins
-                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} slope negative ({ema5[-1]:.2f} <= {ema5[-6]:.2f}). Skipping.")
+                        print(f"🛡️ Guard: {symbol_full} slope negative ({ema5[-1]:.2f} <= {ema5[-6]:.2f}). Skipping.")
                         continue
                     
                     # 2. Freshness Guard (Near RECENT high)
                     # Use last 15 mins high instead of absolute Day High
                     recent_high = max(highs_raw[-15:]) 
-                    if ltp < recent_high * 0.998: # More than 0.2% below recent high
-                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * 0.998). Skipping.")
+                    
+                    # 🔥 Relaxed for MCX (0.5%) vs NFO (0.2%)
+                    freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
+                    if ltp < recent_high * freshness_limit:
+                        print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
                         continue
                 else:
-                    if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
+                    print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
                     continue
 
                 base_symbol = data.get('company_name') or symbol_full

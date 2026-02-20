@@ -32,9 +32,11 @@ class TestExecutorLogic(unittest.TestCase):
         scores = {'MCX|467013': 50.0}
         # Rising candles: last close is 5719, high is 5729
         mock_candles = [{'intc': str(5700 + i), 'inth': str(5710 + i), 'intl': str(5690 + i), 'stat': 'Ok'} for i in range(20)]
+        # High is 5729. 0.4% below is 5706. 
+        # Previous 0.2% rule would fail, new 0.5% rule should pass.
         self.state.client.SYMBOLDICT = {
             'MCX|467013': {
-                'lp': '5729.0', # Matches Recent High
+                'lp': '5707.0', 
                 'symbol': 'CRUDEOIL19FEB26', 'company_name': 'CRUDEOIL',
                 'candles': mock_candles
             }
