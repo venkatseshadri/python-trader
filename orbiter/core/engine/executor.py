@@ -66,10 +66,11 @@ class Executor:
                         if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} slope negative ({ema5[-1]:.2f} <= {ema5[-6]:.2f}). Skipping.")
                         continue
                     
-                    # 2. Freshness Guard (Near session high)
-                    day_high = max(highs_raw)
-                    if ltp < day_high * 0.998: # More than 0.2% below high
-                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < High {day_high} * 0.998). Skipping.")
+                    # 2. Freshness Guard (Near RECENT high)
+                    # Use last 15 mins high instead of absolute Day High
+                    recent_high = max(highs_raw[-15:]) 
+                    if ltp < recent_high * 0.998: # More than 0.2% below recent high
+                        if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * 0.998). Skipping.")
                         continue
                 else:
                     if state.verbose_logs: print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
