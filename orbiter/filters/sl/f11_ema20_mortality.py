@@ -15,7 +15,7 @@ def resample_to_15min(minute_candles):
     # Map Shoonya keys
     # Keys usually: ssboe, into, inth, intl, intc, v, time
     if 'time' in df.columns:
-        df['time'] = pd.to_datetime(df['time'], format='%d-%m-%Y %H:%M:%S')
+        df['time'] = pd.to_datetime(df['time'], format='mixed')
     elif 'ssboe' in df.columns:
         # ssboe is seconds since epoch
         df['time'] = pd.to_datetime(df['ssboe'], unit='s')
