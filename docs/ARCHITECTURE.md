@@ -17,20 +17,18 @@
         - `resolver/`: Resolves Symbols (Future/Option chains).
 
 3.  **`core/engine/executor.py`:**
-    - Consumes signals.
-    - Routes orders:
-        - `MCX`: Calls `place_future_order`.
-        - `NFO`: Calls `place_credit_spread`.
-    - **New:** Triggers `SummaryManager` for automated post-trade margin alerts.
+    - Consumes signals and routes orders.
+    - **UX Layer:** Consolidates multiple signals into a single "Batch Entry" notification to prevent Telegram spam during high-volatility windows.
+    - **Logic:** Integrates real-time margin data from `SummaryManager` directly into consolidated alerts.
 
 4.  **`core/analytics/summary.py` (SummaryManager):**
     - **Purpose:** Centralizes all financial and performance calculations.
-    - **Parity Logic:** Fetches SPOT quotes for underlyings to match broker dashboards.
+    - **Funds Logic:** Provides authoritative "Available Liquidity" for the C2 notification layer.
     - **Tax Logic:** Calculates estimated Net P&L using segment-specific tax/brokerage rates.
 
 5.  **`utils/telegram_notifier.py` (C2 System):**
     - **Listener:** Runs an async background thread to poll for commands.
-    - **Safety:** Implements session-awareness (via `main.py` callback) to block critical actions during market hours.
+    - **Safety:** Implements session-awareness to block critical actions during market hours.
 
 ## 🛡️ Live Core vs. Research Separation
 
@@ -101,12 +99,17 @@ The bot provides high-resolution logging to allow for forensic audit of every de
 
 ### 1. Dual-Metric Position Tracking (Smart SL V2)
 To eliminate "Leverage Divergence" (where tiny stock moves trigger huge option premium swings), the system uses a split-source risk model:
-- **Trend Gauge (Underlying %):** Technical Stop Losses (EMA20, SuperTrend) are calculated using the **Underlying Stock Price (LTP)**. This ensures exits are based on genuine price action, not option premium noise.
-- **Profit Gauge (Cash PnL ₹):** Trailing Stop Losses are calculated using **Hard Cash (Rupee) values**. Milestone-based trailing (e.g., lock in ₹500 once ₹2000 is hit) provides stable risk management that matches the trader's bank ledger.
-- **Forensics:** Logs for NFO spreads display both layers: `[Stock %] (₹PnL) [LTP: x] [Spread: y]`.
+- **Trend Gauge (Underlying %):** Technical Stop Losses (EMA20, SuperTrend) are calculated using the **Underlying Stock Price (LTP)**. 
+- **Volatility-Aware SL (ATR):** The bot calculates the stock's **ATR (Average True Range)** at the moment of entry. 
+    - **Futures:** SL is set at `Entry +/- 1.5 * ATR`.
+    - **Spreads:** Premium SL is set at `Entry_Premium + (0.25 * ATR)`. This ensures the buffer is proportionate to the stock's actual "breathing room."
+- **Profit Gauge (Cash PnL ₹):** Trailing Stop Losses are calculated using **Hard Cash (Rupee) values**. Milestone-based trailing (e.g., lock in ₹500 once ₹2000 is hit) provides stable risk management.
 
-### 2. Consolidated Alerts
-Individual SL/TP hits are now aggregated into a single, detailed Telegram message per scan cycle, reducing notification noise while providing full PnL and LTP data.
+### 2. Consolidated Alerts (Brevity Protocol)
+To ensure high signal-to-noise for the trader:
+- **Batch Entries:** Multiple position opens in a single cycle are batched into one concise message including **Score Velocity** and **Total Margin**.
+- **Exit Summary:** SL/TP hits are aggregated into a single detailed message displaying `[Stock %]` and `(₹PnL)`.
+- **Spam Suppression:** Redundant, line-by-line margin alerts have been eliminated in favor of integrated liquidity status.
 
 ---
 
