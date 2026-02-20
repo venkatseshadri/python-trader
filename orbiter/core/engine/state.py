@@ -35,24 +35,26 @@ class OrbiterState:
     def save_session(self):
         """Persist active positions and exit history to disk"""
         try:
-            # Convert datetime objects to strings for JSON
-            serializable_positions = {}
-            for token, info in self.active_positions.items():
-                pos_copy = info.copy()
-                if isinstance(pos_copy.get('entry_time'), datetime):
-                    pos_copy['entry_time'] = pos_copy['entry_time'].isoformat()
-                serializable_positions[token] = pos_copy
+            # Convert datetime objects to strings for JSON in both positions and history
+            def json_serial(obj):
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+                raise TypeError(f"Type {type(obj)} not serializable")
 
             data = {
                 'last_updated': datetime.now().timestamp(),
-                'active_positions': serializable_positions,
+                'active_positions': self.active_positions,
                 'exit_history': self.exit_history
             }
+            
             os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
             with open(self.state_file, 'w') as f:
-                json.dump(data, f, indent=4)
+                json.dump(data, f, indent=4, default=json_serial)
+            
         except Exception as e:
             print(f"⚠️ Failed to save session: {e}")
+            import traceback
+            traceback.print_exc()
 
     def load_session(self):
         """Recover session from disk with freshness protocol"""
