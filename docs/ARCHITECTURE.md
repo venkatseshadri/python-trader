@@ -55,12 +55,11 @@ To ensure stability across system restarts and prevent over-trading, the system 
 ### 1. Session Persistence (Disk-based Memory)
 - **Mechanism:** `OrbiterState.save_session()` and `load_session()`.
 - **Storage:** `orbiter/data/session_state.json`.
-- **Containers:** 
-    - `active_positions`: Current trades.
-    - `exit_history`: Cooldown timestamps.
-    - `opening_scores`: The first valid score of the day for each stock (baseline for Velocity).
+- **Atomic Integrity:** Uses a "Write-then-Swap" pattern. Data is written to `.tmp` and then atomically renamed to the primary file. This prevents corruption during power failure or process crashes.
+- **Sanitization:** The state saver automatically strips non-serializable Python objects (like module loaders or active API objects) from the state dictionary before saving, ensuring JSON integrity.
 - **Freshness Protocol:** 
     - **Expiry:** If the state file is >30 minutes old, it is considered "stale" and discarded.
+    - **Corruption Recovery:** If a malformed JSON file is detected on startup, it is automatically backed up to `.corrupt` for forensics and the bot starts fresh.
     - **Silent Recovery:** Recovered positions do NOT trigger new Telegram notifications.
 
 ### 2. Score Velocity (Momentum Tracking)

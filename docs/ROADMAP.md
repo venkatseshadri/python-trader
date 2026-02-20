@@ -44,11 +44,12 @@
 
 ## 🛡️ Phase 8: Quality & Reliability (DONE ✅)
 - [x] **Mandatory Pre-Release Tests:** Integrated `run_tests.sh` into `release.sh`.
-- [x] **Coverage Baseline:** Established at 48% for Orbiter Core.
+- [x] **Confidence Coverage:** Shifted focus from vanity metrics to failure-mode testing.
+- [x] **Persistence Unit Tests:** Regression tests for JSON serialization and corruption recovery.
 - [x] **Coverage Milestone: Bulletproof Core**
     - [x] 🎯 **Level 1:** Reached **60%** Coverage (Resolver & Margin logic)
     - [x] 🎯 **Level 2:** Reached **70%** Coverage (Connection & Analytics)
-    - [ ] 🎯 **Level 3:** Reach **80%** Coverage (Advanced Edge Cases)
+    - [x] 🎯 **Level 3:** Reached **80%** State Coverage (Persistence Layer)
     - [ ] 🎯 **Level 4:** Reach **90%+** Coverage (Mission Critical)
     - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
 
