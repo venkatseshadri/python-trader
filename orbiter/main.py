@@ -244,6 +244,7 @@ class Orbiter:
         self.syncer = Syncer(update_active_positions)
         
         # Link state back to components
+        self.state.load_session() # 🔥 Recover Memory
 
         logger.info(f"📊 Universe: {len(segment.SYMBOLS_FUTURE_UNIVERSE)} tokens")
         logger.info(f"🎯 Entry Threshold: {full_config['TRADE_SCORE']}pts")
@@ -275,16 +276,19 @@ class Orbiter:
     def run(self):
         try:
             # ☀️ Market Start Summary
-            try:
-                pre_report = self.summary.generate_pre_session_report()
-                send_telegram_msg(pre_report)
-            except Exception as e:
-                logger.error(f"⚠️ Could not generate pre-session report: {e}")
-                send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`")
+            # Only send if we didn't just recover a very recent session
+            if not self.state.active_positions:
+                try:
+                    pre_report = self.summary.generate_pre_session_report()
+                    send_telegram_msg(pre_report)
+                except Exception as e:
+                    logger.error(f"⚠️ Could not generate pre-session report: {e}")
+                    send_telegram_msg(f"🚀 *Orbiter Online*\nSegment: `{self.state.config['OPTION_INSTRUMENT']}`")
             
             last_sl_check = 0
             while True:
                 now_ts = time.time()
+                self.state.save_session() # 🔥 Persist Memory every loop
 
                 # EOD Auto-Reset (3:15 PM for NFO, 11:15 PM for MCX)
                 ist = pytz.timezone('Asia/Kolkata')
