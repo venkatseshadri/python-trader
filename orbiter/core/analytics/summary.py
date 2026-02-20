@@ -84,6 +84,53 @@ class SummaryManager:
         ]
         return "\n".join(msg)
 
+    def generate_pnl_report(self, state) -> str:
+        """Concise report of only active positions and floating PnL."""
+        if not state.active_positions:
+            return "✅ *No active positions.*"
+            
+        is_sim = state.config.get('SIMULATION', False)
+        msg = [f"💰 *Running PnL ({self.segment})*{' [SIM]' if is_sim else ''}"]
+        msg.append("-" * 25)
+        
+        total_pnl = 0.0
+        for token, info in state.active_positions.items():
+            try:
+                # 🛡️ Safety: Fallback to entry price if LTP is None
+                raw_ltp = self.broker.get_ltp(token)
+                current_price = float(raw_ltp) if raw_ltp is not None else float(info.get('entry_price', 0))
+                entry_price = float(info.get('entry_price', 0))
+                strategy = info.get('strategy', '')
+                
+                # PnL Calculation
+                pos_pnl = 0.0
+                stock_move = ((current_price - entry_price) / (entry_price or 1) * 100.0)
+                
+                if 'FUTURE' in strategy:
+                    profit_pct = stock_move
+                    if 'SHORT' in strategy: profit_pct = -profit_pct
+                    pos_pnl = (profit_pct / 100.0) * entry_price * info.get('lot_size', 1)
+                else:
+                    # Spread PnL
+                    atm_ltp = self.broker.get_option_ltp_by_symbol(info.get('atm_symbol'))
+                    hdg_ltp = self.broker.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+                    if atm_ltp is not None and hdg_ltp is not None:
+                        current_net = float(atm_ltp) - float(hdg_ltp)
+                        entry_net = float(info.get('entry_net_premium', 0))
+                        pos_pnl = (entry_net - current_net) * info.get('lot_size', 1)
+                
+                total_pnl += pos_pnl
+                emoji = "🟢" if pos_pnl >= 0 else "🔴"
+                msg.append(f"{emoji} `{info.get('symbol', token)}`: **₹{pos_pnl:,.2f}** ({stock_move:+.2f}%)")
+            except Exception as e:
+                msg.append(f"⚠️ `{info.get('symbol', token)}`: Calculation Error")
+                print(f"❌ PnL Calc Error for {token}: {e}")
+        
+        msg.append("-" * 20)
+        pnl_emoji = "📈" if total_pnl >= 0 else "📉"
+        msg.append(f"{pnl_emoji} *Total Floating:* **₹{total_pnl:,.2f}**")
+        return "\n".join(msg)
+
     def generate_live_scan_report(self, state) -> str:
         """🔍 Real-time report of scans and active positions."""
         is_sim = state.config.get('SIMULATION', False)
