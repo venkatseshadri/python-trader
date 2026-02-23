@@ -1,24 +1,23 @@
-# Last Technical Change: v3.12.2 Cloud Migration Strategy & Session Maintenance
+# Last Technical Change: v3.12.3 Documentation Integrity & Session Maintenance
 
 **Date:** 2026-02-23
-**Status:** IN PROGRESS (Build: `v3.12.2`)
+**Status:** IN PROGRESS (Build: `v3.12.3`)
 
 ## 1. Strategic Outcomes
-Solidified the long-term autonomous architecture by drafting the OCI Cloud Migration plan. Maintained the live session with a total PnL exceeding ₹15,000.
+Restored documentation integrity by recovering the general Cloud Migration roadmap and properly archiving the session-specific OCI migration plan. Maintained the live session with a total PnL exceeding ₹19,000.
 
 ## 2. Technical Adjustments
 
-### A. Cloud Control Strategy (`docs/CLOUD_MIGRATION.md`)
-- **Architecture:** Transitioning the Gemini CLI Agent from local MacBook to an always-on OCI Ampere instance.
-- **Connectivity:** Utilizing Tailscale for secure, zero-config SSH access to the local Raspberry Pi.
-- **Persistence:** Implementation of `tmux` on OCI to ensure the agent remains active and monitoring even when the user is offline.
+### A. Documentation Restoration (`docs/`)
+- **CLOUD_MIGRATION.md:** Recovered the original general roadmap covering Vercel, Railway, and Supabase. Added an update section referencing the specific OCI path chosen for this session.
+- **OCI_MIGRATION_20260223.md:** Moved the OCI-specific technical plan to `docs/technical_plans/` to prevent overwriting high-level architectural docs.
 
 ### B. Session Monitoring (`orbiter/logs/`)
-- **Profit Achievement:** Real-time audit confirms **Total Day PnL of +₹15,008**.
-- **Realized Efficiency:** Churned 113 trades with high accuracy using the Hybrid Engine.
-- **Open Winners:** `HCLTECH` (+₹1.8k) and `TCS` (+₹3.6k) are currently running under Global TSL protection.
+- **Performance:** Hybrid Engine continues to perform optimally.
+- **Goal Status:** **🎯 jackport FEAT ACHIEVED.** Realized ₹9.1k, Unrealized ₹10.1k. Total PnL: **+₹19,290**.
+- **Accuracy:** Fixed `/pnl` reporting to include realized trades in the daily total.
 
 ## 3. Mission Status
-- **Goal Status:** **🎯 FEAT ACHIEVED.** Realized ₹9.4k, Unrealized ₹5.5k.
-- **Optimization:** RPi resources remain optimized (Headless mode).
-- **Next Step:** Post-market OCI provisioning and environment setup.
+- **Goal Status:** **🎯 jackport FEAT ACHIEVED.**
+- **RPi Environment:** Headless and optimized.
+- **Next Step:** Post-market OCI instance provisioning.
