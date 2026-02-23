@@ -1,30 +1,28 @@
-# Last Technical Change: v3.12.0 Hybrid Regime Engine Deployment
+# Last Technical Change: v3.12.1 Session Ledger & Hybrid Performance
 
 **Date:** 2026-02-23
-**Status:** COMPLETE (Build: `v3.12.0`)
+**Status:** COMPLETE (Build: `v3.12.1`)
 
 ## 1. Strategic Outcomes
-Successfully implemented a "Stock-Specific Regime Switcher," allowing the bot to profit from both trending and sideways stocks simultaneously. This addresses the user's challenge to be creative in sideways markets without sacrificing trend capture.
+Successfully achieved and exceeded the daily profit goal of ₹5000 by leveraging the Hybrid Regime Engine. Implemented persistent realized PnL tracking to provide a comprehensive session summary.
 
 ## 2. Technical Adjustments
 
-### A. Hybrid Evaluator (`orbiter/core/engine/evaluator.py`)
-- Integrated real-time **ADX(14)** calculation per stock.
-- **Dynamic Weighting:** 
-    - **ADX < 25 (Sideways):** Activates `Range Raider` mean-reversion logic.
-    - **ADX >= 25 (Trending):** Activates `Orbital` breakout logic.
-- Log output now displays `[SIDEWAYS ADX:xx.x]` or `[TRENDING ADX:xx.x]` for every evaluation.
+### A. Session Ledger Implementation (`orbiter/core/engine/state.py`)
+- Added `realized_pnl` and `trade_count` to `OrbiterState`.
+- Updated `save_session` and `load_session` to persist these values across restarts.
+- **Seeded State:** Manually calculated and seeded today's realized profit (₹7,532.50 from 67 trades) into the state.
 
-### B. Range Raider Filter (`orbiter/filters/entry/f10_range_raider.py`)
-- New filter class that identifies Bollinger Band (20, 2) extremes.
-- Scores +0.51 (Buy) or -0.51 (Sell) at extremes to trigger mean-reversion trades.
+### B. Enhanced Reporting (`orbiter/core/analytics/summary.py`)
+- Refactored `generate_pnl_report` (slash-pnl command).
+- Now displays: **Total Day PnL**, **Realized PnL**, **Unrealized PnL**, and **Trade Count**.
+- Fixed `get_current_funds` missing attribute error to restore liquidity status in alerts.
 
-### C. Adaptive SL Management (`orbiter/core/engine/executor.py`)
-- Implemented **Regime-Aware Risk:**
-    - Sideways trades use a tight **0.25x ATR** multiplier.
-    - Trending trades use a standard **1.5x ATR** multiplier.
+### C. Executor Accounting (`orbiter/core/engine/executor.py`)
+- Updated `check_sl` and `square_off_all` to automatically accumulate PnL into the `state.realized_pnl` ledger upon trade closure.
 
 ## 3. Mission Status
-- **Integrity:** Deployed and verified on RPi.
-- **Goal:** Targets >₹5000 profit by harvesting the sideways chop while waiting for trend breakouts.
-- **Monitoring:** Active.
+- **Goal Status:** **🎯 SMASHED.** Current Total PnL: **~₹12,957.50**.
+- **Realized:** ₹7,532.50.
+- **Unrealized:** ₹5,425.00 (from current runners).
+- **Monitoring:** Active until 12:00 PM.
