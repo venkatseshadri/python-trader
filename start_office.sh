@@ -1,14 +1,23 @@
 #!/bin/bash
-# 🏢 ORBITER OFFICE STARTUP SCRIPT (v1.0)
-# This script handles the transition from RPI to MBC.
+# 🏢 ORBITER OFFICE STARTUP SCRIPT (v1.1)
+# This script handles the transition from RPI to MBC with session verification.
 
 echo "🔄 Initializing Office Handover..."
 
-# 1. Run the Handover Tool (Syncs code, Freezes RPI, Shows State)
+# 1. Run the Handover Tool (Syncs code, Freezes RPI, Downloads State)
 python3 orbiter/handover.py
+HANDOVER_EXIT=$?
 
-if [ $? -ne 0 ]; then
-    echo "❌ Handover failed. Check your internet connection or credentials."
+if [ $HANDOVER_EXIT -eq 2 ]; then
+    echo ""
+    echo "🚨 WARNING: No active session was recovered from the cloud."
+    read -p "Do you want to start a FRESH session? [y/N]: " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+        echo "👋 Aborting startup."
+        exit 0
+    fi
+elif [ $HANDOVER_EXIT -ne 0 ]; then
+    echo "❌ Handover process crashed. Check logs."
     exit 1
 fi
 
