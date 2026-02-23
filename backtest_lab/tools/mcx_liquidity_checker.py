@@ -80,8 +80,7 @@ def check_mcx_liquidity():
                 'oi': oi
             })
 
-    print(f"
-{'Option':<20} | {'LTP':<8} | {'Spread%':<8} | {'Volume':<8} | {'OI':<8}")
+    print(f"\n{'Option':<20} | {'LTP':<8} | {'Spread%':<8} | {'Volume':<8} | {'OI':<8}")
     print("-" * 65)
     for res in sorted(results, key=lambda x: x['volume'], reverse=True):
         status = "✅ LIQUID" if res['spread_pct'] < 0.5 and res['volume'] > 100 else "❌ ILLIQUID"
