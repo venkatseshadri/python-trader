@@ -96,15 +96,13 @@ class SummaryManager:
         return "\n".join(msg)
 
     def generate_pnl_report(self, state) -> str:
-        """Concise report of only active positions and floating PnL."""
-        if not state.active_positions:
-            return "✅ <b>No active positions.</b>"
-            
+        """Report total day summary including realized and unrealized PnL."""
         is_sim = state.config.get('SIMULATION', False)
-        msg = [f"💰 <b>Running PnL ({self.segment})</b>{' [SIM]' if is_sim else ''}"]
+        msg = [f"📊 <b>Session Summary ({self.segment})</b>{' [SIM]' if is_sim else ''}"]
         msg.append("-" * 25)
         
-        total_pnl = 0.0
+        active_pnl = 0.0
+        active_lines = []
         for token, info in state.active_positions.items():
             try:
                 # 🛡️ Safety: Fallback to entry price if LTP is None
@@ -130,16 +128,25 @@ class SummaryManager:
                         entry_net = float(info.get('entry_net_premium', 0))
                         pos_pnl = (entry_net - current_net) * info.get('lot_size', 1)
                 
-                total_pnl += pos_pnl
+                active_pnl += pos_pnl
                 emoji = "🟢" if pos_pnl >= 0 else "🔴"
-                msg.append(f"{emoji} <code>{info.get('symbol', token)}</code>: <b>₹{pos_pnl:,.2f}</b> ({stock_move:+.2f}%)")
+                active_lines.append(f"{emoji} <code>{info.get('symbol', token)}</code>: <b>₹{pos_pnl:,.2f}</b> ({stock_move:+.2f}%)")
             except Exception as e:
-                msg.append(f"⚠️ <code>{info.get('symbol', token)}</code>: Calculation Error")
+                active_lines.append(f"⚠️ <code>{info.get('symbol', token)}</code>: Calculation Error")
                 print(f"❌ PnL Calc Error for {token}: {e}")
         
-        msg.append("-" * 20)
-        pnl_emoji = "📈" if total_pnl >= 0 else "📉"
-        msg.append(f"{pnl_emoji} <b>Total Floating:</b> <b>₹{total_pnl:,.2f}</b>")
+        realized_pnl = getattr(state, 'realized_pnl', 0.0)
+        total_pnl = active_pnl + realized_pnl
+        trade_count = getattr(state, 'trade_count', 0)
+
+        msg.append(f"🎯 <b>Total Day PnL:</b> <b>₹{total_pnl:,.2f}</b>")
+        msg.append(f"✅ <b>Realized:</b>  ₹{realized_pnl:,.2f} ({trade_count} trades)")
+        msg.append(f"📈 <b>Unrealized:</b> ₹{active_pnl:,.2f}")
+        
+        if active_lines:
+            msg.append("\n💼 <b>Active Positions:</b>")
+            msg.extend(active_lines)
+        
         return "\n".join(msg)
 
     def generate_live_scan_report(self, state) -> str:

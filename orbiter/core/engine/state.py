@@ -19,6 +19,8 @@ class OrbiterState:
         # 🔥 NEW: Global TSL State
         self.max_portfolio_pnl = 0.0
         self.global_tsl_active = False
+        self.realized_pnl = 0.0
+        self.trade_count = 0
 
         self.last_scan_metrics = []
         self.last_scan_log_ts = 0
@@ -60,7 +62,9 @@ class OrbiterState:
                 'exit_history': self.exit_history,
                 'opening_scores': self.opening_scores,
                 'max_portfolio_pnl': self.max_portfolio_pnl,
-                'global_tsl_active': self.global_tsl_active
+                'global_tsl_active': self.global_tsl_active,
+                'realized_pnl': self.realized_pnl,
+                'trade_count': self.trade_count
             }
             
             os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
@@ -112,6 +116,8 @@ class OrbiterState:
             self.opening_scores = data.get('opening_scores', {})
             self.max_portfolio_pnl = data.get('max_portfolio_pnl', 0.0)
             self.global_tsl_active = data.get('global_tsl_active', False)
+            self.realized_pnl = data.get('realized_pnl', 0.0)
+            self.trade_count = data.get('trade_count', 0)
             
             if self.active_positions:
                 print(f"🧠 Recovered {len(self.active_positions)} active positions from disk.")

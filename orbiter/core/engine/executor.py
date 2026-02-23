@@ -356,6 +356,10 @@ class Executor:
                 total_pnl += pnl_val
                 lines.append(f"• `{pos['symbol']}`: {pos['pct_change']:.2f}% (₹{pnl_val:.2f}) {price_details}")
 
+            # 🔥 Record for Session Ledger
+            state.realized_pnl += total_pnl
+            state.trade_count += len(to_square)
+
             summary = "\n".join(lines)
             send_telegram_msg(f"⏹️ *Mass Square Off Complete*\nReason: `{reason}`\nTotal PnL: ₹{total_pnl:.2f}\n\n*Positions:*\n{summary}")
         return to_square
@@ -496,6 +500,10 @@ class Executor:
                 }
                 to_square.append(so)
                 if token in state.active_positions: 
+                    # 🔥 Record for Session Ledger
+                    state.realized_pnl += info.get('pnl_rs', 0)
+                    state.trade_count += 1
+                    
                     del state.active_positions[token]
                     state.exit_history[token] = time.time() # 🔥 Record exit for cooldown
         if to_square:
