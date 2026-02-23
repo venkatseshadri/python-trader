@@ -472,6 +472,13 @@ class Executor:
                 try: cand = f.evaluate(info, float(ltp), data)
                 except Exception as e: cand = {'hit': False, 'reason': f"err:{e}"}
                 if cand and cand.get('hit'):
+                    # 🧠 PROFIT EFFICIENCY GUARD (v3.13.0)
+                    # For Sideways scalps, don't take tiny profits (< ₹500) 
+                    # unless it's a Stop Loss (Reason starts with 'SL' or 'sf').
+                    is_tp = not (cand.get('reason', '').startswith('SL') or cand.get('reason', '').startswith('sf'))
+                    if info.get('regime') == 'SIDEWAYS' and is_tp and info.get('pnl_rs', 0) < 500:
+                        continue
+
                     res = cand
                     if 'reason' not in res: res['reason'] = f.key
                     break
