@@ -18,7 +18,8 @@ from core.broker.master import ScripMaster
 def audit_realtime():
     print(f"🕵️  Real-time Hindsight Audit (5:00 PM - Now) @ {datetime.now().strftime('%H:%M:%S')}...")
     
-    client = BrokerClient(config_path='ShoonyaApi-py/cred.yml', segment_name='mcx')
+    # Use correct relative path for ShoonyaApi-py/cred.yml
+    client = BrokerClient(config_path='../ShoonyaApi-py/cred.yml', segment_name='mcx')
     if not client.login():
         print("❌ Authentication failed.")
         return
