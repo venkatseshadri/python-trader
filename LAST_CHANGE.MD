@@ -1,26 +1,20 @@
-# Last Technical Change: v3.10.9 Final Strategic Overhaul
+# Last Technical Change: v3.11.0 Session Target Optimization
 
-**Date:** 2026-02-20
-**Status:** COMPLETE (Build: `v3.10.9`)
+**Date:** 2026-02-23
+**Status:** COMPLETE (Build: `v3.11.0`)
 
 ## 1. Strategic Outcomes
-Today's session transitioned the bot from a brittle, noisy system into an institutional-grade trading engine. Floating PnL in the live MCX session exceeded ₹60,000 using the new logic.
+Today's session focused on precise session target management and automated trailing stop-loss activation.
 
-## 2. Final Component Hardening
+## 2. Component Adjustments
 
-### A. HTML Notification Layer (`orbiter/utils/telegram_notifier.py`)
-- Abandoned Markdown in favor of robust **HTML tags**. This fixed the "Silent Failure" bug where underscores in stock symbols crashed the Telegram message delivery.
-- Added `/pnl` command for concise, real-time profit tracking.
+### A. Session Management (`orbiter/config/config.py`)
+- **Portfolio Target:** Set `TOTAL_TARGET_PROFIT_RS` to **5000**. The bot will now hard-exit all positions once the session PnL reaches this target.
+- **Trailing Stop Loss:** Adjusted `TSL_ACTIVATION_RS` from **1000** to **500**. This ensures that individual winning trades (1 lot) start locking in profits much earlier, aligning with the user's "need 500 from 1 stock" goal.
 
-### B. Startup Performance (`orbiter/core/broker/master/`)
-- Implemented **Singleton ScripMaster** and **Offline-First testing**.
-- Bot startup and Test Suite execution are now **500% faster** by avoiding redundant 200MB network downloads.
-
-### C. Guard Resilience (`orbiter/core/engine/executor.py`)
-- Hardened the Guard loop with `try-except` blocks and strict data validation.
-- Relaxed MCX Freshness to **0.5%** to better capture high-value commodity momentum.
+### B. Startup Logic (`orbiter/main.py`)
+- **Hibernation Fix:** Reduced hibernation interval from 10 minutes to **1 minute** to prevent missing the market open.
 
 ## 3. Mission Status
-- **Integrity:** 100% Verified on Raspberry Pi.
-- **Regression:** 63/63 Tests Passing.
-- **Data:** Repository cleaned from 2.4GB to 26MB.
+- **Integrity:** Deployed and Restarted on Raspberry Pi.
+- **Monitoring:** Active. Waiting for 10:30 AM checkpoint to potentially lower entry threshold.

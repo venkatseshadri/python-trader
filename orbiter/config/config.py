@@ -19,12 +19,12 @@ TARGET_PROFIT_RS = 0         # Exit if Total PnL >= this amount
 STOP_LOSS_RS = 0             # Exit if Total PnL <= -this amount
 
 # 🔥 PORTFOLIO-WIDE TARGETS (Master Kill-switch)
-TOTAL_TARGET_PROFIT_RS = 0   
+TOTAL_TARGET_PROFIT_RS = 5000   
 TOTAL_STOP_LOSS_RS = 0       
 
 # 🔥 TRAILING SL CONFIG
 TSL_RETREACEMENT_PCT = 40    
-TSL_ACTIVATION_RS = 1000     
+TSL_ACTIVATION_RS = 500     
 
 SCORE_CAP_ORB_PCT = 0.10
 SCORE_CAP_EMA_PCT = 0.10
