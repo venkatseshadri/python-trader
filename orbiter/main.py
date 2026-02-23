@@ -216,12 +216,10 @@ class Orbiter:
         segment, seg_name = self._get_active_segment()
         logger.info(f"✅ Initializing Engine [v{VERSION}] for {seg_name.upper()}...")
         
-        # Build merged configuration
+        # Build merged configuration (Segment overrides Global)
         full_config = {
             **vars(global_config),
-            'MARKET_OPEN': segment.MARKET_OPEN,
-            'MARKET_CLOSE': segment.MARKET_CLOSE,
-            'OPTION_INSTRUMENT': segment.OPTION_INSTRUMENT,
+            **vars(segment),
             'SIMULATION': self.simulation,
             'VERBOSE_LOGS': True # 🔥 FORCE
         }
