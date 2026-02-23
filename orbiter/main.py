@@ -126,6 +126,7 @@ def manage_lockfile(action="acquire"):
 class Orbiter:
     def __init__(self, simulation: bool = False):
         self.simulation = simulation
+        self.office_mode = False
         self.client = None
         self.state = None
         self.evaluator = Evaluator()
@@ -201,6 +202,13 @@ class Orbiter:
                 logger.error(f"❌ AI Query Error: {e}")
                 return f"❌ <b>AI Error:</b> Internal state processing failed ({str(e)})"
 
+        def freeze_bot():
+            logger.info("❄️ FREEZE SIGNAL RECEIVED via Telegram. Stopping execution...")
+            send_telegram_msg("❄️ <b>Orbiter:</b> Execution frozen. Service stopping.")
+            # Use os._exit to bypass standard shutdown and kill the process immediately
+            import os
+            os._exit(0)
+
         callbacks = {
             "margin": lambda: self.summary.generate_margin_status() if hasattr(self, 'summary') and self.summary else "💤 <b>Orbiter:</b> Initializing. Margin data unavailable.",
             "status": lambda: self.summary.generate_pre_session_report() if hasattr(self, 'summary') and self.summary else "💤 <b>Orbiter:</b> Initializing. Session report unavailable.",
@@ -208,8 +216,10 @@ class Orbiter:
             "scan": lambda: self.summary.generate_live_scan_report(self.state) if hasattr(self, 'summary') and hasattr(self, 'state') and self.summary and self.state else "💤 <b>Orbiter:</b> Initializing. No active scans.",
             "cleanup": safe_cleanup,
             "query": handle_ai_query,
+            "freeze": freeze_bot,
             "version": lambda: f"🤖 <b>Orbiter v{VERSION}</b>"
         }
+
         listener = TelegramCommandListener(callbacks)
         listener.start()
 
@@ -330,7 +340,11 @@ class Orbiter:
                     if score != 0: scores[token] = score
                 
                 # Execute Signals
-                self.executor.rank_signals(self.state, scores, self.syncer)
+                if not self.office_mode:
+                    self.executor.rank_signals(self.state, scores, self.syncer)
+                else:
+                    if int(now_ts) % 60 < 5: # Log only once a minute
+                        logger.info("🏢 Office Mode: Monitoring Only. Skipping signal execution.")
 
                 # SL/TP Monitoring
                 if now_ts - last_sl_check >= 60:
@@ -392,11 +406,14 @@ class Orbiter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--simulation", action="store_true")
+    parser.add_argument("--office-mode", action="store_true", help="Monitoring-only mode for laptop handover")
     args = parser.parse_args()
 
     manage_lockfile("acquire")
     try:
+        # Pass office_mode into the bot instance
         bot = Orbiter(simulation=args.simulation)
+        bot.office_mode = args.office_mode
         bot.verbose_logs = True # 🔥 FORCE DEBUG
         bot.setup()
         if bot.login():
