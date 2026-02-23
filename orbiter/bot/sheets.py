@@ -531,6 +531,38 @@ def get_engine_state():
         print(f"⚠️ Failed to fetch cloud state: {e}")
     return None
 
+def register_instance(instance_id):
+    """Mark this instance as the Master in the cloud to prevent conflicts"""
+    try:
+        creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
+        creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
+        client = gspread.authorize(creds)
+        book = client.open("trade_log")
+        sheet = _get_or_create_worksheet(book, "instance_lock")
+        
+        timestamp = datetime.now().timestamp()
+        # Store in cell A1: Instance ID, B1: Timestamp
+        sheet.update("A1:B1", [[instance_id, timestamp]])
+    except Exception as e:
+        print(f"⚠️ Cloud Registration failed: {e}")
+
+def get_master_instance():
+    """Check which instance is currently the Master in the cloud"""
+    try:
+        creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
+        creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
+        client = gspread.authorize(creds)
+        book = client.open("trade_log")
+        sheet = _get_or_create_worksheet(book, "instance_lock")
+        
+        data = sheet.get("A1:B1")
+        if data and len(data[0]) >= 2:
+            return {"id": data[0][0], "ts": float(data[0][1])}
+    except Exception as e:
+        print(f"⚠️ Failed to fetch master instance: {e}")
+    return None
+
+
 
 
 def log_closed_positions(closed_data):

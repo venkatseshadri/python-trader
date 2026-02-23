@@ -287,6 +287,13 @@ class Orbiter:
 
     def run(self):
         try:
+            # 🆔 Identity & Heartbeat setup
+            import socket
+            hostname = socket.gethostname()
+            instance_id = "office_mbc" if "macbook" in hostname.lower() or "mbc" in hostname.lower() or "darwin" in sys.platform else "home_rpi"
+            last_heartbeat = 0
+            hibernate_mode = False
+
             # ☀️ Market Start Summary
             # Only send if we didn't just recover a very recent session
             if not self.state.active_positions:
@@ -333,9 +340,36 @@ class Orbiter:
                     self.is_running = False # Stop the engine for now
                     break 
                 
+                # 🛡️ CLOUD HEARTBEAT & CONFLICT CHECK (v3.14.3)
+                if now_ts - last_heartbeat >= 60:
+                    from bot.sheets import register_instance, get_master_instance
+                    master = get_master_instance()
+                    
+                    # If I am RPI and someone else (MBC) was active in last 5 mins
+                    if instance_id == "home_rpi" and master and master['id'] != instance_id:
+                        if (now_ts - master['ts']) < 300:
+                            if not hibernate_mode:
+                                hibernate_mode = True
+                                logger.warning(f"🚨 CONFLICT: {master['id']} is active. RPI entering HIBERNATE mode.")
+                                send_telegram_msg(f"💤 <b>Orbiter (RPI):</b> Conflict detected with <code>{master['id']}</code>. Hibernating.")
+                        else:
+                            hibernate_mode = False # Master is stale, I can take over
+                    else:
+                        hibernate_mode = False
+                    
+                    if not hibernate_mode:
+                        register_instance(instance_id)
+                    
+                    last_heartbeat = now_ts
+
                 # Evaluation Cycle
+                if hibernate_mode:
+                    time.sleep(60)
+                    continue
+
                 scores = {}
                 self.state.last_scan_metrics = []
+
                 for token in self.state.symbols:
                     score = self.evaluator.evaluate_filters(self.state, token)
                     if score != 0: scores[token] = score
