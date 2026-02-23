@@ -88,7 +88,7 @@ class BrokerClient:
             }
         self.conn.start_live_feed(symbols, _tick_handler)
 
-    def prime_candles(self, symbols: List[str], lookback_mins: int = 30):
+    def prime_candles(self, symbols: List[str], lookback_mins: int = 120):
         """Fetch historical 1-minute candles to satisfy entry guards immediately on startup"""
         if not symbols: return
         print(f"⏳ Priming {len(symbols)} symbols with last {lookback_mins}m data...")
