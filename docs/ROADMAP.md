@@ -45,6 +45,13 @@
 - [x] **Commands:** `/status`, `/margin`, `/scan`, `/help`, `/cleanup`.
 - [x] **Safety:** Session-aware safety locks and 2-step confirmations.
 
+## ☁️ Phase 9: Cloud Control Center (IN PROGRESS ⏳)
+- [x] **Research:** Validated OCI Always Free ARM feasibility.
+- [x] **Migration Plan:** Reference `docs/CLOUD_MIGRATION.md`.
+- [ ] **Infrastructure:** Provision OCI Ampere Instance.
+- [ ] **Networking:** Tailscale integration for cross-environment SSH.
+- [ ] **Agent Deployment:** Gemini CLI persistent session setup on OCI.
+
 ## 📊 Phase 7: Automated Session Reporting (DONE ✅)
 - [x] **Specification:** Reference `docs/REPORTING_SPECIFICATION.md`.
 - [x] **Pre-Session Report:** Granular fund/collateral breakdown at market open.
