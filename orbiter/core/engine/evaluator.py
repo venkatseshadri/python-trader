@@ -131,15 +131,20 @@ class Evaluator:
                 for i, f in enumerate(entry_filters):
                     # Smart Weighting
                     if is_sideways:
-                        # Sideways Mode: Only EF10 active
-                        weight = 1.0 if f.key == 'ef10_range_raider' else 0.0
+                        # Sideways Mode: Only EF10 and EF11 active
+                        if f.key in ['ef10_range_raider', 'ef11_ratio_raider']:
+                            weight = 1.0
+                        else:
+                            weight = 0.0
                     else:
-                        # Trending Mode: EF1-EF9 active, EF10 inactive
-                        if f.key == 'ef10_range_raider': weight = 0.0
-                        else: weight = base_weights[i] if i < len(base_weights) else 1.0
+                        # Trending Mode: EF1-EF9 active, EF10/EF11 inactive
+                        if f.key in ['ef10_range_raider', 'ef11_ratio_raider']:
+                            weight = 0.0
+                        else:
+                            weight = base_weights[i] if i < len(base_weights) else 1.0
                     
                     if weight > 0:
-                        res = f.evaluate(data, candle_data, token=websocket_token)
+                        res = f.evaluate(data, candle_data, token=websocket_token, state=state)
                         if not isinstance(res, dict): res = {'score': res if isinstance(res, (int, float)) else 0}
                         filter_results[f.key] = res
                         scores.append(res.get('score', 0) * weight)

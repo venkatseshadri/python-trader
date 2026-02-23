@@ -48,6 +48,12 @@ class Executor:
                 ema_r = results.get('ef2_price_above_5ema', {})
                 ltp, ltp_display, symbol_full = safe_ltp(data, token)
                 
+                # 🔥 NEW: Price Guard (v3.14.1)
+                max_p = state.config.get('MAX_NOMINAL_PRICE', 999999)
+                if ltp > max_p:
+                    print(f"🛡️ Price Guard: {symbol_full} price ₹{ltp:,.0f} > Cap ₹{max_p:,.0f}. Skipping.")
+                    continue
+
                 # 🔥 NEW: Trend-State Guards
                 try:
                     candle_data = data.get('candles', []) if data else []
@@ -128,6 +134,29 @@ class Executor:
                         print(f"⏳ Waiting for WS resolution for {token}...")
                         continue
 
+                    # 🧠 MARGIN GUARD (MCX) (v3.13.1)
+                    span_m = None
+                    fut_res = state.client.resolver.get_near_future(base_symbol, 'MCX', state.client.api)
+                    if fut_res:
+                        lot_size = state.client.master.TOKEN_TO_LOTSIZE.get(t_id_raw, 0)
+                        if lot_size <= 0:
+                            for r in state.client.master.DERIVATIVE_OPTIONS:
+                                if r.get('tradingsymbol') == fut_res['tsym']:
+                                    lot_size = int(r.get('lot_size', 0))
+                                    break
+                        if lot_size > 0:
+                            fut_details = {'tsym': fut_res['tsym'], 'lot_size': lot_size, 'exchange': 'MCX', 'token': token}
+                            span_m = state.client.calculate_future_margin(fut_details, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
+                            if span_m.get('ok'):
+                                req_margin = span_m.get('total_margin', 0)
+                                limits = state.client.get_limits()
+                                total_power = limits.get('total_power', 0) if limits else 0
+                                sim_used = sum(p.get('total_margin', 0) for p in state.active_positions.values())
+                                
+                                if (req_margin + sim_used) > total_power:
+                                    print(f"🛡️ Margin Guard: {fut_res['tsym']} requires ₹{req_margin:,.0f} (Total Sim Used: ₹{sim_used:,.0f}) but only ₹{total_power:,.0f} power. Skipping.")
+                                    continue
+
                     order_res = state.client.place_future_order(
                         symbol=base_symbol, token=token, side='B' if is_bull else 'S',
                         execute=state.config.get('OPTION_EXECUTE'),
@@ -149,18 +178,20 @@ class Executor:
                         'total_margin': order_res.get('total_margin', 0)
                     }
                     
-                    # 🧠 Regime-Specific Stop Loss
+                    # 🧠 Regime-Specific Stop Loss (v3.14.0)
                     regime = results.get('regime', 'TRENDING')
-                    sl_mult = 1.5 if regime == 'TRENDING' else 0.25
+                    sl_mult = state.config.get('SL_MULT_TRENDING', 1.5) if regime == 'TRENDING' else state.config.get('SL_MULT_SIDEWAYS', 0.25)
 
                     state.active_positions[token] = {
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                         'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'lot_size': sig['lot_size'],
+                        'total_margin': span_m.get('total_margin', 0) if (span_m and span_m.get('ok')) else 0,
                         'regime': regime,
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
+                        'future_max_loss_pct': state.config.get('FUTURE_MAX_LOSS_PCT', 5.0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
@@ -172,18 +203,44 @@ class Executor:
 
                 # ✅ NFO (or others): Use Credit Spreads
                 else:
-                    spread = (state.client.place_put_credit_spread if is_bull else state.client.place_call_credit_spread)(
-                        symbol=base_symbol, ltp=ltp, hedge_steps=state.config.get('HEDGE_STEPS'),
-                        expiry_type=state.config.get('OPTION_EXPIRY'), execute=state.config.get('OPTION_EXECUTE'),
-                        product_type=state.config.get('OPTION_PRODUCT_TYPE'), price_type=state.config.get('OPTION_PRICE_TYPE'),
-                        instrument=state.config.get('OPTION_INSTRUMENT')
+                    # 1. Resolve Contracts (v3.13.1)
+                    res = state.client.resolver.get_credit_spread_contracts(
+                        base_symbol, ltp, 'PUT' if is_bull else 'CALL', 
+                        state.config.get('HEDGE_STEPS'), state.config.get('OPTION_EXPIRY'), 
+                        state.config.get('OPTION_INSTRUMENT')
+                    )
+                    
+                    if not res.get('ok'):
+                        print(f"⚠️ Spread resolution failed for {base_symbol}: {res.get('reason')}")
+                        continue
+                    
+                    # 2. 🔥 MARGIN GUARD (v3.13.1)
+                    span_m = state.client.calculate_span_for_spread(res, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
+                    if span_m.get('ok'):
+                        req_margin = span_m.get('total_margin', 0)
+                        limits = state.client.get_limits()
+                        total_power = limits.get('total_power', 0) if limits else 0
+                        
+                        # Calculate total simulated margin used by all active positions
+                        sim_used = sum(p.get('total_margin', 0) for p in state.active_positions.values())
+                        
+                        if (req_margin + sim_used) > total_power:
+                            print(f"🛡️ Margin Guard: {base_symbol} requires ₹{req_margin:,.0f} (Total Sim Used: ₹{sim_used:,.0f}) but only ₹{total_power:,.0f} power. Skipping.")
+                            continue
+                        
+                        if state.verbose_logs:
+                            print(f"💰 Margin Check: {base_symbol} OK (Req: ₹{req_margin:,.0f} | Sim Used: ₹{sim_used:,.0f} | Power: ₹{total_power:,.0f})")
+
+                    # 3. Execute/Simulate
+                    spread = state.client.executor.place_spread(
+                        res, state.config.get('OPTION_EXECUTE'), 
+                        state.config.get('OPTION_PRODUCT_TYPE'), state.config.get('OPTION_PRICE_TYPE')
                     )
 
                     if not spread.get('ok'):
                         print(f"⚠️ Spread failed for {base_symbol}: {spread.get('reason')}")
                         continue
 
-                    span_m = state.client.calculate_span_for_spread(spread, product_type=state.config.get('OPTION_PRODUCT_TYPE'))
                     atm_p = state.client.get_option_ltp_by_symbol(spread.get('atm_symbol'))
                     hdg_p = state.client.get_option_ltp_by_symbol(spread.get('hedge_symbol'))
 
@@ -199,9 +256,9 @@ class Executor:
                         **{k: span_m.get(k, 0) for k in ['span', 'expo', 'total_margin', 'pledged_required', 'span_trade', 'expo_trade', 'pre_trade', 'add', 'add_trade', 'ten', 'ten_trade', 'del', 'del_trade', 'spl', 'spl_trade']}
                     }
 
-                    # 🧠 Regime-Specific Stop Loss
+                    # 🧠 Regime-Specific Stop Loss (v3.14.0)
                     regime = results.get('regime', 'TRENDING')
-                    sl_mult = 0.25 if regime == 'TRENDING' else 0.10 # Even tighter for sideways spreads
+                    sl_mult = state.config.get('SL_MULT_TRENDING', 0.25) if regime == 'TRENDING' else state.config.get('SL_MULT_SIDEWAYS', 0.10)
 
                     state.active_positions[token] = {
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
@@ -212,9 +269,11 @@ class Executor:
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
                         'lot_size': spread.get('lot_size', 0),
+                        'total_margin': span_m.get('total_margin', 0),
                         'regime': regime,
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
+                        'future_max_loss_pct': state.config.get('FUTURE_MAX_LOSS_PCT', 5.0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
                         'tsl_activation_rs': state.config.get('TSL_ACTIVATION_RS', 1000),
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),

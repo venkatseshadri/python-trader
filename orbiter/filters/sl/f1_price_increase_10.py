@@ -38,6 +38,23 @@ def check_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] 
             
             # ✅ Handle FUTURES
             elif 'FUTURE' in strategy:
+                # 🧠 NEW: Nominal % SL (v3.14.5)
+                # Tolerate up to X% of the contract's nominal value
+                # Example: 2L asset @ 5% = 10k loss limit
+                loss_pct_cap = position.get('future_max_loss_pct', 5.0)
+                if lot_size > 0 and loss_pct_cap > 0:
+                    nominal_at_entry = entry_price * lot_size
+                    max_allowed_loss_rs = nominal_at_entry * (loss_pct_cap / 100.0)
+                    
+                    # Calculate current PnL for this future
+                    current_pnl = (current_ltp - entry_price) * lot_size
+                    if 'SHORT' in strategy: current_pnl = -current_pnl
+                    
+                    if current_pnl <= -max_allowed_loss_rs:
+                        result['hit'] = True
+                        result['reason'] = f"Nominal SL: PnL ₹{current_pnl:.2f} <= ₹-{max_allowed_loss_rs:,.0f} ({loss_pct_cap}% of ₹{nominal_at_entry:,.0f})"
+                        return result
+
                 # Price Buffer = ATR * 1.5
                 if 'LONG' in strategy:
                     sl_price = entry_price - (entry_atr * mult)

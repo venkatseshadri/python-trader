@@ -17,6 +17,7 @@
 - [x] **Smart SL V2:** Underlying-aware risk (Stock % + Cash PnL ₹).
 - [x] **Smart ATR SL:** Volatility-adjusted dynamic stop loss (ATR-based).
 - [x] **Relative Freshness:** Dynamic breakout window (15m) for multi-session stability.
+- [x] **yfinance Downloader:** CLI utility for global market data acquisition (e.g., MNQ futures). (2026-02-23)
 - [ ] **Mass Attribute Analysis:** Study entire `orbiter_revamp_data.csv` in batches. (Next Milestone)
 - [ ] **Correlation Matrix:** Identify highest "Predictive Power" indicators.
 - [ ] **Filter Pruning:** Eliminate low-value noise filters.
@@ -70,4 +71,4 @@
     - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
 
 ---
-*Last Updated: 2026-02-23 | Build: v3.12.0 (STABLE)*
+*Last Updated: 2026-02-23 | Build: v3.12.4 (STABLE)*

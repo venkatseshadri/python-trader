@@ -52,6 +52,8 @@ To maintain 99.9% uptime during market hours, the project enforces a strict boun
 - **Directories:** `backtest_lab/`, `docs/`, `samples/`.
 - **Status:** Non-Critical.
 - **Update Policy:** Updates do NOT trigger a daemon restart. Research can be synced live without interrupting active trading sessions.
+- **Key Tools:**
+    - `backtest_lab/tools/yfinance_downloader.py`: CLI utility for historical/intraday data acquisition from global markets.
 
 ---
 

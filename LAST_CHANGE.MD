@@ -1,23 +1,26 @@
-# Last Technical Change: v3.12.3 Documentation Integrity & Session Maintenance
+# Last Technical Change: v3.12.5 Ratio Raider Sideways Filter
 
 **Date:** 2026-02-23
-**Status:** IN PROGRESS (Build: `v3.12.3`)
+**Status:** COMPLETED (Build: `v3.12.5`)
 
 ## 1. Strategic Outcomes
-Restored documentation integrity by recovering the general Cloud Migration roadmap and properly archiving the session-specific OCI migration plan. Maintained the live session with a total PnL exceeding ₹19,000.
+Implemented a real-time Pairs Trading / Ratio Arbitrage strategy for MCX Metals (Gold/Silver). This targets the 5.26% ROI identified in the historical analysis, specifically optimized for sideways "bleeding" sessions where standard trend filters fail.
 
 ## 2. Technical Adjustments
 
-### A. Documentation Restoration (`docs/`)
-- **CLOUD_MIGRATION.md:** Recovered the original general roadmap covering Vercel, Railway, and Supabase. Added an update section referencing the specific OCI path chosen for this session.
-- **OCI_MIGRATION_20260223.md:** Moved the OCI-specific technical plan to `docs/technical_plans/` to prevent overwriting high-level architectural docs.
+### A. New Filter (`filters/entry/ef11_ratio_raider.py`)
+- **Logic:** Calculates real-time GC/SI ratio Z-Score.
+- **Trigger:** Signals Buy/Sell when ratio stretches beyond 2.0 standard deviations from its 2-hour rolling mean.
+- **Context Awareness:** Filter now accepts `state` object to access partner-symbol live prices from `state.client.SYMBOLDICT`.
 
-### B. Session Monitoring (`orbiter/logs/`)
-- **Performance:** Hybrid Engine continues to perform optimally.
-- **Goal Status:** **🎯 jackport FEAT ACHIEVED.** Realized ₹9.1k, Unrealized ₹10.1k. Total PnL: **+₹19,290**.
-- **Accuracy:** Fixed `/pnl` reporting to include realized trades in the daily total.
+### B. Evaluator Update (`core/engine/evaluator.py`)
+- **Regime Activation:** Enabled EF11 alongside EF10 only when `ADX < 25` (Sideways Regime).
+- **Architecture:** Updated filter caller to pass `token` and `state` context to all entry filters.
+
+### C. Registry Update (`filters/__init__.py`)
+- Formally registered `ef11_ratio_raider` in the global `FILTERS` list.
 
 ## 3. Mission Status
-- **Goal Status:** **🎯 jackport FEAT ACHIEVED.**
-- **RPi Environment:** Headless and optimized.
-- **Next Step:** Post-market OCI instance provisioning.
+- **Goal Status:** **Sideways Profitability Enhanced.**
+- **RPi Environment:** Ready for deployment.
+- **Next Step:** Monitor live MCX session for GC/SI divergence triggers.

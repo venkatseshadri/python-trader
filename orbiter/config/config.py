@@ -28,6 +28,14 @@ GLOBAL_TSL_PCT = 20             # 20% Retracement (Research Optimized)
 TSL_RETREACEMENT_PCT = 40    
 TSL_ACTIVATION_RS = 500     
 
+# 🔥 STRATEGY MULTIPLIERS (v3.14.0)
+SL_MULT_TRENDING = 1.5
+SL_MULT_SIDEWAYS = 0.25
+
+# 🔥 ASSET FILTERING (v3.14.1)
+MAX_NOMINAL_PRICE = 20000    # Ignore symbols with price > 20k
+FUTURE_MAX_LOSS_PCT = 5.0    # 5% Max tolerance on nominal value (v3.14.5)
+
 SCORE_CAP_ORB_PCT = 0.10
 SCORE_CAP_EMA_PCT = 0.10
 SCORE_CAP_EMA_CROSS_PCT = 0.10

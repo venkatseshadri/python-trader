@@ -113,9 +113,19 @@ class SummaryManager:
                 
                 # PnL Calculation
                 pos_pnl = 0.0
+                # 🛡️ Safety: If current price is 0 or missing, use entry price to avoid ghost losses
+                if current_price <= 0:
+                    current_price = entry_price
+                
                 stock_move = ((current_price - entry_price) / (entry_price or 1) * 100.0)
                 
-                if 'FUTURE' in strategy:
+                # 🔥 VOLATILITY GUARD (v3.14.4)
+                # If the move is > 50% in one session, it's likely a data glitch
+                if abs(stock_move) > 50.0 and 'FUTURE' in strategy:
+                    print(f"⚠️ PnL Data Glitch detected for {info.get('symbol')}. Falling back to internal PnL.")
+                    pos_pnl = info.get('pnl_rs', 0.0)
+                    stock_move = (pos_pnl / (entry_price * info.get('lot_size', 1)) * 100.0) if entry_price > 0 else 0.0
+                elif 'FUTURE' in strategy:
                     profit_pct = stock_move
                     if 'SHORT' in strategy: profit_pct = -profit_pct
                     pos_pnl = (profit_pct / 100.0) * entry_price * info.get('lot_size', 1)
@@ -238,6 +248,10 @@ class SummaryManager:
             total_pnl = 0.0
             for token, info in state.active_positions.items():
                 ltp = state.client.get_ltp(token) or info.get('entry_price', 0)
+                # 🛡️ Safety: Avoid zero price ghost losses
+                if float(ltp) <= 0:
+                    ltp = info.get('entry_price', 0)
+                
                 strategy = info.get('strategy', '')
                 
                 # PnL Calculation
@@ -268,32 +282,65 @@ class SummaryManager:
 
         return "\n".join(msg)
 
-    def generate_post_session_report(self) -> str:
+    def generate_post_session_report(self, state=None) -> str:
         """3:30 PM (NFO) / End of MCX Post-Market Debrief."""
         limits = self.broker.get_limits()
         orders = self.broker.get_order_history()
         positions = self.broker.get_positions()
         
+        is_sim = state.config.get('SIMULATION', False) if state else False
+        mode_tag = " [SIMULATED]" if is_sim else ""
+
         # Filter for executed orders only
         executed = [o for o in orders if o.get('status') == 'COMPLETE']
         
-        msg = [f"🌇 <b>{self.segment} SESSION DEBRIEF</b>"]
+        msg = [f"🌇 <b>{self.segment} SESSION DEBRIEF{mode_tag}</b>"]
         msg.append("-" * 25)
         
         # 1. Financial Performance
-        total_pnl = sum(float(p.get('rpnl', 0)) + float(p.get('urpnl', 0)) for p in positions)
+        if is_sim and state:
+            # For simulation, we use the internal state counters
+            # Calculate Unrealized from active positions
+            active_pnl = 0.0
+            for token, info in state.active_positions.items():
+                try:
+                    raw_ltp = self.broker.get_ltp(token)
+                    current_price = float(raw_ltp) if (raw_ltp is not None and float(raw_ltp) > 0) else float(info.get('entry_price', 0))
+                    entry_price = float(info.get('entry_price', 0))
+                    strategy = info.get('strategy', '')
+                    if 'FUTURE' in strategy:
+                        profit_pct = ((current_price - entry_price) / entry_price * 100.0)
+                        if 'SHORT' in strategy: profit_pct = -profit_pct
+                        active_pnl += (profit_pct / 100.0) * entry_price * info.get('lot_size', 1)
+                    else:
+                        atm_ltp = self.broker.get_option_ltp_by_symbol(info.get('atm_symbol'))
+                        hdg_ltp = self.broker.get_option_ltp_by_symbol(info.get('hedge_symbol'))
+                        if atm_ltp is not None and hdg_ltp is not None:
+                            active_pnl += (float(info.get('entry_net_premium', 0)) - (float(atm_ltp) - float(hdg_ltp))) * info.get('lot_size', 1)
+                except: pass
+            
+            gross_pnl = state.realized_pnl + active_pnl
+            num_trades = state.trade_count + (len(state.active_positions) * 2) # Est. legs
+        else:
+            gross_pnl = sum(float(p.get('rpnl', 0)) + float(p.get('urpnl', 0)) for p in positions)
+            num_trades = len(executed)
         
         # 2. Detailed Charges
-        est_charges = TaxCalculator.estimate_charges(len(executed), total_pnl, self.segment)
-        net_pnl = total_pnl - est_charges
+        est_charges = TaxCalculator.estimate_charges(num_trades, gross_pnl, self.segment)
+        net_pnl = gross_pnl - est_charges
         
-        pnl_emoji = "🟢" if total_pnl >= 0 else "🔴"
-        msg.append(f"{pnl_emoji} <b>Gross PnL:</b> ₹{total_pnl:,.2f}")
+        pnl_emoji = "🟢" if gross_pnl >= 0 else "🔴"
+        msg.append(f"{pnl_emoji} <b>Gross PnL:</b> ₹{gross_pnl:,.2f}")
         msg.append(f"💸 <b>Est. Charges:</b> ₹{est_charges:,.2f}")
         msg.append(f"📈 <b>Net PnL (Est):</b> ₹{net_pnl:,.2f}")
         
         # 3. Portfolio Concentration Risk
-        if positions:
+        if is_sim and state and state.active_positions:
+             msg.append("\n📊 <b>Top Runners:</b>")
+             top_p = sorted(state.active_positions.values(), key=lambda x: x.get('pnl_rs', 0), reverse=True)[:1]
+             if top_p:
+                 msg.append(f"🔥 <b>Leader:</b> {top_p[0]['symbol']} (₹{top_p[0].get('pnl_rs', 0):,.2f})")
+        elif positions:
             msg.append("\n📊 <b>Portfolio Concentration:</b>")
             max_pos = None
             max_val = -1.0
@@ -306,12 +353,12 @@ class SummaryManager:
                 msg.append(f"🔥 <b>Top Mover:</b> {max_pos} (₹{max_val:,.2f})")
         
         # 4. Execution Activity
-        msg.append(f"\n🎯 <b>Activity:</b> {len(executed)} Orders Executed")
+        act_count = state.trade_count if is_sim else len(executed)
+        msg.append(f"\n🎯 <b>Activity:</b> {act_count} Trades Logged")
         
         # 5. Final Margin & T+1 Estimate
         if limits:
             msg.append(f"💰 <b>Final Margin:</b> ₹{limits['available']:,.2f}")
-            # T+1 Estimate: If NFO, profits are usually available next day.
             t1_margin = limits['available'] + net_pnl
             msg.append(f"📅 <b>T+1 Est. Margin:</b> ₹{t1_margin:,.2f}")
 

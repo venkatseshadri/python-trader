@@ -9,6 +9,7 @@ from .entry.f7_atr_relative import atr_momentum_filter
 from .entry.f8_trend_sniper import trend_sniper_filter
 from .entry.f9_institutional_flip import institutional_flip_filter
 from .entry.f10_range_raider import range_raider_filter
+from .entry.ef11_ratio_raider import ratio_raider_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
 from .sl.f2_5ema_below_9ema import sl_5ema_below_9ema
 from .sl.sl_supertrend_reversal import sl_supertrend_reversal
@@ -57,6 +58,7 @@ FILTERS = [
     Filter('ef8_trend_sniper', 'entry', trend_sniper_filter),
     Filter('ef9_institutional_flip', 'entry', institutional_flip_filter),
     Filter('ef10_range_raider', 'entry', range_raider_filter),
+    Filter('ef11_ratio_raider', 'entry', ratio_raider_filter),
     # Stop Loss Filters
     Filter('sf1_price_increase_10', 'sl', lambda position, ltp, data: sl_price_increase_10(position, ltp, data)),
     # Filter('sf2_ema_reversal', 'sl', sl_5ema_below_9ema),

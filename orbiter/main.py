@@ -311,18 +311,17 @@ class Orbiter:
                     time.sleep(30) # Wait for Shoonya to settle positions/orders
                     
                     try:
-                        post_report = self.summary.generate_post_session_report()
+                        post_report = self.summary.generate_post_session_report(self.state)
                         send_telegram_msg(post_report)
                     except Exception as e:
                         logger.error(f"⚠️ Could not generate post-session report: {e}")
                         send_telegram_msg("🏁 *Orbiter:* Session ended (Report failed).")
 
-                    logger.info("💤 Hibernating until next segment check...")
-                    # Non-blocking sleep: check every 60s but keep the process alive
-                    # This ensures the Telegram background thread stays responsive
-                    for _ in range(30): # 30 minutes
-                        if not self.is_running: break
-                        time.sleep(60)
+                    logger.info("💤 Hibernating until next segment check (1 hour)...")
+                    # Break the outer loop to ensure a full re-initialization for the next segment (e.g. MCX)
+                    # But sleep long enough to prevent the loop from immediately restarting and debriefing again.
+                    time.sleep(3600) 
+                    self.is_running = False # Stop the engine for now
                     break 
                 
                 # Evaluation Cycle
