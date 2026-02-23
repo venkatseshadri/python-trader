@@ -28,6 +28,7 @@
 
 ## 🚀 Phase 4: Live Transition & Scaling
 - [x] **Session Target Management:** Implemented hard stops (`TOTAL_STOP_LOSS_RS=5000`) and Global Portfolio TSL (`Target=2000`, `20%`) based on Nifty 10 matrix research. (2026-02-23)
+- [x] **Hybrid Regime Engine:** Real-time ADX-based switching between Trending (Orbital) and Sideways (Range Raider) per stock. (2026-02-23)
 - [ ] **Live Mode:** Shift from simulation to real execution.
 - [ ] **Session Lifecycle:** Finalize auto-exit timings.
 - [ ] **Log Rotation:** Automated RPi log maintenance.
