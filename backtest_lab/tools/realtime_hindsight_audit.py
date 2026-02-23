@@ -57,8 +57,7 @@ def audit_realtime():
 
     # 1. Ratio Audit (Gold vs Silver)
     if 'GOLD' in data_map and 'SILVER' in data_map:
-        print("
-📈 AUDIT: GOLD/SILVER RATIO")
+        print("\n📈 AUDIT: GOLD/SILVER RATIO")
         combined = pd.DataFrame({
             'GC': data_map['GOLD']['intc'],
             'SI': data_map['SILVER']['intc']
@@ -80,8 +79,7 @@ def audit_realtime():
 
     # 2. Solo Reversion (Crude Oil)
     if 'CRUDEOIL' in data_map:
-        print("
-🛢️  AUDIT: CRUDE OIL MEAN REVERSION")
+        print("\n🛢️  AUDIT: CRUDE OIL MEAN REVERSION")
         df = data_map['CRUDEOIL']
         upper, middle, lower = talib.BBANDS(df['intc'], timeperiod=20, nbdevup=2, nbdevdn=2)
         
