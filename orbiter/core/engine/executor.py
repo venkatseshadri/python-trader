@@ -74,12 +74,23 @@ class Executor:
                             print(f"🛡️ Guard: {symbol_full} slope negative or NaN. Skipping.")
                             continue
                         
-                        # 2. Freshness Guard (Near RECENT high)
-                        recent_high = np.max(highs_raw[-15:]) 
+                        # 2. Freshness Guard (Near RECENT high/low)
                         freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
-                        if ltp < recent_high * freshness_limit:
-                            print(f"🛡️ Guard: {symbol_full} stale (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
-                            continue
+                        # Determine direction early for Guard
+                        is_bull_guard = score > 0 
+                        
+                        if is_bull_guard:
+                            recent_high = np.max(highs_raw[-15:]) 
+                            if ltp < recent_high * freshness_limit:
+                                print(f"🛡️ Guard: {symbol_full} stale LONG (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
+                                continue
+                        else:
+                            # Short Guard: LTP shouldn't be too far ABOVE recent low
+                            recent_low = np.min(lows_raw[-15:])
+                            buffer = 1 + (1 - freshness_limit)
+                            if ltp > recent_low * buffer:
+                                print(f"🛡️ Guard: {symbol_full} stale SHORT (LTP {ltp} > Recent Low {recent_low} * {buffer:.4f}). Skipping.")
+                                continue
                     else:
                         print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
                         continue
