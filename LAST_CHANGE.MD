@@ -1,22 +1,19 @@
-# Last Technical Change: v3.12.7 Futures-Optimized Ratio Raider
+# Last Technical Change: v3.12.9 OrbiterState Segment Awareness Fix
 
 **Date:** 2026-02-23
-**Status:** COMPLETED (Build: `v3.12.7`)
+**Status:** COMPLETED (Build: `v3.12.9`)
 
 ## 1. Strategic Outcomes
-Optimized the Ratio Arbitrage strategy for the high-liquidity MCX Futures market. This follows a liquidity audit confirming that MCX options are currently untradeable for scalping. The refined filter now captures faster divergences between Gold/Silver and Copper/Aluminum.
+Stabilized the segment-specific filter activation logic. This fix enables the **Ratio Raider** to identify its operating environment (MCX vs NFO), preventing crashes while ensuring it only triggers on relevant commodity pairs.
 
 ## 2. Technical Adjustments
 
-### A. Filter Refinement (`filters/entry/ef11_ratio_raider.py`)
-- **Time Sensitivity:** Reduced rolling Z-score window from 120m to 60m for faster entry in volatile evening sessions.
-- **Symbol Expansion:** Added industrial metal pairing (`COPPER` / `ALUMINIUM`).
-- **Precision Logic:** Standardized ratio calculation (Primary vs Partner) to ensure consistent Buy/Sell signals across paired assets.
-
-### B. Instrument Pivot
-- Shifted strategy focus exclusively to **Futures** for the MCX segment due to verified option illiquidity.
+### A. Core Engine Fixes
+- **`core/engine/state.py`:** Added `segment_name` to the `OrbiterState` class definition and constructor.
+- **`orbiter/main.py`:** Updated `OrbiterState` initialization to pass the `seg_name` parameter.
+- This resolves the `AttributeError: 'OrbiterState' object has no attribute 'segment_name'` observed in the v3.12.8 deployment.
 
 ## 3. Mission Status
-- **Goal Status:** **MCX Sideways Strategy Hardened.**
-- **RPi Environment:** Deploying v3.12.7 for final session observation.
-- **Next Step:** Monitor for Futures ratio trades in the 21:00-23:30 window.
+- **Goal Status:** **Segment Awareness Restored.**
+- **RPi Environment:** Deploying v3.12.9 to finalize MCX session configuration.
+- **Next Step:** Confirm Ratio Raider is successfully active for the Gold/Silver pairing.

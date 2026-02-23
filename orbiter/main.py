@@ -228,7 +228,7 @@ class Orbiter:
         
         # Initialize Agnostic Components
         self.client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name=seg_name)
-        self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config)
+        self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config, segment_name=seg_name)
         
         # Initialise Summary Manager
         self.summary = SummaryManager(self.client, seg_name, version=VERSION)

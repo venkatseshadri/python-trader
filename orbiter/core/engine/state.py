@@ -5,11 +5,12 @@ import importlib.util
 from typing import Dict, Any, List
 
 class OrbiterState:
-    def __init__(self, client, symbols: List[str], filters_module, config: Dict[str, Any]):
+    def __init__(self, client, symbols: List[str], filters_module, config: Dict[str, Any], segment_name: str = 'nfo'):
         self.client = client
         self.symbols = symbols
         self.filters = filters_module
         self.config = config
+        self.segment_name = segment_name.lower()
         
         # position_info = {'entry_price', 'entry_time', 'symbol', 'company_name', ...}
         self.active_positions = {}
