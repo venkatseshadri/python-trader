@@ -27,7 +27,7 @@
 - [ ] **Vectorization Check:** Parity check between vector vs loop engines.
 
 ## 🚀 Phase 4: Live Transition & Scaling
-- [x] **Session Target Management:** Implemented hard stops (`TOTAL_TARGET_PROFIT_RS=5000`) and early trailing (`TSL_ACTIVATION_RS=500`) to secure wins. (2026-02-23)
+- [x] **Session Target Management:** Implemented hard stops (`TOTAL_STOP_LOSS_RS=5000`) and Global Portfolio TSL (`Target=2000`, `20%`) based on Nifty 10 matrix research. (2026-02-23)
 - [ ] **Live Mode:** Shift from simulation to real execution.
 - [ ] **Session Lifecycle:** Finalize auto-exit timings.
 - [ ] **Log Rotation:** Automated RPi log maintenance.
@@ -55,10 +55,10 @@
 - [x] **Persistence Unit Tests:** Regression tests for JSON serialization and corruption recovery.
 - [x] **Coverage Milestone: Bulletproof Core**
     - [x] 🎯 **Level 1:** Reached **60%** Coverage (Resolver & Margin logic)
-    - [x] 🎯 **Level 2:** Reached **70%** Coverage (Connection & Analytics)
-    - [x] 🎯 **Level 3:** Reached **80%** State Coverage (Persistence Layer)
+    - [x] **Level 2:** Reached **70%** Coverage (Connection & Analytics)
+    - [x] **Level 3:** Reached **80%** State Coverage (Persistence Layer)
     - [ ] 🎯 **Level 4:** Reach **90%+** Coverage (Mission Critical)
     - [ ] 🏁 **Level 5:** Reach **100%** Coverage (Total Verification)
 
 ---
-*Last Updated: 2026-02-23 | Build: v3.11.0 (STABLE)*
+*Last Updated: 2026-02-23 | Build: v3.11.1 (STABLE)*

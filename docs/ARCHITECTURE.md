@@ -19,8 +19,9 @@
         - **Singleton ScripMaster:** To optimize memory and startup speed, the scrip data is loaded exactly once and shared across all bot instances.
 
 3.  **`core/engine/executor.py`:**
-    - **Guarded Execution:** Implements Slope Guards (EMA5) and Relative Freshness (15m window).
-    - **Mass Square Off:** Atomic portfolio closure with immediate state persistence to prevent "Amnesia Loops."
+    - **Global TSL Engine:** Tracks portfolio-wide PnL peaks and enforces a dynamic trailing floor (e.g., 20% retracement) to capture "Runners" while protecting gains.
+    - **Guarded Execution:** Implements Directional Freshness Guards (Long vs Short) and Slope Guards.
+    - **Mass Square Off:** Atomic portfolio closure with immediate state reset to prevent "Re-entry Loops" or "Amnesia."
 
 4.  **`utils/telegram_notifier.py`:**
     - **HTML Notification Layer:** Uses robust HTML tags (`<b>`, `<code>`) for all Telegram messages. This provides 100% immunity to the underscore parsing crashes common in Markdown.
@@ -74,9 +75,12 @@ To ensure stability across system restarts and prevent over-trading, the system 
 - **Purpose:** Identifies if momentum is accelerating (positive velocity) or fading (negative velocity).
 
 ### 3. Trend-State Entry Guards
-Even if a signal score is high, the `Executor` performs two "Real-time Sanity Checks" before opening a position:
-- **Slope Guard:** Uses a 1-minute EMA5. Re-entry is blocked unless the current EMA5 is higher than its level 5 minutes ago (`EMA5_now > EMA5_prev`). This ensures the trend is actively moving up.
-- **Relative Freshness Guard:** Blocks entries if the current price is stagnant. Price must be within **0.2% of the last 15 minutes' high** to qualify as a fresh breakout. This prevents the "Day High" from paralyzing late-session trades.
+Even if a signal score is high, the `Executor` performs "Real-time Sanity Checks" before opening a position:
+- **Slope Guard:** Uses a 1-minute EMA5. Re-entry is blocked unless the current EMA5 is higher than its level 5 minutes ago (`EMA5_now > EMA5_prev`).
+- **Directional Freshness Guard:**
+    - **Long:** Price must be within **0.2% of the last 15 minutes' HIGH**.
+    - **Short:** Price must be within **0.2% of the last 15 minutes' LOW**.
+    - *Purpose:* Ensures we enter on active breakout/breakdown, not on a stale retracement.
 
 ---
 
@@ -113,7 +117,13 @@ To eliminate "Leverage Divergence" (where tiny stock moves trigger huge option p
     - **Spreads:** Premium SL is set at `Entry_Premium + (0.25 * ATR)`. This ensures the buffer is proportionate to the stock's actual "breathing room."
 - **Profit Gauge (Cash PnL ₹):** Trailing Stop Losses are calculated using **Hard Cash (Rupee) values**. Milestone-based trailing (e.g., lock in ₹500 once ₹2000 is hit) provides stable risk management.
 
-### 2. Consolidated Alerts (Brevity Protocol)
+### 2. Global Portfolio TSL
+To solve the "Capping Winners" problem, the system implements a portfolio-wide trailing mechanism:
+- **Activation:** Starts trailing only when `Portfolio PnL >= Target` (e.g., ₹2000).
+- **Mechanic:** Sets a dynamic "Floor" at `Max_PnL - (Max_PnL * Retracement_Pct)`.
+- **Outcome:** If portfolio hits ₹10,000, it secures ₹8,000 (at 20% pct), significantly outperforming fixed targets.
+
+### 3. Consolidated Alerts (Brevity Protocol)
 To ensure high signal-to-noise for the trader:
 - **Batch Entries:** Multiple position opens in a single cycle are batched into one concise message including **Score Velocity** and **Total Margin**.
 - **Exit Summary:** SL/TP hits are aggregated into a single detailed message displaying `[Stock %]` and `(₹PnL)`.
