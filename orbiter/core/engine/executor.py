@@ -142,11 +142,16 @@ class Executor:
                         'total_margin': order_res.get('total_margin', 0)
                     }
                     
+                    # 🧠 Regime-Specific Stop Loss
+                    regime = results.get('regime', 'TRENDING')
+                    sl_mult = 1.5 if regime == 'TRENDING' else 0.25
+
                     state.active_positions[token] = {
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                         'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'lot_size': sig['lot_size'],
+                        'regime': regime,
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
@@ -154,7 +159,7 @@ class Executor:
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
                         'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75),
                         'entry_atr': entry_atr,
-                        'atr_sl_mult': 1.5 # Standard for Futures
+                        'atr_sl_mult': sl_mult
                     }
                     buy_signals.append(sig) # 🔥 Capture signal for summary alert
 
@@ -187,6 +192,10 @@ class Executor:
                         **{k: span_m.get(k, 0) for k in ['span', 'expo', 'total_margin', 'pledged_required', 'span_trade', 'expo_trade', 'pre_trade', 'add', 'add_trade', 'ten', 'ten_trade', 'del', 'del_trade', 'spl', 'spl_trade']}
                     }
 
+                    # 🧠 Regime-Specific Stop Loss
+                    regime = results.get('regime', 'TRENDING')
+                    sl_mult = 0.25 if regime == 'TRENDING' else 0.10 # Even tighter for sideways spreads
+
                     state.active_positions[token] = {
                         'entry_price': ltp, 'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
                         'symbol': symbol_full, 'company_name': base_symbol, 'strategy': sig['strategy'],
@@ -196,6 +205,7 @@ class Executor:
                         'orb_high': sig['orb_high'], 'orb_low': sig['orb_low'],
                         'entry_net_premium': (atm_p - hdg_p) if (atm_p and hdg_p) else 0,
                         'lot_size': spread.get('lot_size', 0),
+                        'regime': regime,
                         'target_profit_rs': state.config.get('TARGET_PROFIT_RS', 0),
                         'stop_loss_rs': state.config.get('STOP_LOSS_RS', 0),
                         'tsl_retracement_pct': state.config.get('TSL_RETREACEMENT_PCT', 50),
@@ -203,7 +213,7 @@ class Executor:
                         'tp_trail_activation': state.config.get('TP_TRAIL_ACTIVATION', 1.5),
                         'tp_trail_gap': state.config.get('TP_TRAIL_GAP', 0.75),
                         'entry_atr': entry_atr,
-                        'atr_sl_mult': 0.25 # Tight for Premium Spreads
+                        'atr_sl_mult': sl_mult
                     }
                     buy_signals.append(sig) # 🔥 Capture signal for summary alert
 

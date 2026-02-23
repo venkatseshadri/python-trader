@@ -111,13 +111,32 @@ class Evaluator:
                 for f in entry_filters: filter_results[f.key] = {'score': 0}
                 total = 0
             else:
+                # 🧠 REGIME DETECTION
+                import talib
+                adx_val = 0
+                hs_r = np.array([safe_float(c.get('inth') or c.get('h')) for c in candle_data], dtype=float)
+                ls_r = np.array([safe_float(c.get('intl') or c.get('l')) for c in candle_data], dtype=float)
+                cs_r = np.array([safe_float(c.get('intc') or c.get('c')) for c in candle_data], dtype=float)
+                if len(cs_r) >= 15:
+                    adx_s = talib.ADX(hs_r, ls_r, cs_r, timeperiod=14)
+                    adx_val = float(adx_s[-1]) if not np.isnan(adx_s[-1]) else 0
+                
+                is_sideways = adx_val > 0 and adx_val < 25
+                regime_label = "SIDEWAYS" if is_sideways else "TRENDING"
+
                 # 🧠 WEIGHTING LOGIC
                 # Weights: [F1_ORB, F2_EMA5, F3_EMA_X, F4_ST, F5_SCOPE, F6_GAP, F7_ATR, F8_SNIPER, F9_FLIP]
                 base_weights = state.config.get('ENTRY_WEIGHTS', [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0, 1.0, 1.0])
                 
                 for i, f in enumerate(entry_filters):
-                    # Only evaluate if weight > 0
-                    weight = base_weights[i] if i < len(base_weights) else 1.0
+                    # Smart Weighting
+                    if is_sideways:
+                        # Sideways Mode: Only EF10 active
+                        weight = 1.0 if f.key == 'ef10_range_raider' else 0.0
+                    else:
+                        # Trending Mode: EF1-EF9 active, EF10 inactive
+                        if f.key == 'ef10_range_raider': weight = 0.0
+                        else: weight = base_weights[i] if i < len(base_weights) else 1.0
                     
                     if weight > 0:
                         res = f.evaluate(data, candle_data, token=websocket_token)
@@ -129,6 +148,8 @@ class Evaluator:
                         scores.append(0)
 
                 total = round(sum(s for s in scores if not math.isnan(s)), 2) if scores else 0
+                filter_results['regime'] = regime_label
+                filter_results['adx'] = adx_val
 
             if not has_live_data and ltp == 0: total = 0
             state.filter_results_cache[token] = {**filter_results, 'total': total}
@@ -185,8 +206,9 @@ class Evaluator:
             })
 
             if state.verbose_logs:
-                details = " ".join([f"{k.upper()}={v.get('score', 0)}" for k, v in filter_results.items()])
-                print(f"📊 {symbol_out} ({token}): {details} TOTAL={total}")
+                details = " ".join([f"{k.upper()}={v.get('score', 0)}" for k, v in filter_results.items() if isinstance(v, dict)])
+                regime_info = f"[{filter_results.get('regime', 'N/A')} ADX:{filter_results.get('adx', 0):.1f}]"
+                print(f"📊 {symbol_out} ({token}): {regime_info} {details} TOTAL={total}")
             
             return total
 
