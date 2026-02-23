@@ -14,9 +14,9 @@ from core.broker.master import ScripMaster
 def check_mcx_liquidity():
     print(f"🔍 Analyzing MCX Option Liquidity @ {datetime.now().strftime('%H:%M:%S')}...")
     
-    master = ScripMaster()
-    client = BrokerClient(master)
-    if not client.authenticate():
+    # Use standard cred path and specify MCX segment
+    client = BrokerClient(config_path='../cred.yml', segment_name='mcx')
+    if not client.login():
         print("❌ Authentication failed.")
         return
 
@@ -42,7 +42,7 @@ def check_mcx_liquidity():
         
         # 2. Find ATM Option
         # Get options for this symbol
-        options = [r for r in master.DERIVATIVE_OPTIONS if r.get('symbol') == symbol and r.get('instrument') == 'OPTFUT']
+        options = [r for r in client.master.DERIVATIVE_OPTIONS if r.get('symbol') == symbol and r.get('instrument') == 'OPTFUT']
         if not options:
             print(f"  ⚠️ No options found for {symbol} in master.")
             continue
