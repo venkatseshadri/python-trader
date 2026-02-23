@@ -124,3 +124,42 @@ class OrbiterState:
                 print(f"🧠 Recovered {len(self.active_positions)} active positions from disk.")
         except Exception as e:
             print(f"⚠️ Failed to load session: {e}")
+
+    def sync_with_broker(self):
+        """
+        🔥 BROKER SYNC (v3.13.6)
+        Queries the broker for actual open positions and matches them with our universe.
+        If a position is missing from internal state (e.g. handover), it is re-imported.
+        """
+        print("🔄 Syncing internal state with Broker API...")
+        real_positions = self.client.get_positions()
+        if not real_positions:
+            print("✅ Broker reporting zero open positions.")
+            return
+
+        for p in real_positions:
+            qty = int(p.get('netqty', 0))
+            if qty == 0: continue
+            
+            token = f"{p['exch']}|{p['token']}"
+            if token not in self.active_positions:
+                # 🔥 FOUND A GHOST POSITION (Missing in state but live in broker)
+                print(f"👻 Re-importing missing position: {p['tsym']} ({qty} lots)")
+                
+                # Reconstruct minimum required info for the engine to manage it
+                self.active_positions[token] = {
+                    "entry_price": float(p.get('avgprc', 0)),
+                    "entry_time": datetime.now(), # Approximate
+                    "symbol": p['tsym'],
+                    "company_name": self.client.get_company_name(p['token'], exchange=p['exch']),
+                    "strategy": "FUTURE_LONG" if qty > 0 else "FUTURE_SHORT",
+                    "lot_size": abs(qty),
+                    "total_margin": 50000.0, # Reset to safe default
+                    "regime": "SIDEWAYS",
+                    "tp_trail_activation": 1.5,
+                    "tp_trail_gap": 0.75,
+                    "pnl_rs": float(p.get('rpnl', 0)) + float(p.get('urpnl', 0))
+                }
+        
+        print(f"✅ Handover complete. Managing {len(self.active_positions)} total positions.")
+

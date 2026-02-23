@@ -254,6 +254,7 @@ class Orbiter:
         
         # Link state back to components
         self.state.load_session() # 🔥 Recover Memory
+        self.state.sync_with_broker() # 🔥 Handover: Sync with real positions
 
         logger.info(f"📊 Universe: {len(segment.SYMBOLS_FUTURE_UNIVERSE)} tokens")
         logger.info(f"🎯 Entry Threshold: {full_config['TRADE_SCORE']}pts")
