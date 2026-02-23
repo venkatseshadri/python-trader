@@ -1,22 +1,22 @@
-# Last Technical Change: v3.12.6 Filter Context Compatibility Fix
+# Last Technical Change: v3.12.7 Futures-Optimized Ratio Raider
 
 **Date:** 2026-02-23
-**Status:** COMPLETED (Build: `v3.12.6`)
+**Status:** COMPLETED (Build: `v3.12.7`)
 
 ## 1. Strategic Outcomes
-Ensured system-wide compatibility for state-aware filters. This fix allows the new **Ratio Raider** and future intelligent filters to access global engine state without causing execution errors during live trading.
+Optimized the Ratio Arbitrage strategy for the high-liquidity MCX Futures market. This follows a liquidity audit confirming that MCX options are currently untradeable for scalping. The refined filter now captures faster divergences between Gold/Silver and Copper/Aluminum.
 
 ## 2. Technical Adjustments
 
-### A. Filter Signature Refactor (`filters/entry/f1-f11`)
-- Updated all entry filter function signatures to use `**kwargs`.
-- Standardized parameter extraction (`token`, `weight`, `state`) within each filter.
-- This resolves the `TypeError: filter() got an unexpected keyword argument 'state'` observed during the v3.12.5 deployment.
+### A. Filter Refinement (`filters/entry/ef11_ratio_raider.py`)
+- **Time Sensitivity:** Reduced rolling Z-score window from 120m to 60m for faster entry in volatile evening sessions.
+- **Symbol Expansion:** Added industrial metal pairing (`COPPER` / `ALUMINIUM`).
+- **Precision Logic:** Standardized ratio calculation (Primary vs Partner) to ensure consistent Buy/Sell signals across paired assets.
 
-### B. Deployment Integrity
-- Verified that `Evaluator` can now safely pass `state` and `token` context to any registered filter.
+### B. Instrument Pivot
+- Shifted strategy focus exclusively to **Futures** for the MCX segment due to verified option illiquidity.
 
 ## 3. Mission Status
-- **Goal Status:** **Filter Architecture Stabilized.**
-- **RPi Environment:** Deploying fix to resume MCX session observation.
-- **Next Step:** Confirm stable initialization and observe Ratio Raider signals on Gold/Silver.
+- **Goal Status:** **MCX Sideways Strategy Hardened.**
+- **RPi Environment:** Deploying v3.12.7 for final session observation.
+- **Next Step:** Monitor for Futures ratio trades in the 21:00-23:30 window.

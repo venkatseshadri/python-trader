@@ -7,21 +7,42 @@ from datetime import datetime, timedelta
 def download_data(ticker, interval, start, end, output_dir):
     """
     Downloads data from yfinance and saves it to a CSV file.
+    Handles chunking for 1m data beyond 7 days.
     """
     print(f"🚀 Downloading {ticker} ({interval}) from {start} to {end}...")
     
     try:
-        data = yf.download(ticker, interval=interval, start=start, end=end)
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+        end_dt = datetime.strptime(end, "%Y-%m-%d")
         
-        if data.empty:
+        all_chunks = []
+        current_start = start_dt
+        
+        while current_start < end_dt:
+            # yfinance 1m limit is roughly 7-8 days per request
+            chunk_end = min(current_start + timedelta(days=7), end_dt)
+            print(f"  📥 Fetching chunk: {current_start.strftime('%Y-%m-%d')} to {chunk_end.strftime('%Y-%m-%d')}...")
+            
+            chunk = yf.download(ticker, interval=interval, 
+                               start=current_start.strftime("%Y-%m-%d"), 
+                               end=chunk_end.strftime("%Y-%m-%d"))
+            
+            if not chunk.empty:
+                # Flatten MultiIndex columns if present
+                if isinstance(chunk.columns, pd.MultiIndex):
+                    chunk.columns = chunk.columns.get_level_values(0)
+                all_chunks.append(chunk)
+            
+            current_start = chunk_end
+
+        if not all_chunks:
             print(f"⚠️ No data found for {ticker} with the given parameters.")
             return
-        
-        # Flatten MultiIndex columns if present (common in newer yfinance versions)
-        if isinstance(data.columns, pd.MultiIndex):
-            data.columns = data.columns.get_level_values(0)
             
-        print(f"✅ Downloaded {len(data)} rows.")
+        data = pd.concat(all_chunks)
+        data = data[~data.index.duplicated(keep='first')] # Remove overlaps
+        
+        print(f"✅ Downloaded {len(data)} total rows.")
         
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)

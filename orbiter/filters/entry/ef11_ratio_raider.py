@@ -4,31 +4,28 @@ from utils.utils import safe_float
 
 def ratio_raider_filter(data, candles, **kwargs):
     """
-    Pairs Trading / Ratio Arbitrage Filter (GC vs SI)
-    Only active during SIDEWAYS market.
+    Refined Pairs Trading Filter for MCX Futures (GC/SI).
     """
     try:
         state = kwargs.get('state')
-        current_token = kwargs.get('token') # e.g. MCX|454818 (GOLD)
+        current_token = kwargs.get('token')
         
         if not state or not current_token:
             return 0
 
-        # Define the primary pair (Gold and Silver)
-        # Using symbols from mcx_futures_map to be precise
-        # GOLD: MCX|454818, SILVER: MCX|451666
-        # Note: We use the base symbols for logic
-        
+        # Define Futures pairs
         symbol_map = {
             'GOLD': 'SILVER',
             'SILVER': 'GOLD',
             'GOLDM': 'SILVERM',
-            'SILVERM': 'GOLDM'
+            'SILVERM': 'GOLDM',
+            'COPPER': 'ALUMINIUM',
+            'ALUMINIUM': 'COPPER'
         }
         
         current_symbol = ""
         for s in symbol_map.keys():
-            if s in data.get('t', ''): # tradingsymbol
+            if s in data.get('t', ''):
                 current_symbol = s
                 break
         
@@ -37,7 +34,7 @@ def ratio_raider_filter(data, candles, **kwargs):
             
         partner_symbol = symbol_map[current_symbol]
         
-        # Find partner's live data
+        # Find partner's live LTP
         partner_data = None
         for token, val in state.client.SYMBOLDICT.items():
             if partner_symbol in val.get('t', ''):
@@ -47,48 +44,48 @@ def ratio_raider_filter(data, candles, **kwargs):
         if not partner_data or safe_float(partner_data.get('lp')) == 0:
             return 0
             
-        ltp_a = safe_float(data.get('lp'))
-        ltp_b = safe_float(partner_data.get('lp'))
+        ltp_a = safe_float(data.get('lp')) # Current
+        ltp_b = safe_float(partner_data.get('lp')) # Partner
         
-        # Calculate current ratio
-        # Always A/B where A is Gold, B is Silver for consistency
-        if 'GOLD' in current_symbol:
+        # Calculate Ratio (Base A / Base B)
+        # To maintain a stable ratio direction, always use Gold/Silver alphabetical
+        if current_symbol < partner_symbol:
             current_ratio = ltp_a / ltp_b
+            is_primary = True
         else:
             current_ratio = ltp_b / ltp_a
+            is_primary = False
             
-        # We need historical ratio for Z-Score
-        # For simplicity in this filter, we check if Ratio is stretched 
-        # compared to its opening ratio or a fixed benchmark.
-        # Ideally, we'd use a rolling window, but filter has limited state.
+        # Maintain ratio history in state for Z-Score
+        hist_key = f"ratio_{min(current_symbol, partner_symbol)}_{max(current_symbol, partner_symbol)}"
+        if not hasattr(state, 'pair_histories'):
+            state.pair_histories = {}
         
-        # 🧠 CRITICAL: Since filters are stateless, we'll store the ratio 
-        # in the partner's data dict or a global state cache.
-        if not hasattr(state, 'ratio_history'):
-            state.ratio_history = []
+        if hist_key not in state.pair_histories:
+            state.pair_histories[hist_key] = []
             
-        state.ratio_history.append(current_ratio)
-        if len(state.ratio_history) > 120: # 2 hour window
-            state.ratio_history.pop(0)
+        state.pair_histories[hist_key].append(current_ratio)
+        if len(state.pair_histories[hist_key]) > 60: # 60 minute window for sharper signals
+            state.pair_histories[hist_key].pop(0)
             
-        if len(state.ratio_history) < 30:
+        if len(state.pair_histories[hist_key]) < 20:
             return 0
             
-        mean_ratio = np.mean(state.ratio_history)
-        std_ratio = np.std(state.ratio_history)
+        mean_ratio = np.mean(state.pair_histories[hist_key])
+        std_ratio = np.std(state.pair_histories[hist_key])
         if std_ratio == 0: return 0
         
         zscore = (current_ratio - mean_ratio) / std_ratio
         
-        # Signal Logic
-        # If I am GOLD and Z is low -> Buy Gold
-        # If I am SILVER and Z is high -> Buy Silver
-        if 'GOLD' in current_symbol:
-            if zscore < -2.0: return 0.55 # Buy Gold
-            if zscore > 2.0: return -0.55 # Sell Gold
-        else: # I am SILVER
-            if zscore > 2.0: return 0.55 # Buy Silver (it's undervalued relative to Gold)
-            if zscore < -2.0: return -0.55 # Sell Silver
+        # Signal Logic (Z-Score Threshold = 2.0)
+        # If Ratio (A/B) is low -> A is cheap, B is expensive -> Buy A
+        if is_primary:
+            if zscore < -2.0: return 0.55 # Buy Primary (Gold)
+            if zscore > 2.0: return -0.55 # Sell Primary
+        else:
+            # We are the partner (B). If Ratio (A/B) is high -> B is cheap -> Buy B
+            if zscore > 2.0: return 0.55 # Buy Partner (Silver)
+            if zscore < -2.0: return -0.55 # Sell Partner
             
         return 0
         
