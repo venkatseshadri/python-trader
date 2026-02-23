@@ -281,6 +281,10 @@ class Executor:
                 })
 
         state.active_positions.clear()
+        # 🔥 Reset Global TSL State on Mass Exit
+        state.global_tsl_active = False
+        state.max_portfolio_pnl = 0.0
+        
         now_ts = time.time()
         if to_square:
             for pos in to_square:
