@@ -15,7 +15,7 @@ def check_mcx_liquidity():
     print(f"🔍 Analyzing MCX Option Liquidity @ {datetime.now().strftime('%H:%M:%S')}...")
     
     # Use standard cred path and specify MCX segment
-    client = BrokerClient(config_path='ShoonyaApi-py/cred.yml', segment_name='mcx')
+    client = BrokerClient(config_path='../ShoonyaApi-py/cred.yml', segment_name='mcx')
     if not client.login():
         print("❌ Authentication failed.")
         return
