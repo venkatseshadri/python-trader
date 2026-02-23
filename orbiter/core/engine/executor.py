@@ -68,11 +68,16 @@ class Executor:
                         atrs = talib.ATR(highs_raw, lows_raw, closes_raw, timeperiod=14)
                         entry_atr = float(atrs[-1]) if not np.isnan(atrs[-1]) else 0
 
-                        # 1. Slope Guard (EMA5 rising)
+                        # 1. Slope Guard (EMA5 Direction)
                         ema5 = talib.EMA(closes_raw, timeperiod=5)
-                        if len(ema5) >= 6 and (np.isnan(ema5[-1]) or np.isnan(ema5[-6]) or ema5[-1] <= ema5[-6]):
-                            print(f"🛡️ Guard: {symbol_full} slope negative or NaN. Skipping.")
-                            continue
+                        if len(ema5) >= 6 and not np.isnan(ema5[-1]) and not np.isnan(ema5[-6]):
+                            slope = ema5[-1] - ema5[-6]
+                            if is_bull_guard and slope < 0:
+                                print(f"🛡️ Guard: {symbol_full} slope negative for LONG. Skipping.")
+                                continue
+                            elif not is_bull_guard and slope > 0:
+                                print(f"🛡️ Guard: {symbol_full} slope positive for SHORT. Skipping.")
+                                continue
                         
                         # 2. Freshness Guard (Near RECENT high/low)
                         freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
