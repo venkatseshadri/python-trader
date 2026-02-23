@@ -70,33 +70,40 @@ class Executor:
 
                         # Determine direction early for Guard
                         is_bull_guard = score > 0 
+                        is_sideways_guard = results.get('regime') == 'SIDEWAYS'
 
-                        # 1. Slope Guard (EMA5 Direction)
-                        ema5 = talib.EMA(closes_raw, timeperiod=5)
-                        if len(ema5) >= 6 and not np.isnan(ema5[-1]) and not np.isnan(ema5[-6]):
-                            slope = ema5[-1] - ema5[-6]
-                            if is_bull_guard and slope < 0:
-                                print(f"🛡️ Guard: {symbol_full} slope negative for LONG. Skipping.")
-                                continue
-                            elif not is_bull_guard and slope > 0:
-                                print(f"🛡️ Guard: {symbol_full} slope positive for SHORT. Skipping.")
-                                continue
-                        
-                        # 2. Freshness Guard (Near RECENT high/low)
-                        freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
-                        
-                        if is_bull_guard:
-                            recent_high = np.max(highs_raw[-15:]) 
-                            if ltp < recent_high * freshness_limit:
-                                print(f"🛡️ Guard: {symbol_full} stale LONG (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
-                                continue
+                        # 🧠 STRATEGY GUARD LOGIC
+                        # Trending trades (Breakouts) require Slope & Freshness.
+                        # Sideways trades (Mean Reversion) are exempt from these as they trade the bounce.
+                        if not is_sideways_guard:
+                            # 1. Slope Guard (EMA5 Direction)
+                            ema5 = talib.EMA(closes_raw, timeperiod=5)
+                            if len(ema5) >= 6 and not np.isnan(ema5[-1]) and not np.isnan(ema5[-6]):
+                                slope = ema5[-1] - ema5[-6]
+                                if is_bull_guard and slope < 0:
+                                    print(f"🛡️ Guard: {symbol_full} slope negative for LONG. Skipping.")
+                                    continue
+                                elif not is_bull_guard and slope > 0:
+                                    print(f"🛡️ Guard: {symbol_full} slope positive for SHORT. Skipping.")
+                                    continue
+                            
+                            # 2. Freshness Guard (Near RECENT high/low)
+                            freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
+                            if is_bull_guard:
+                                recent_high = np.max(highs_raw[-15:]) 
+                                if ltp < recent_high * freshness_limit:
+                                    print(f"🛡️ Guard: {symbol_full} stale LONG (LTP {ltp} < Recent High {recent_high} * {freshness_limit}). Skipping.")
+                                    continue
+                            else:
+                                # Short Guard: LTP shouldn't be too far ABOVE recent low
+                                recent_low = np.min(lows_raw[-15:])
+                                buffer = 1 + (1 - freshness_limit)
+                                if ltp > recent_low * buffer:
+                                    print(f"🛡️ Guard: {symbol_full} stale SHORT (LTP {ltp} > Recent Low {recent_low} * {buffer:.4f}). Skipping.")
+                                    continue
                         else:
-                            # Short Guard: LTP shouldn't be too far ABOVE recent low
-                            recent_low = np.min(lows_raw[-15:])
-                            buffer = 1 + (1 - freshness_limit)
-                            if ltp > recent_low * buffer:
-                                print(f"🛡️ Guard: {symbol_full} stale SHORT (LTP {ltp} > Recent Low {recent_low} * {buffer:.4f}). Skipping.")
-                                continue
+                            if state.verbose_logs:
+                                print(f"🌊 Sideways Mode: {symbol_full} bypassing trend guards.")
                     else:
                         print(f"🛡️ Guard: {symbol_full} insufficient candles ({len(candle_data)} < 15). Skipping.")
                         continue
