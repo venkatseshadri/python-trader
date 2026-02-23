@@ -69,10 +69,14 @@ class Evaluator:
         exchange = token.split("|")[0] if "|" in token else 'NSE'
         
         try:
-            candle_data = state.client.api.get_time_price_series(
-                exchange=exchange, token=websocket_token,
-                starttime=start_ts, endtime=end_ts, interval=1
-            )
+            # 🔥 Optimization (v3.13.4): Use primed candles if available
+            candle_data = data.get('candles', [])
+            
+            if not candle_data:
+                candle_data = state.client.api.get_time_price_series(
+                    exchange=exchange, token=websocket_token,
+                    starttime=start_ts, endtime=end_ts, interval=1
+                )
             
             if not candle_data and token == state.symbols[0]:
                 time.sleep(0.5)
