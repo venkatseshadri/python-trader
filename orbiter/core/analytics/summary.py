@@ -32,6 +32,17 @@ class SummaryManager:
         self.version = version
         self.logger = logging.getLogger(f"SummaryManager_{segment_name}")
 
+    def get_current_funds(self) -> Dict[str, float]:
+        """Programmatic access to margin data."""
+        limits = self.broker.get_limits()
+        if not limits:
+            return {'available_margin': 0.0, 'used_margin': 0.0, 'cash': 0.0}
+        return {
+            'available_margin': limits['available'],
+            'used_margin': limits['margin_used'],
+            'cash': limits['liquid_cash']
+        }
+
     def generate_pre_session_report(self) -> str:
         """9:30 AM (NFO) / 5:30 PM (MCX) Pre-Market Check."""
         limits = self.broker.get_limits()
