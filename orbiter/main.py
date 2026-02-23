@@ -163,9 +163,9 @@ class Orbiter:
 
             if is_weekend or is_holiday or is_off_hours:
                 reason = "WEEKEND" if is_weekend else ("HOLIDAY" if is_holiday else f"OFF-HOURS ({seg_name.upper()})")
-                logger.info(f"💤 {reason}. Hibernating for 10 minutes...")
+                logger.info(f"💤 {reason}. Hibernating for 1 minute...")
                 # Non-blocking sleep: check every 60s but keep thread alive
-                for _ in range(10):
+                for _ in range(1):
                     time.sleep(60)
                 continue # Re-check after sleep
             
