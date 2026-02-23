@@ -131,8 +131,10 @@ class Evaluator:
                 for i, f in enumerate(entry_filters):
                     # Smart Weighting
                     if is_sideways:
-                        # Sideways Mode: Only EF10 and EF11 active
-                        if f.key in ['ef10_range_raider', 'ef11_ratio_raider']:
+                        # Sideways Mode: Only EF10 (Range Raider) and EF11 (Ratio Raider - MCX Only)
+                        if f.key == 'ef10_range_raider':
+                            weight = 1.0
+                        elif f.key == 'ef11_ratio_raider' and state.segment_name == 'mcx':
                             weight = 1.0
                         else:
                             weight = 0.0
