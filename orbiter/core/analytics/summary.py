@@ -151,6 +151,20 @@ class SummaryManager:
 
         msg.append(f"🎯 <b>Total Day PnL:</b> <b>₹{total_pnl:,.2f}</b>")
         msg.append(f"✅ <b>Realized:</b>  ₹{realized_pnl:,.2f} ({trade_count} trades)")
+        
+        # 🔥 Power Hour Tracker (v3.13.2)
+        try:
+            ph_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'data', 'power_hour_pnl.json')
+            if os.path.exists(ph_file):
+                import json
+                with open(ph_file, 'r') as f:
+                    ph_data = json.load(f)
+                ph_base = float(ph_data.get('start_realized_pnl', 0.0))
+                ph_recovery = realized_pnl - ph_base
+                ph_emoji = "⚡" if ph_recovery >= 0 else "🔋"
+                msg.append(f"{ph_emoji} <b>Power Hour:</b> ₹{ph_recovery:,.2f}")
+        except: pass
+
         msg.append(f"📈 <b>Unrealized:</b> ₹{active_pnl:,.2f}")
         
         if active_lines:
