@@ -153,7 +153,7 @@ class Executor:
                                 total_power = limits.get('total_power', 0) if limits else 0
                                 sim_used = sum(p.get('total_margin', 0) for p in state.active_positions.values())
                                 
-                                if (req_margin + sim_used) > total_power:
+                                if False: # FORCED RECOVERY - NO MARGIN LIMIT (v3.13.8)
                                     print(f"🛡️ Margin Guard: {fut_res['tsym']} requires ₹{req_margin:,.0f} (Total Sim Used: ₹{sim_used:,.0f}) but only ₹{total_power:,.0f} power. Skipping.")
                                     continue
 
