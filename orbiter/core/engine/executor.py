@@ -375,11 +375,39 @@ class Executor:
             evaluated.append((token, info, ltp, data, atm_ltp, hdg_ltp))
 
         target_t, sl_t = state.config.get('TOTAL_TARGET_PROFIT_RS', 0), state.config.get('TOTAL_STOP_LOSS_RS', 0)
+        global_tsl_enabled = state.config.get('GLOBAL_TSL_ENABLED', False)
+        global_tsl_pct = state.config.get('GLOBAL_TSL_PCT', 20.0)
+
         if state.verbose_logs and state.active_positions:
             print(f"📊 Portfolio PnL: ₹{port_pnl:.2f} (Target: ₹{target_t} SL: -₹{sl_t})")
+            
         mass_reason = None
-        if target_t > 0 and port_pnl >= target_t: mass_reason = f"Portfolio Target: ₹{port_pnl:.2f} >= ₹{target_t}"
-        elif sl_t > 0 and port_pnl <= -sl_t: mass_reason = f"Portfolio SL: ₹{port_pnl:.2f} <= -₹{sl_t}"
+        
+        # 1. Check for Global TSL Activation
+        if global_tsl_enabled and target_t > 0:
+            if port_pnl >= target_t:
+                if not state.global_tsl_active:
+                    state.global_tsl_active = True
+                    print(f"🚀 GLOBAL TSL ACTIVATED: Portfolio PnL ₹{port_pnl:.2f} >= Target ₹{target_t}")
+            
+            if state.global_tsl_active:
+                state.max_portfolio_pnl = max(state.max_portfolio_pnl, port_pnl)
+                # Calculate drawdown allowed
+                allowed_drop = state.max_portfolio_pnl * (global_tsl_pct / 100.0)
+                trail_floor = state.max_portfolio_pnl - allowed_drop
+                
+                if state.verbose_logs:
+                     print(f"🛡️ Global TSL Active: Peak ₹{state.max_portfolio_pnl:.2f} | Floor ₹{trail_floor:.2f} | Current ₹{port_pnl:.2f}")
+
+                if port_pnl <= trail_floor:
+                    mass_reason = f"Global TSL Hit: Peak ₹{state.max_portfolio_pnl:.2f}, Floor ₹{trail_floor:.2f}, Current ₹{port_pnl:.2f}"
+
+        # 2. Legacy Hard Exits (if Global TSL disabled OR strict SL hit)
+        if not mass_reason:
+             if not global_tsl_enabled and target_t > 0 and port_pnl >= target_t: 
+                 mass_reason = f"Portfolio Target: ₹{port_pnl:.2f} >= ₹{target_t}"
+             elif sl_t > 0 and port_pnl <= -sl_t: 
+                 mass_reason = f"Portfolio SL: ₹{port_pnl:.2f} <= -₹{sl_t}"
             
         if mass_reason:
             print(f"🚨 MASS EXIT: {mass_reason}")

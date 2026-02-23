@@ -20,7 +20,9 @@ STOP_LOSS_RS = 0             # Exit if Total PnL <= -this amount
 
 # 🔥 PORTFOLIO-WIDE TARGETS (Master Kill-switch)
 TOTAL_TARGET_PROFIT_RS = 5000   
-TOTAL_STOP_LOSS_RS = 0       
+TOTAL_STOP_LOSS_RS = 0
+GLOBAL_TSL_ENABLED = False    # If True, TOTAL_TARGET_PROFIT_RS activates trailing instead of hard exit
+GLOBAL_TSL_PCT = 20           # Default 20% retracement from peak portfolio PnL
 
 # 🔥 TRAILING SL CONFIG
 TSL_RETREACEMENT_PCT = 40    
