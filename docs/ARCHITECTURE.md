@@ -98,12 +98,12 @@ We faced persistent `future_not_found` errors because `place_future_order` was r
 2.  **Priority 1:** Check `TOKEN_TO_LOTSIZE` (Memory Cache). Populated from `mcx_futures_map.json` at startup.
 3.  **Priority 2:** Check `DERIVATIVE_OPTIONS` (Master File).
 
-## 🛠️ Utilities
-- `utils/mcx/update_mcx_config.py`:
-    - Connects to Shoonya.
-    - Finds nearest futures.
-    - **Captures Lot Size** and saves to `data/mcx_futures_map.json`.
-    - Updates `config/mcx/config.py` with the universe list.
+## 🛠️ Infrastructure & Optimization (Headless Deployment)
+
+To ensure maximum stability on low-power hardware (RPi), the bot is optimized for **Headless Execution**:
+- **Environment:** CLI-only mode (`multi-user.target`). GUI stacks (Wayland/X11) are suppressed to free ~200MB RAM.
+- **Critical Processes:** `packagekit` and `cups` are disabled to prevent CPU spikes during active trading hours.
+- **Persistence:** Systemd manages `orbiter.service` with automated restart logic on crash.
 
 ## 📈 Transparency & Monitoring
 

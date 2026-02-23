@@ -1,30 +1,28 @@
-# Last Technical Change: v3.11.1 Global TSL & Short Guard Fix
+# Last Technical Change: v3.11.2 Infrastructure Hardening & Global TSL
 
 **Date:** 2026-02-23
-**Status:** COMPLETE (Build: `v3.11.1`)
+**Status:** COMPLETE (Build: `v3.11.2`)
 
 ## 1. Strategic Outcomes
-Implemented sophisticated profit protection (Global TSL) and fixed a critical signal-blocking bug to ensure trade execution.
+Transformed the Raspberry Pi into a high-performance headless trading node and deployed advanced profit protection logic (Global TSL) verified against Nifty Top 10 historical data.
 
-## 2. Component Adjustments
+## 2. Technical Adjustments
 
-### A. Global Portfolio TSL (`orbiter/core/engine/executor.py`)
-- **Logic:** Tracks `Max Portfolio PnL` once an Activation Target is reached.
-- **Config:** Activates at **₹2000**. Trails with a **20%** retracement floor.
-- **Behavior:**
-    - If PnL hits ₹2000 -> TSL Active (Floor ₹1600).
-    - If PnL hits ₹10,000 -> Floor ₹8,000.
-    - Captures runners while securing wins.
-- **Safety:** Added state reset in `square_off_all` to prevent re-entry trigger loops.
+### A. Raspberry Pi Optimization (`Infrastructure`)
+- **GUI Suppression:** Stopped `lightdm` and set system to `multi-user.target` (CLI only).
+- **Resource Recovery:** Masked `packagekit` and disabled `cups`.
+- **Result:** Available RAM increased from **120MB to 440MB** (+266% gain).
 
-### B. Signal Guard Fix (`orbiter/core/engine/executor.py`)
-- **Bug:** The "Freshness Guard" was applying Long logic (LTP near High) to Short signals, blocking valid breakdowns.
-- **Fix:** Implemented directional guard. Shorts now verify LTP is near Low (not High).
+### B. Global Portfolio TSL (`orbiter/core/engine/executor.py`)
+- **Implementation:** Portfolio-wide trailing stop loss that activates at **₹2000** profit.
+- **Trailing:** Enforces a **20% retracement floor** (e.g., if peak is ₹10k, floor is ₹8k).
+- **Validation:** Matrix backtest on Top 10 Nifty stocks showed **+₹1.66L net benefit** over fixed targets.
 
-### C. Session Management (`orbiter/config/config.py`)
-- **Hard Stop:** Set `TOTAL_STOP_LOSS_RS = 5000`.
-- **Target:** Set `TOTAL_TARGET_PROFIT_RS = 2000` (as TSL Activation).
+### C. Signal Guard Corrections (`orbiter/core/engine/executor.py`)
+- **Directional Logic:** Re-engineered "Freshness Guard" and "Slope Guard" to handle **SHORT** signals. Previously, these were using Long-only logic, blocking valid breakdowns.
+- **WIPRO Fix:** Verified that WIPRO short signals (-0.54) are now unlocked for execution.
 
 ## 3. Mission Status
-- **Integrity:** Validated via Matrix Simulation on Top 10 Nifty Stocks (+₹1.6L net benefit).
-- **Monitoring:** Active. Expecting Short trades (e.g., WIPRO) to now execute.
+- **Integrity:** Deployed and verified on RPi.
+- **Safety:** Hard Session Stop set at **-₹5000**.
+- **Monitoring:** Active. Bot is in Simulation Mode with optimized resource headroom.

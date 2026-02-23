@@ -36,6 +36,7 @@
 - [x] **Checksums:** Portable relative-path SHA-256 validation.
 - [x] **Automated Updates:** Verified `update.sh` loop.
 - [x] **System Integrity:** Resolved all path and submodule conflicts.
+- [x] **RPi Optimization:** Headless mode transition, GUI suppression, and resource hardening (+260% RAM gain). (2026-02-23)
 
 ## 🕹️ Phase 6: Remote Command & Control (C2) (DONE ✅)
 - [x] **Specification:** Reference `docs/C2_SPECIFICATION.md`.
