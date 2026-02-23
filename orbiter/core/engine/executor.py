@@ -68,6 +68,9 @@ class Executor:
                         atrs = talib.ATR(highs_raw, lows_raw, closes_raw, timeperiod=14)
                         entry_atr = float(atrs[-1]) if not np.isnan(atrs[-1]) else 0
 
+                        # Determine direction early for Guard
+                        is_bull_guard = score > 0 
+
                         # 1. Slope Guard (EMA5 Direction)
                         ema5 = talib.EMA(closes_raw, timeperiod=5)
                         if len(ema5) >= 6 and not np.isnan(ema5[-1]) and not np.isnan(ema5[-6]):
@@ -81,8 +84,6 @@ class Executor:
                         
                         # 2. Freshness Guard (Near RECENT high/low)
                         freshness_limit = 0.995 if token.startswith('MCX|') else 0.998
-                        # Determine direction early for Guard
-                        is_bull_guard = score > 0 
                         
                         if is_bull_guard:
                             recent_high = np.max(highs_raw[-15:]) 
