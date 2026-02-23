@@ -1,8 +1,44 @@
+import json
 from .state import OrbiterState
 
 class Syncer:
-    def __init__(self, update_active_positions):
+    def __init__(self, update_active_positions, update_engine_state=None, get_engine_state=None):
         self.update_active_positions = update_active_positions
+        self.update_engine_state = update_engine_state
+        self.get_engine_state = get_engine_state
+
+    def cloud_save_state(self, state: OrbiterState):
+        """Snapshot the entire state JSON to Google Sheets for handover"""
+        if not self.update_engine_state: return
+        try:
+            # Re-use the existing sterilization logic from state.py
+            def json_serial(obj):
+                from datetime import datetime
+                if isinstance(obj, datetime): return obj.isoformat()
+                raise TypeError("Serial fail")
+
+            sanitized = {}
+            for token, info in state.active_positions.items():
+                pos_copy = info.copy()
+                if 'config' in pos_copy: del pos_copy['config']
+                sanitized[token] = pos_copy
+
+            data = {
+                'last_updated': __import__('datetime').datetime.now().timestamp(),
+                'active_positions': sanitized,
+                'exit_history': state.exit_history,
+                'opening_scores': state.opening_scores,
+                'realized_pnl': state.realized_pnl,
+                'trade_count': state.trade_count
+            }
+            self.update_engine_state(json.dumps(data, default=json_serial))
+        except Exception as e:
+            print(f"⚠️ Cloud Save failed: {e}")
+
+    def cloud_load_state(self):
+        """Pull the snapshot from Google Sheets"""
+        if not self.get_engine_state: return None
+        return self.get_engine_state()
 
     def sync_active_positions_to_sheets(self, state: OrbiterState):
         """Push current active positions to Google Sheets"""

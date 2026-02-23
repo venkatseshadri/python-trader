@@ -246,11 +246,11 @@ class Orbiter:
         self.ai = OrbiterAI(cred_path)
 
         # Inject agnostic sheets logic
-        from bot.sheets import log_buy_signals, log_closed_positions, update_active_positions
+        from bot.sheets import log_buy_signals, log_closed_positions, update_active_positions, update_engine_state, get_engine_state
         from filters import get_filters
         
         self.executor = Executor(log_buy_signals, log_closed_positions, get_filters('sl'), get_filters('tp'), summary_manager=self.summary)
-        self.syncer = Syncer(update_active_positions)
+        self.syncer = Syncer(update_active_positions, update_engine_state, get_engine_state)
         
         # Link state back to components
         self.state.load_session() # 🔥 Recover Memory

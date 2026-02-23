@@ -502,6 +502,36 @@ def update_active_positions(active_data):
     if rows:
         sheet.append_rows(rows, value_input_option='USER_ENTERED')
 
+def update_engine_state(state_json_str):
+    """Store the entire engine state as a cloud snapshot for handover"""
+    creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
+    creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
+    client = gspread.authorize(creds)
+    book = client.open("trade_log")
+    sheet = _get_or_create_worksheet(book, "engine_state")
+    
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S IST")
+    # Store in cell A1: Timestamp, B1: JSON Data
+    sheet.update("A1:B1", [[timestamp, state_json_str]])
+    print(f"☁️ Engine State uploaded to Google Sheets @ {timestamp}")
+
+def get_engine_state():
+    """Download the latest engine state from the cloud snapshot"""
+    try:
+        creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
+        creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
+        client = gspread.authorize(creds)
+        book = client.open("trade_log")
+        sheet = _get_or_create_worksheet(book, "engine_state")
+        
+        data = sheet.get("B1")
+        if data and data[0]:
+            return data[0][0]
+    except Exception as e:
+        print(f"⚠️ Failed to fetch cloud state: {e}")
+    return None
+
+
 
 def log_closed_positions(closed_data):
     """Append to 'closed_positions' and update overall PnL summary"""

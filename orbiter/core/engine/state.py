@@ -74,39 +74,49 @@ class OrbiterState:
                 json.dump(data, f, indent=4, default=json_serial)
             os.replace(tmp_file, self.state_file) # 🔥 Atomic Swap to prevent corruption
             
+            # 🔥 NEW: Cloud Mirror (v3.14.0)
+            if self.syncer:
+                self.syncer.cloud_save_state(self)
+                
         except Exception as e:
             print(f"⚠️ Failed to save session: {e}")
             import traceback
             traceback.print_exc()
 
     def load_session(self):
-        """Recover session from disk with freshness protocol"""
-        if not os.path.exists(self.state_file):
-            return
-
-        try:
-            with open(self.state_file, 'r') as f:
-                data = json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"⚠️ Corrupted session file detected: {e}")
-            backup_path = self.state_file + ".corrupt"
+        """Recover session from disk or Cloud Snapshot (Google Sheets)"""
+        data = None
+        
+        # 1. Try Local Load
+        if os.path.exists(self.state_file):
             try:
-                os.replace(self.state_file, backup_path)
-                print(f"💾 Corrupted file moved to {backup_path} for investigation.")
-            except: pass
-            return
-        except Exception as e:
-            print(f"⚠️ Failed to load session: {e}")
+                with open(self.state_file, 'r') as f:
+                    data = json.load(f)
+                
+                # Freshness Check (30 minutes expiry)
+                if (datetime.now().timestamp() - data.get('last_updated', 0)) > 1800:
+                    print("⚠️ Local session stale (> 30m). Checking cloud...")
+                    data = None
+            except Exception as e:
+                print(f"⚠️ Local load failed: {e}")
+                data = None
+
+        # 2. Try Cloud Load (v3.14.0)
+        if not data and self.syncer:
+            print("☁️ Attempting Cloud State recovery from Google Sheets...")
+            cloud_json = self.syncer.cloud_load_state()
+            if cloud_json:
+                try:
+                    data = json.loads(cloud_json)
+                    print("✅ Cloud Snapshot recovered successfully.")
+                except Exception as e:
+                    print(f"⚠️ Cloud parsing failed: {e}")
+
+        if not data:
             return
 
         try:
-            # 1. Freshness Check (30 minutes expiry)
-            last_ts = data.get('last_updated', 0)
-            if (datetime.now().timestamp() - last_ts) > 1800:
-                print("⚠️ Stale session file found (> 30m). Ignoring.")
-                return
-
-            # 2. Re-hydrate Positions
+            # Re-hydrate Positions
             raw_positions = data.get('active_positions', {})
             for token, info in raw_positions.items():
                 if 'entry_time' in info:
@@ -121,9 +131,10 @@ class OrbiterState:
             self.trade_count = data.get('trade_count', 0)
             
             if self.active_positions:
-                print(f"🧠 Recovered {len(self.active_positions)} active positions from disk.")
+                print(f"🧠 Recovered {len(self.active_positions)} positions (via {'Cloud' if not os.path.exists(self.state_file) else 'Disk'}).")
         except Exception as e:
-            print(f"⚠️ Failed to load session: {e}")
+            print(f"⚠️ Failed to re-hydrate session: {e}")
+
 
     def sync_with_broker(self):
         """
