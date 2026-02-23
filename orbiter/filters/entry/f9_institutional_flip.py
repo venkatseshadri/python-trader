@@ -2,12 +2,14 @@ import numpy as np
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def institutional_flip_filter(data, candle_data, token):
+def institutional_flip_filter(data, candle_data, **kwargs):
     """
     🎯 F9: INSTITUTIONAL FLIP & LEVEL BREAKER
     Logic: Detects if yesterday's levels (High/Low) are being tested or flipped.
     Patterns: BULL_FLIP, BEAR_FLIP, YHIGH_BREAK, YLOW_BREAK.
     """
+    token = kwargs.get('token')
+    
     ltp = safe_float(data.get('lp', 0))
     yest_high = safe_float(data.get('ph', 0)) # Previous High
     yest_low = safe_float(data.get('pl', 0))  # Previous Low

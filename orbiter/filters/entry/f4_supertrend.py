@@ -55,12 +55,15 @@ def calculate_st_values(highs, lows, closes, period, multiplier):
             
     return st
 
-def supertrend_filter(data, candle_data, token, weight=20):
+def supertrend_filter(data, candle_data, **kwargs):
     """
     🎯 F4: BI-DIRECTIONAL STABILITY SCORE
     Anchor (15m): Trend Direction (Prevents Whipsaws)
     Momentum (5m): Slope Agreement (Quality Scoring)
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 20)
+    
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0 or not candle_data or len(candle_data) < 30:
         return {'score': 0.00}

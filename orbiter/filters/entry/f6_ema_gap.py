@@ -3,7 +3,7 @@ import talib
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def ema_gap_expansion_filter(data, candle_data, token, weight=10):
+def ema_gap_expansion_filter(data, candle_data, **kwargs):
     """
     🎯 F6: EMA GAP EXPANSION (ACCELERATION)
     Formula: (Gap[now] - Gap[prev]) / LTP * 100
@@ -11,6 +11,9 @@ def ema_gap_expansion_filter(data, candle_data, token, weight=10):
     Positive: Gap is widening (Acceleration)
     Negative: Gap is narrowing (Deceleration/Convergence)
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 10)
+    
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0 or not candle_data or len(candle_data) < 15:
         return {'score': 0.00, 'gap_now': 0.00, 'gap_prev': 0.00}

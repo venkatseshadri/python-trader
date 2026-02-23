@@ -3,12 +3,15 @@ import talib
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def ema_scope_filter(data, candle_data, token, weight=10):
+def ema_scope_filter(data, candle_data, **kwargs):
     """
     🎯 F5: EMA SCOPE (VELOCITY)
     Formula: (EMA5[now] - EMA5[prev]) / LTP * 100
     Measures the 'tilt' or 'angle' of the EMA5.
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 10)
+    
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0 or not candle_data or len(candle_data) < 10:
         return {'score': 0.00, 'ema5_now': 0.00, 'ema5_prev': 0.00}

@@ -1,26 +1,22 @@
-# Last Technical Change: v3.12.5 Ratio Raider Sideways Filter
+# Last Technical Change: v3.12.6 Filter Context Compatibility Fix
 
 **Date:** 2026-02-23
-**Status:** COMPLETED (Build: `v3.12.5`)
+**Status:** COMPLETED (Build: `v3.12.6`)
 
 ## 1. Strategic Outcomes
-Implemented a real-time Pairs Trading / Ratio Arbitrage strategy for MCX Metals (Gold/Silver). This targets the 5.26% ROI identified in the historical analysis, specifically optimized for sideways "bleeding" sessions where standard trend filters fail.
+Ensured system-wide compatibility for state-aware filters. This fix allows the new **Ratio Raider** and future intelligent filters to access global engine state without causing execution errors during live trading.
 
 ## 2. Technical Adjustments
 
-### A. New Filter (`filters/entry/ef11_ratio_raider.py`)
-- **Logic:** Calculates real-time GC/SI ratio Z-Score.
-- **Trigger:** Signals Buy/Sell when ratio stretches beyond 2.0 standard deviations from its 2-hour rolling mean.
-- **Context Awareness:** Filter now accepts `state` object to access partner-symbol live prices from `state.client.SYMBOLDICT`.
+### A. Filter Signature Refactor (`filters/entry/f1-f11`)
+- Updated all entry filter function signatures to use `**kwargs`.
+- Standardized parameter extraction (`token`, `weight`, `state`) within each filter.
+- This resolves the `TypeError: filter() got an unexpected keyword argument 'state'` observed during the v3.12.5 deployment.
 
-### B. Evaluator Update (`core/engine/evaluator.py`)
-- **Regime Activation:** Enabled EF11 alongside EF10 only when `ADX < 25` (Sideways Regime).
-- **Architecture:** Updated filter caller to pass `token` and `state` context to all entry filters.
-
-### C. Registry Update (`filters/__init__.py`)
-- Formally registered `ef11_ratio_raider` in the global `FILTERS` list.
+### B. Deployment Integrity
+- Verified that `Evaluator` can now safely pass `state` and `token` context to any registered filter.
 
 ## 3. Mission Status
-- **Goal Status:** **Sideways Profitability Enhanced.**
-- **RPi Environment:** Ready for deployment.
-- **Next Step:** Monitor live MCX session for GC/SI divergence triggers.
+- **Goal Status:** **Filter Architecture Stabilized.**
+- **RPi Environment:** Deploying fix to resume MCX session observation.
+- **Next Step:** Confirm stable initialization and observe Ratio Raider signals on Gold/Silver.

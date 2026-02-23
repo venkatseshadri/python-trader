@@ -6,6 +6,7 @@ def range_raider_filter(data, candles, **kwargs):
     Sideways Mean Reversion Filter
     Returns +0.51 for Buy (Below Lower BB), -0.51 for Sell (Above Upper BB)
     """
+    token = kwargs.get('token')
     try:
         closes = np.array([float(c.get('intc', 0)) for c in candles if c.get('stat')=='Ok'], dtype=float)
         if len(closes) < 20:

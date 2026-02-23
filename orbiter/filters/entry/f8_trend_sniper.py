@@ -3,12 +3,14 @@ import talib
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def trend_sniper_filter(data, candle_data, token):
+def trend_sniper_filter(data, candle_data, **kwargs):
     """
     🎯 F8: TREND SNIPER (ADX + EMA COMBO)
     Logic: Requires ADX > 25 for trend strength AND EMA5/9 alignment.
     This acts as a high-quality gatekeeper for multi-stock execution.
     """
+    token = kwargs.get('token')
+    
     if not candle_data or len(candle_data) < 30:
         return {'score': 0.00}
 

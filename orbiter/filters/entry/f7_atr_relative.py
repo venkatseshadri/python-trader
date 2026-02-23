@@ -3,12 +3,15 @@ import talib
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def atr_momentum_filter(data, candle_data, token, weight=10):
+def atr_momentum_filter(data, candle_data, **kwargs):
     """
     🎯 F7: ATR RELATIVE MOMENTUM (SOFT FILTER)
     Logic: Is the volatility (ATR) expanding or contracting?
     If ATR is less than its own 20-period average, momentum is dying.
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 10)
+    
     if not candle_data or len(candle_data) < 30:
         return {'score': 0.00}
 

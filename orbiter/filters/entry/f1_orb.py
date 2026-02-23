@@ -77,10 +77,14 @@ def calculate_orb_range(ret, token):
         return h_val, l_val, orb_open
     return None, None, None
 
-def orb_filter(data, ret, weight=25, token=None, buffer_pct=0.2):
+def orb_filter(data, ret, **kwargs):
     """
     🎯 SIMPLIFIED F1_ORB: 2/3 MOMENTUM + 1/3 DISTANCE (2 DECIMAL PLACES)
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 25)
+    buffer_pct = kwargs.get('buffer_pct', 0.2)
+    
     ltp = safe_float(data.get('lp', 0) or 0)
     day_open = safe_float(data.get('o', 0) or data.get('pc', 0) or 0)
     

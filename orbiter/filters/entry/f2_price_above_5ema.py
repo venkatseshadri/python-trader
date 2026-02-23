@@ -10,11 +10,13 @@ import numpy as np
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def price_above_5ema_filter(data, candle_data, token, weight=20):
+def price_above_5ema_filter(data, candle_data, **kwargs):
     """
     🎯 F2_5EMA SIMPLIFIED: (LTP - EMA5) / LTP × 100
     ORB-STYLE %pts - consistent with F1_ORB_SIMPLE
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 20)
     
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0:

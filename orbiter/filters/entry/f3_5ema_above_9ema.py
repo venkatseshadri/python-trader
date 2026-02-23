@@ -10,11 +10,13 @@ import numpy as np
 from config.config import VERBOSE_LOGS
 from utils.utils import safe_float
 
-def ema5_above_9ema_filter(data, candle_data, token, weight=18):
+def ema5_above_9ema_filter(data, candle_data, **kwargs):
     """
     🎯 F3_5EMA_ABOVE_9EMA SIMPLIFIED: (EMA5 - EMA9) / EMA5 × 100
     ORB-STYLE %pts - matches F1_ORB + F2_EMA5 exactly
     """
+    token = kwargs.get('token')
+    weight = kwargs.get('weight', 18)
     
     if not candle_data or len(candle_data) < 9:
         if VERBOSE_LOGS:
