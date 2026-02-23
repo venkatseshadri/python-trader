@@ -1,19 +1,22 @@
-# Last Technical Change: v3.12.9 OrbiterState Segment Awareness Fix
+# Last Technical Change: v3.13.1 Power Hour Aggressive Mode
 
 **Date:** 2026-02-23
-**Status:** COMPLETED (Build: `v3.12.9`)
+**Status:** COMPLETED (Build: `v3.13.1`)
 
 ## 1. Strategic Outcomes
-Stabilized the segment-specific filter activation logic. This fix enables the **Ratio Raider** to identify its operating environment (MCX vs NFO), preventing crashes while ensuring it only triggers on relevant commodity pairs.
+Deployed an aggressive configuration for the final hour of the MCX session. This "Power Hour" mode is designed to capture rapid late-session mean reversions and ratio divergences to recover the current drawdown.
 
 ## 2. Technical Adjustments
 
-### A. Core Engine Fixes
-- **`core/engine/state.py`:** Added `segment_name` to the `OrbiterState` class definition and constructor.
-- **`orbiter/main.py`:** Updated `OrbiterState` initialization to pass the `seg_name` parameter.
-- This resolves the `AttributeError: 'OrbiterState' object has no attribute 'segment_name'` observed in the v3.12.8 deployment.
+### A. Configuration Tuning (`config/config.py`)
+- **`TRADE_SCORE`:** Lowered from 0.50 to 0.40 to increase entry sensitivity.
+- **`TOP_N`:** Reduced from 10 to 3 to concentrate margin on the highest-probability signals.
+
+### B. Deployment Integrity
+- Verified the removal of stale lock files on the Pi.
+- Ensured segment-specific logic is correctly isolating MCX for Ratio Raider.
 
 ## 3. Mission Status
-- **Goal Status:** **Segment Awareness Restored.**
-- **RPi Environment:** Deploying v3.12.9 to finalize MCX session configuration.
-- **Next Step:** Confirm Ratio Raider is successfully active for the Gold/Silver pairing.
+- **Goal Status:** **Aggressive Scalping Enabled.**
+- **RPi Environment:** Deploying v3.13.1 for the 22:00-23:30 window.
+- **Next Step:** Monitor live trade calls for Ratio Raider or Range Raider triggers.
