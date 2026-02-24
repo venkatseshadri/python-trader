@@ -33,7 +33,7 @@ SL_MULT_TRENDING = 1.5
 SL_MULT_SIDEWAYS = 0.25
 
 # 🔥 ASSET FILTERING (v3.14.1)
-MAX_NOMINAL_PRICE = 20000    # Ignore symbols with price > 20k
+MAX_NOMINAL_PRICE = 30000    # 🔥 Lifted to allow NIFTY (v3.15.2)
 FUTURE_MAX_LOSS_PCT = 5.0    # 5% Max tolerance on nominal value (v3.14.5)
 
 SCORE_CAP_ORB_PCT = 0.10
