@@ -19,9 +19,9 @@ TARGET_PROFIT_RS = 0         # Exit if Total PnL >= this amount
 STOP_LOSS_RS = 0             # Exit if Total PnL <= -this amount
 
 # 🔥 PORTFOLIO-WIDE TARGETS (Master Kill-switch)
-TOTAL_TARGET_PROFIT_RS = 2000   # Activation Threshold for Global TSL (Research Optimized)
+TOTAL_TARGET_PROFIT_RS = 1100   # 🔥 VPS Fund Target (v3.16.0)
 TOTAL_STOP_LOSS_RS = 5000       # Hard Stop (User Mandate)
-GLOBAL_TSL_ENABLED = True       # Enable logic
+GLOBAL_TSL_ENABLED = False      # 🔥 Disable trailing for immediate ₹1100 lock-in
 GLOBAL_TSL_PCT = 20             # 20% Retracement (Research Optimized)
 
 # 🔥 TRAILING SL CONFIG
