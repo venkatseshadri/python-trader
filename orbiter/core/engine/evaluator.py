@@ -159,6 +159,13 @@ class Evaluator:
                         scores.append(0)
 
                 total = round(sum(s for s in scores if not math.isnan(s)), 2) if scores else 0
+                
+                # 🔥 NIFTY EXPIRY BOOST (v3.14.5)
+                # If Nifty Index and Sideways, boost the score to prioritize it for high theta decay
+                if symbol_out.upper() == 'NIFTY' and is_sideways:
+                    total = round(total * 1.5, 2)
+                    if state.verbose_logs: print(f"🚀 NIFTY Expiry Boost Applied: Total Score {total}")
+
                 filter_results['regime'] = regime_label
                 filter_results['adx'] = adx_val
 
