@@ -227,7 +227,11 @@ class BrokerClient:
     def get_positions(self):
         """Fetch all open/overnight positions."""
         try:
-            # ⭐ Fixed: Use self.conn.cred['user'] instead of private API attribute
+            # 🔥 On-Demand Fix (v3.14.9)
+            # Ensure private attributes are present before calling the API
+            setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
+            setattr(self.api, '_NorenApi__accountid', self.conn.cred['user'])
+            
             res = self.api.get_positions()
             if not res: return []
             return [p for p in res if p.get('stat') == 'Ok']
