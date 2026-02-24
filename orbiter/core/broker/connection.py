@@ -114,6 +114,8 @@ class ConnectionManager:
             self.socket_opened = True
             print("🚀 WEBSOCKET LIVE!")
             self.api.subscribe(symbols, feed_type='d')
+            # 🔥 NEW: Subscribe to live order status updates (v3.15.9)
+            self.api.subscribe_orders()
         
         self.api.start_websocket(
             subscribe_callback=on_tick,
