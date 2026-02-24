@@ -236,7 +236,15 @@ class Orbiter:
         
         # Initialize Agnostic Components
         self.client = BrokerClient("../ShoonyaApi-py/cred.yml", segment_name=seg_name)
-        self.state = OrbiterState(self.client, segment.SYMBOLS_FUTURE_UNIVERSE, filters, full_config, segment_name=seg_name)
+        
+        # 🔥 PURGE STOCK UNIVERSE (v3.15.5)
+        # Force ONLY NIFTY for the live VPS sprint to ensure margin priority
+        universe = segment.SYMBOLS_FUTURE_UNIVERSE
+        if seg_name == 'nfo':
+            universe = [s for s in universe if '51714' in str(s) or 'NIFTY' in str(s)]
+            logger.info(f"🎯 NIFTY SPRINT: Universe filtered to {len(universe)} symbols.")
+
+        self.state = OrbiterState(self.client, universe, filters, full_config, segment_name=seg_name)
         
         # Initialise Summary Manager
         self.summary = SummaryManager(self.client, seg_name, version=VERSION)
