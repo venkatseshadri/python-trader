@@ -1,15 +1,15 @@
 from datetime import time as dt_time
 
 # 🔥 SHARED CONFIGURATION
-TOP_N = 3                    # Focus on TOP 3 highest scoring
+TOP_N = 1                    # 🔥 NIFTY SPRINT: Only 1 Trade at a time
 TRADE_SCORE = 0.40            # Aggressive entry for Power Hour
 
 ENTRY_WEIGHTS = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-OPTION_EXECUTE = False
+OPTION_EXECUTE = True        # 🔥 LIVE EXECUTION ACTIVE
 OPTION_PRODUCT_TYPE = 'I'
 OPTION_PRICE_TYPE = 'MKT'
-OPTION_EXPIRY = 'monthly'
+OPTION_EXPIRY = 'weekly'     # 🔥 Focus on NIFTY weekly expiry
 HEDGE_STEPS = 4
 UPDATE_INTERVAL = 5          # Seconds between scans
 VERBOSE_LOGS = True

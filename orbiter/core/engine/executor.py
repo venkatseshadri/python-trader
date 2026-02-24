@@ -23,6 +23,13 @@ class Executor:
         for i, (token, score) in enumerate(ranked):
             if token in state.active_positions: continue
 
+            # 🔥 NIFTY-ONLY WHITELIST (v3.15.0)
+            # Ensure only NIFTY is considered for this live sprint
+            data = state.client.SYMBOLDICT.get(token)
+            symbol_check = data.get('t', '').upper() if data else ''
+            if 'NIFTY' not in symbol_check and '51714' not in token:
+                continue
+
             # 🔥 NEW: Score Velocity Tracking
             if token not in state.opening_scores and abs(score) > 0.1:
                 state.opening_scores[token] = score
