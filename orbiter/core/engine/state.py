@@ -85,16 +85,55 @@ class OrbiterState:
 
     def load_session(self):
         """Recover session from disk or Cloud Snapshot (Google Sheets)"""
-        # 🔥 ABSOLUTE RESET (v3.15.7): Hard-skip recovery for the live NIFTY sprint
-        print("🛡️ NIFTY SPRINT: Hard-skipping session recovery for a clean margin start.")
-        self.active_positions = {}
-        self.exit_history = {}
-        self.opening_scores = {}
-        self.max_portfolio_pnl = 0.0
-        self.global_tsl_active = False
-        self.realized_pnl = 0.0
-        self.trade_count = 0
-        return
+        data = None
+        
+        # 1. Try Local Load
+        if os.path.exists(self.state_file):
+            try:
+                with open(self.state_file, 'r') as f:
+                    data = json.load(f)
+                
+                # Freshness Check (30 minutes expiry)
+                if (datetime.now().timestamp() - data.get('last_updated', 0)) > 1800:
+                    print("⚠️ Local session stale (> 30m). Checking cloud...")
+                    data = None
+            except Exception as e:
+                print(f"⚠️ Local load failed: {e}")
+                data = None
+
+        # 2. Try Cloud Load (v3.14.0)
+        if not data and self.syncer:
+            print("☁️ Attempting Cloud State recovery from Google Sheets...")
+            cloud_json = self.syncer.cloud_load_state()
+            if cloud_json:
+                try:
+                    data = json.loads(cloud_json)
+                    print("✅ Cloud Snapshot recovered successfully.")
+                except Exception as e:
+                    print(f"⚠️ Cloud parsing failed: {e}")
+
+        if not data:
+            return
+
+        try:
+            # Re-hydrate Positions
+            raw_positions = data.get('active_positions', {})
+            for token, info in raw_positions.items():
+                if 'entry_time' in info:
+                    info['entry_time'] = datetime.fromisoformat(info['entry_time'])
+                self.active_positions[token] = info
+            
+            self.exit_history = data.get('exit_history', {})
+            self.opening_scores = data.get('opening_scores', {})
+            self.max_portfolio_pnl = data.get('max_portfolio_pnl', 0.0)
+            self.global_tsl_active = data.get('global_tsl_active', False)
+            self.realized_pnl = data.get('realized_pnl', 0.0)
+            self.trade_count = data.get('trade_count', 0)
+            
+            if self.active_positions:
+                print(f"🧠 Recovered {len(self.active_positions)} positions (via {'Cloud' if not os.path.exists(self.state_file) else 'Disk'}).")
+        except Exception as e:
+            print(f"⚠️ Failed to re-hydrate session: {e}")
 
 
     def sync_with_broker(self):
