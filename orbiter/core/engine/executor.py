@@ -367,10 +367,16 @@ class Executor:
                 if exec_orders:
                     qty, atm_s, hdg_s = info.get('lot_size', 0), info.get('atm_symbol'), info.get('hedge_symbol')
                     if qty > 0 and atm_s and hdg_s:
-                        for side, sym, rem in [('B', atm_s, 'sq_atm'), ('S', hdg_s, 'sq_hdg')]:
-                            state.client.api.place_order(buy_or_sell=side, product_type=state.config.get('OPTION_PRODUCT_TYPE'),
-                                                       exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
-                                                       price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_{rem}')
+                        # 🔥 EXIT SEQUENCE (v3.16.1): Short first, then Hedge
+                        state.client.api.place_order(buy_or_sell='B', product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                                                   exchange='NFO', tradingsymbol=atm_s, quantity=qty, discloseqty=0,
+                                                   price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_sq_atm')
+                        
+                        time.sleep(0.5) # 🛡️ Safety delay to ensure margin release
+                        
+                        state.client.api.place_order(buy_or_sell='S', product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                                                   exchange='NFO', tradingsymbol=hdg_s, quantity=qty, discloseqty=0,
+                                                   price_type='MKT', price=0, retention='DAY', remarks=f'{reason}_sq_hdg')
 
                 # Calculate final spread for logging/alerts
                 exit_net = (atm_p_exit - hdg_p_exit) if (atm_p_exit and hdg_p_exit) else 0
@@ -559,10 +565,16 @@ class Executor:
                 if state.config.get('OPTION_EXECUTE', False):
                     qty, atm_s, hdg_s = info.get('lot_size', 0), info.get('atm_symbol'), info.get('hedge_symbol')
                     if qty > 0 and atm_s and hdg_s:
-                        for side, sym, rem in [('B', atm_s, 'sl_atm'), ('S', hdg_s, 'sl_hdg')]:
-                            state.client.api.place_order(buy_or_sell=side, product_type=state.config.get('OPTION_PRODUCT_TYPE'),
-                                                       exchange='NFO', tradingsymbol=sym, quantity=qty, discloseqty=0,
-                                                       price_type='MKT', price=0, retention='DAY', remarks=f'SLTP_{rem}')
+                        # 🔥 EXIT SEQUENCE (v3.16.1): Short first, then Hedge
+                        state.client.api.place_order(buy_or_sell='B', product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                                                   exchange='NFO', tradingsymbol=atm_s, quantity=qty, discloseqty=0,
+                                                   price_type='MKT', price=0, retention='DAY', remarks=f'SLTP_sl_atm')
+                        
+                        time.sleep(0.5) # 🛡️ Safety delay to ensure margin release
+                        
+                        state.client.api.place_order(buy_or_sell='S', product_type=state.config.get('OPTION_PRODUCT_TYPE'),
+                                                   exchange='NFO', tradingsymbol=hdg_s, quantity=qty, discloseqty=0,
+                                                   price_type='MKT', price=0, retention='DAY', remarks=f'SLTP_sl_hdg')
 
                 # Calculate final spread for logging/alerts
                 exit_net = (atm_exit - hdg_exit) if (atm_exit and hdg_exit) else 0
