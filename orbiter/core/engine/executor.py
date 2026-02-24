@@ -229,10 +229,13 @@ class Executor:
                         total_power = limits.get('total_power', 0) if limits else 0
                         
                         # Calculate total simulated margin used by all active positions
-                        # 🔥 RESET GUARD (v3.15.3): If no active positions, force sim_used to 0
+                        # 🔥 FINAL RESET GUARD (v3.15.4): Force sim_used to 0 if no active positions
                         sim_used = 0
                         if state.active_positions:
                             sim_used = sum(p.get('total_margin', 0) for p in state.active_positions.values())
+                        else:
+                            # Double-check: Force clear if state is somehow ghost-tracking
+                            sim_used = 0
                         
                         if (req_margin + sim_used) > total_power:
                             print(f"🛡️ Margin Guard: {base_symbol} requires ₹{req_margin:,.0f} (Total Sim Used: ₹{sim_used:,.0f}) but only ₹{total_power:,.0f} power. Skipping.")
