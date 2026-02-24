@@ -229,12 +229,12 @@ class Executor:
                         total_power = limits.get('total_power', 0) if limits else 0
                         
                         # Calculate total simulated margin used by all active positions
-                        # 🔥 FINAL RESET GUARD (v3.15.4): Force sim_used to 0 if no active positions
+                        # 🔥 ABSOLUTE RESET GUARD (v3.15.6): Force sim_used to 0 if no active positions
                         sim_used = 0
-                        if state.active_positions:
+                        if state.active_positions and len(state.active_positions) > 0:
                             sim_used = sum(p.get('total_margin', 0) for p in state.active_positions.values())
                         else:
-                            # Double-check: Force clear if state is somehow ghost-tracking
+                            # Hard reset to ensure ghost margin doesn't block trades
                             sim_used = 0
                         
                         if (req_margin + sim_used) > total_power:
