@@ -85,6 +85,17 @@ class Evaluator:
                     starttime=start_ts, endtime=end_ts, interval=1
                 )
 
+            # 🔥 Robust NIFTY Fallback (v3.14.9)
+            if not candle_data and symbol_out.upper() == 'NIFTY':
+                if state.verbose_logs: print(f"⚠️ NIFTY history missing. Forcing LTP sync for {token}")
+                # If we can't get history, we use the current OHLC from quote to satisfy filters
+                quote = state.client.api.get_quotes(exchange=exchange, token=token_id)
+                if quote and quote.get('lp'):
+                    data['lp'] = data['ltp'] = float(quote['lp'])
+                    data['o'], data['h'], data['l'], data['c'] = float(quote['open']), float(quote['high']), float(quote['low']), float(quote['close'])
+                    # Inject a single "mock" candle so filters don't exit early
+                    candle_data = [{'stat':'Ok', 'intc': quote['lp'], 'into': quote['open'], 'inth': quote['high'], 'intl': quote['low'], 'time': datetime.now().strftime("%d-%m-%Y %H:%M:%S")}]
+
             candle_open, candle_high, candle_low, candle_close = self._candle_stats(candle_data, self._time_key)
 
             # Resolve Prices & Stats BEFORE filters
