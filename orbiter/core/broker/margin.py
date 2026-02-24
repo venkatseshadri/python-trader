@@ -36,6 +36,7 @@ class MarginCalculator:
 
         positionlist = [make_pos(hedge_row, "B"), make_pos(atm_row, "S")]
         try:
+            # 🔥 Pass actid explicitly (v3.14.8)
             ret = api.span_calculator(actid, positionlist)
             if not isinstance(ret, dict) or ret.get('stat') != 'Ok':
                 return {'ok': False, 'reason': f"span_err:{ret.get('emsg', 'unknown')}"}

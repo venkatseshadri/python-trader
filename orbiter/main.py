@@ -252,6 +252,11 @@ class Orbiter:
         self.executor = Executor(log_buy_signals, log_closed_positions, get_filters('sl'), get_filters('tp'), summary_manager=self.summary)
         self.syncer = Syncer(update_active_positions, update_engine_state, get_engine_state)
         
+        # 🔥 MANUALLY REGISTER NIFTY (v3.14.8)
+        # Ensure the name "NIFTY" is linked to token 51714 so Evaluator can apply Expiry Boost
+        self.client.master.TOKEN_TO_SYMBOL['51714'] = 'NIFTY'
+        self.client.master.TOKEN_TO_SYMBOL['NFO|51714'] = 'NIFTY'
+        
         # Link state back to components
         self.state.load_session() # 🔥 Recover Memory
         self.state.sync_with_broker() # 🔥 Handover: Sync with real positions

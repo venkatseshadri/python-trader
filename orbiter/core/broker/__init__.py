@@ -200,6 +200,7 @@ class BrokerClient:
     def get_limits(self):
         """Fetch granular margin and fund status from Shoonya."""
         try:
+            # ⭐ Fixed: Use self.conn.cred['user'] instead of private API attribute
             res = self.api.get_limits()
             if not res or res.get('stat') != 'Ok':
                 return None
