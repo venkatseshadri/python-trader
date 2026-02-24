@@ -86,6 +86,13 @@ class ConnectionManager:
             reason = ret.get('emsg') or ret.get('reason') if isinstance(ret, dict) else ''
             print(f"❌ Login failed{': ' + reason if reason else ''}")
             return False
+        
+        # 🔥 NUCLEAR FIX (v3.14.9)
+        # Manually inject mangled private attributes to ensure all internal API calls (like get_positions)
+        # always find the credentials regardless of how the object was initialized.
+        setattr(self.api, '_NorenApi__username', self.cred['user'])
+        setattr(self.api, '_NorenApi__accountid', self.cred['user'])
+        
         return True
 
     def start_live_feed(self, symbols: List[str], on_tick_callback, verbose=False):
