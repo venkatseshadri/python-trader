@@ -69,7 +69,12 @@ class ContractResolver:
                 return {'token': f"NFO|{valid[0][1]['token']}", 'tsym': valid[0][1]['tradingsymbol']}
         return None
 
-    def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int, expiry_type: str, instrument: str) -> Dict[str, Any]:
+    def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int, expiry_type: str, instrument: Optional[str] = None) -> Dict[str, Any]:
+        # 🔥 Dynamic Instrument Detection (v3.14.5)
+        if not instrument:
+            is_index = symbol.upper() in ('NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX')
+            instrument = 'OPTIDX' if is_index else 'OPTSTK'
+            
         expiry = self._select_expiry(symbol, expiry_type, instrument)
         if not expiry: return {'ok': False, 'reason': 'no_expiry'}
         rows = self._get_option_rows(symbol, expiry, instrument)

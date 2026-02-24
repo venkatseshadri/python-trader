@@ -201,14 +201,14 @@ class Executor:
                     }
                     buy_signals.append(sig) # 🔥 Capture signal for summary alert
 
-                # ✅ NFO (or others): Use Credit Spreads
                 else:
-                    # 1. Resolve Contracts (v3.13.1)
+                    # 1. Resolve Contracts (v3.14.5 - Dynamic instrument detection)
                     res = state.client.resolver.get_credit_spread_contracts(
-                        base_symbol, ltp, 'PUT' if is_bull else 'CALL', 
+                        base_symbol, ltp, 'PUT' if score > 0 else 'CALL', 
                         state.config.get('HEDGE_STEPS'), state.config.get('OPTION_EXPIRY'), 
-                        state.config.get('OPTION_INSTRUMENT')
+                        None # instrument set dynamically by resolver
                     )
+
                     
                     if not res.get('ok'):
                         print(f"⚠️ Spread resolution failed for {base_symbol}: {res.get('reason')}")
