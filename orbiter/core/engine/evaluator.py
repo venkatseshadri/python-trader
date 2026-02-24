@@ -111,6 +111,12 @@ class Evaluator:
             filter_results = {}
             scores = []
 
+            # 🔥 Move Symbol/Company resolution EARLY (v3.14.7)
+            mapped_symbol = state.client.get_symbol(token_id, exchange=exchange)
+            mapped_company = state.client.get_company_name(token_id, exchange=exchange)
+            symbol_out = data.get('t') or data.get('symbol') or mapped_symbol
+            company_out = data.get('company_name') or mapped_company or symbol_out
+
             if not candle_data or len(candle_data) < 5:
                 for f in entry_filters: filter_results[f.key] = {'score': 0}
                 total = 0
@@ -171,12 +177,6 @@ class Evaluator:
 
             if not has_live_data and ltp == 0: total = 0
             state.filter_results_cache[token] = {**filter_results, 'total': total}
-
-            # Symbol/Company resolution
-            mapped_symbol = state.client.get_symbol(token_id, exchange=exchange)
-            mapped_company = state.client.get_company_name(token_id, exchange=exchange)
-            symbol_out = data.get('t') or data.get('symbol') or mapped_symbol
-            company_out = data.get('company_name') or mapped_company or symbol_out
 
             # BASE symbol cleanup
             base_symbol_res = company_out if company_out and '|' not in str(company_out) else symbol_out
