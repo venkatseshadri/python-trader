@@ -33,10 +33,10 @@ class OrderExecutor:
         hedge_sym = spread['hedge_symbol']
         lot = spread['lot_size']
         
-        # 🔥 SAFETY GASKET (v3.15.0)
-        # Force exactly 1 lot for NIFTY Index (75 shares) to prevent over-leverage
+        # 🔥 SAFETY GASKET (v3.15.1)
+        # Force exactly 1 lot for NIFTY Index (65 shares) to prevent over-leverage
         if 'NIFTY' in atm_sym.upper():
-            lot = 75
+            lot = 65
             print(f"🛡️ NIFTY Safety: Forcing exactly 1 lot ({lot} shares)")
 
         exch = spread.get('exchange', 'NFO')
