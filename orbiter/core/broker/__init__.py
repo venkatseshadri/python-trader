@@ -200,7 +200,12 @@ class BrokerClient:
     def get_limits(self):
         """Fetch granular margin and fund status from Shoonya."""
         try:
-            # ⭐ Fixed: Use self.conn.cred['user'] instead of private API attribute
+            # 🔥 On-Demand Comprehensive Fix (v3.14.9)
+            setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
+            setattr(self.api, '_NorenApi__accountid', self.conn.cred['user'])
+            token = getattr(self.api, '_NorenApi__susertoken', None)
+            setattr(self.api, '_NorenApi__susertoken', token)
+
             res = self.api.get_limits()
             if not res or res.get('stat') != 'Ok':
                 return None
@@ -227,10 +232,14 @@ class BrokerClient:
     def get_positions(self):
         """Fetch all open/overnight positions."""
         try:
-            # 🔥 On-Demand Fix (v3.14.9)
-            # Ensure private attributes are present before calling the API
+            # 🔥 On-Demand Comprehensive Fix (v3.14.9)
+            # Ensure all private attributes are present before calling the API
             setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
             setattr(self.api, '_NorenApi__accountid', self.conn.cred['user'])
+            
+            # Use safe getattr to bridge the mangled susertoken
+            token = getattr(self.api, '_NorenApi__susertoken', None)
+            setattr(self.api, '_NorenApi__susertoken', token)
             
             res = self.api.get_positions()
             if not res: return []
