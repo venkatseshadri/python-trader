@@ -1,10 +1,14 @@
 """TP filter: premium drops >= 10% from entry price (Profit Taking)"""
 from typing import Dict, Any
 
-def check_tp(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] = None) -> Dict[str, Any]:
+def check_tp(data, candle_data=None, **kwargs) -> Dict[str, Any]:
     """Return dict with {'hit': bool, 'pct': float, 'reason': str}"""
     result = {'hit': False, 'pct': 0.0, 'reason': ''}
     try:
+        from orbiter.utils.utils import safe_float
+        position = kwargs.get('position', {})
+        current_ltp = safe_float(data.get('lp', 0))
+        
         # ✅ Priority: Short-Premium based TP
         entry_net = position.get('entry_net_premium')
         current_net = data.get('current_net_premium') if data else None

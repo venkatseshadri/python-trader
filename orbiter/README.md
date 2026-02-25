@@ -1,94 +1,23 @@
-# ORBITER
+# 🚀 Orbiter
 
-[![Status][status-badge]][status-link] [![Python][python-badge]][python-link] [![License][license-badge]][license-link]
+Welcome to **Orbiter**, the high-performance, rule-based algorithmic trading orchestrator.
 
-**ORBITER v3.2.0-20260218-ce903b5** - Unified Segment Multi-Market Trader
+## 🎯 Single Responsibility Principle (SRP)
+The `orbiter/` directory serves as the **Root Orchestrator**. Its singular responsibility is to bootstrap the application, parse command-line arguments, initialize the core engine, and manage the top-level application lifecycle (start, loop, shutdown).
 
-Scans NIFTY/MCX symbols for ORB breakouts, ranks by momentum strength, and executes Option Credit Spreads with margin-efficient leg sequencing.
+## 📂 Architecture Overview
+Orbiter is highly modular, separating concerns into distinct directories:
+- **`core/`**: The heart of the application. Contains the execution engine, broker integrations, and analytical summaries.
+- **`strategies/`**: Strategy-specific configurations, including rules, filters, and instruments.
+- **`bot/`**: Telegram Command & Control (C2) interface for notifications and remote management.
+- **`config/`**: System-wide, static configurations (e.g., system.json, secrets).
+- **`utils/`**: Shared utilities like logging, file locks, data management, and the CLI argument parser.
+- **`tests/`**: Unit and integration tests guaranteeing system integrity.
 
-## 🚀 Features
+## 🛠️ Entry Point
+- **`main.py`**: The universal entry point. It sets up the environment, resolves the `project_root`, locks the process (to prevent duplicate instances), and instantiates `OrbiterApp`.
+- **`CLI Arguments`**: Passing `--simulation=true` or `--strategyId=xyz` allows headless, dynamic strategy swapping without touching the codebase.
 
-- **Multi-Market Support** → Automatic NFO/MCX segment switching
-- **Modular Engine v3** → Decoupled Evaluator, Executor, and State management
-- **Credit Spreads** → Sell ATM / Buy Hedge for margin benefit (auto-sequenced)
-- **Shoonya API** → Production-grade REST + Websocket integration
-- **Live SL/Target Monitoring** → Portfolio-wide and individual position management
-- **Simulation Mode** → Full dry-run with real market data
-- **Versioning** → Integrated version logging to ensure environment parity
-
-## 📁 Architecture
-
-orbiter/
-├── config/         # Multi-segment + strategy params
-├── core/           
-│   ├── broker/     # Modular Broker Client (New v3)
-│   ├── engine/     # Evaluator, Executor, State
-├── bot/            # Google Sheets + Telegram Bot (Planned)
-├── filters/        # Signal & Exit filters (v1-v8)
-├── data/           # Symbols, Masters, Margin Caches
-└── main.py         # Entry point (Generic runner)
-
-## 🎯 How It Works
-
-1. **Auto-Detect Segment**: Switches between NFO (Day) and MCX (Evening) based on time.
-2. **Scan Universe**: Pulls ORB (9:15-9:30) high/low and LTP.
-3. **Rank Signals**: Sorts by breakout distance (Top N).
-4. **Leg Sequencing**: For Credit Spreads, buys the Hedge first to unlock margin benefit, then sells the ATM.
-5. **Live Monitoring**: Websocket feed monitors premium for SL/TP hits.
-
-## 🛠 Quick Start
-
-### Development (Mac/Local)
-```bash
-# 1. Setup
-git clone <repo>
-cd python-trader
-
-# 2. Run simulation
-python orbiter/main.py --simulation
-
-# 3. Go live
-python orbiter/main.py
-```
-
-### Production (Raspberry Pi Daemon)
-For 24/7 operation with automatic crash recovery and session switching (NFO -> MCX):
-
-1. **Install Service**:
-   ```bash
-   sudo cp install/rpi/orbiter.service /etc/systemd/system/
-   cp install/rpi/orbiter.env /home/pi/python/
-   sudo systemctl daemon-reload
-   sudo systemctl enable orbiter
-   ```
-
-2. **Configure Mode**:
-   Edit `/home/pi/python/orbiter.env` to toggle simulation:
-   - `ORBITER_FLAGS=""` (Live Mode)
-   - `ORBITER_FLAGS="--simulation"` (Simulation Mode)
-
-3. **Control**:
-   ```bash
-   sudo systemctl start orbiter    # Start
-   sudo systemctl stop orbiter     # Stop
-   sudo systemctl restart orbiter  # Restart (Apply .env changes)
-   sudo systemctl status orbiter   # Check Health
-   ```
-
-## 📋 Monitoring & Logs
-
-Orbiter generates comprehensive logs to handle background sessions (e.g., `screen` or `systemd`):
-
-- **System Logs**: `logs/system/orbiter_YYYYMMDD_HHMM.log` (Captures everything: prints, errors, crashes).
-- **Trade Logs**: `logs/nfo/trade_calls.log` (Specific to execution calls).
-- **Service Logs**: `sudo journalctl -u orbiter -f` (Linux system-level logs).
-
-## 🛡️ Release & Integrity
-
-Before pushing changes, always run the release script to sync versions and checksums:
-```bash
-./release.sh
-```
-This updates `version.txt`, `main.py`, and regenerates `checksums.txt` for environment parity.
-
-Version 3.6.3-20260218-0c972a7 - Feb 2026
+## ⚠️ Core Rules
+1. **Never leak secrets**: No credentials should ever exist in code. Use `orbiter/bot/credentials.json` or `.env` variables.
+2. **Never break the loop**: `main.py` wraps the core execution in a resilient `try-finally` block to guarantee lock releases and graceful degradation.

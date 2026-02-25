@@ -12,8 +12,8 @@ import time
 # Ensure we can import from project root (orbiter/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from core.client import BrokerClient
-import config.config as config
+from orbiter.core.client import BrokerClient
+import orbiter.config.config as config
 import logging
 
 def main():
@@ -36,7 +36,7 @@ def main():
         return
 
     # Use NFO specific config
-    import config.nfo.config as nfo_config
+    import orbiter.config.nfo.config as nfo_config
     print(f"📊 Scanning {len(nfo_config.SYMBOLS_UNIVERSE)} symbols from SYMBOLS_UNIVERSE...")
     
     futures_list = []

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from datetime import datetime
-from core.engine.syncer import Syncer
+from orbiter.core.engine.runtime.syncer import Syncer
 
 def test_sync_active_positions_payload_preparation():
     # 1. Setup Mock Callback

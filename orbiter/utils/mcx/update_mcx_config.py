@@ -11,12 +11,12 @@ import time
 # Ensure we can import from project root (orbiter/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from core.broker import BrokerClient
-import config.config as config
+from orbiter.core.broker import BrokerClient
+import orbiter.config.config as config
 import logging
 
 # Common MCX symbols
-import config.mcx.config as mcx_config
+import orbiter.config.mcx.config as mcx_config
 
 def main():
     print("🚀 Starting MCX Configuration Update...")

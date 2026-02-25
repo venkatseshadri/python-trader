@@ -6,7 +6,7 @@ import sys
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from bot.sheets import (
+from orbiter.bot.sheets import (
     SCOPE, TRADE_LOG_HEADER, POSITIONS_HEADER, 
     CLOSED_POSITIONS_HEADER, SCAN_METRICS_HEADER
 )

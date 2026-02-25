@@ -1,7 +1,6 @@
 import numpy as np
 import talib
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def ema_gap_expansion_filter(data, candle_data, **kwargs):
     """
@@ -13,6 +12,7 @@ def ema_gap_expansion_filter(data, candle_data, **kwargs):
     """
     token = kwargs.get('token')
     weight = kwargs.get('weight', 10)
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0 or not candle_data or len(candle_data) < 15:

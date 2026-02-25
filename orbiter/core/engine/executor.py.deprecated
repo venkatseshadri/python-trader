@@ -1,0 +1,248 @@
+from datetime import datetime
+import time
+import pytz
+import numpy as np
+from orbiter.utils.utils import safe_ltp, safe_float
+from orbiter.utils import telegram_notifier as _telegram
+
+# Backwards-compat for unit tests that patch this symbol directly
+def send_telegram_msg(message: str):
+    return _telegram.send_telegram_msg(message)
+from .state import OrbiterState
+
+
+class Executor:
+    def __init__(self, log_buy_signals, log_closed_positions, sl_filters, tp_filters, summary_manager=None):
+        self.log_buy_signals = log_buy_signals
+        self.log_closed_positions = log_closed_positions
+        self.sl_filters = sl_filters
+        self.tp_filters = tp_filters
+        self.summary = summary_manager
+
+    def _is_mcx(self, token: str) -> bool:
+        return str(token).startswith("MCX|")
+
+    def _freshness_limit(self, token: str) -> float:
+        return 0.995 if self._is_mcx(token) else 0.998
+
+    def _slope_guard(self, score: float, candles) -> bool:
+        closes = [safe_float(c.get('intc')) for c in candles if c.get('stat') == 'Ok']
+        closes = [c for c in closes if c > 0]
+        if len(closes) < 2:
+            return True
+        slope = closes[-1] - closes[0]
+        if score > 0 and slope < 0:
+            return False
+        if score < 0 and slope > 0:
+            return False
+        return True
+
+    def _freshness_guard(self, score: float, ltp: float, candles, token: str) -> bool:
+        highs = [safe_float(c.get('inth')) for c in candles if c.get('stat') == 'Ok']
+        lows = [safe_float(c.get('intl')) for c in candles if c.get('stat') == 'Ok']
+        highs = [h for h in highs if h > 0]
+        lows = [l for l in lows if l > 0]
+        if not highs or not lows:
+            return True
+
+        recent_high = max(highs)
+        recent_low = min(lows)
+        freshness_limit = self._freshness_limit(token)
+
+        if score > 0:
+            return ltp >= recent_high * freshness_limit
+        buffer = 1 + (1 - freshness_limit)
+        return ltp <= recent_low * buffer
+
+    def rank_signals(self, state: OrbiterState, scores, syncer):
+        """Process signals and place orders"""
+        buy_signals = []
+        top_n = state.config.get('TOP_N', 1)
+        ranked = sorted(scores.items(), key=lambda x: abs(x[1]), reverse=True)[:top_n]
+
+        for i, (token, score) in enumerate(ranked):
+            if token in state.active_positions:
+                continue
+
+            if abs(score) < state.config.get('TRADE_SCORE', 0):
+                continue
+
+            data = state.client.SYMBOLDICT.get(token, {})
+            ltp, _ltp_display, symbol_full = safe_ltp(data, token)
+
+            candles = data.get('candles', []) if isinstance(data, dict) else []
+            if candles:
+                if not self._slope_guard(score, candles):
+                    continue
+                if not self._freshness_guard(score, ltp, candles, token):
+                    continue
+
+            # Log evaluated signals
+            buy_signals.append({
+                'token': token,
+                'symbol': symbol_full,
+                'company_name': data.get('company_name'),
+                'score': score,
+            })
+
+            if self._is_mcx(token):
+                res = state.client.place_future_order(
+                    symbol=data.get('symbol') or symbol_full,
+                    side='B' if score > 0 else 'S',
+                    qty=data.get('lot_size') or data.get('lotsize') or 1,
+                    execute=state.config.get('OPTION_EXECUTE', True),
+                )
+                if res and res.get('ok'):
+                    state.active_positions[token] = {
+                        'symbol': res.get('tsym') or data.get('symbol') or symbol_full,
+                        'entry_price': ltp,
+                        'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
+                        'strategy': 'FUTURE_LONG' if score > 0 else 'FUTURE_SHORT',
+                        'lot_size': res.get('lot_size', 1),
+                    }
+            else:
+                res = state.client.place_put_credit_spread(
+                    symbol=data.get('company_name') or data.get('symbol') or symbol_full,
+                    ltp=ltp,
+                    execute=state.config.get('OPTION_EXECUTE', True),
+                    product_type=state.config.get('OPTION_PRODUCT_TYPE', 'I'),
+                    price_type=state.config.get('OPTION_PRICE_TYPE', 'MKT'),
+                    hedge_steps=state.config.get('HEDGE_STEPS', 4),
+                    expiry_type=state.config.get('OPTION_EXPIRY', 'monthly'),
+                    instrument=state.config.get('OPTION_INSTRUMENT', 'OPTSTK'),
+                )
+                if res and res.get('ok'):
+                    atm_symbol = res.get('atm_symbol')
+                    hedge_symbol = res.get('hedge_symbol')
+                    atm_ltp = state.client.get_option_ltp_by_symbol(atm_symbol)
+                    hedge_ltp = state.client.get_option_ltp_by_symbol(hedge_symbol)
+                    entry_net = safe_float(atm_ltp) - safe_float(hedge_ltp)
+                    state.active_positions[token] = {
+                        'symbol': data.get('symbol') or symbol_full,
+                        'company_name': data.get('company_name'),
+                        'entry_price': ltp,
+                        'entry_time': datetime.now(pytz.timezone('Asia/Kolkata')),
+                        'strategy': 'PUT_CREDIT_SPREAD',
+                        'atm_symbol': atm_symbol,
+                        'hedge_symbol': hedge_symbol,
+                        'entry_net_premium': entry_net,
+                        'atm_premium_entry': safe_float(atm_ltp),
+                        'lot_size': res.get('lot_size', 1),
+                        'expiry': res.get('expiry'),
+                        'max_profit_pct': 0.0,
+                        'max_pnl_rs': 0.0,
+                    }
+
+        if buy_signals:
+            self.log_buy_signals(buy_signals)
+
+        return buy_signals
+
+    def _compute_position_pnl(self, state: OrbiterState, token: str, info: dict) -> float:
+        strategy = info.get('strategy', '')
+        entry_price = safe_float(info.get('entry_price', 0))
+        lot_size = info.get('lot_size', 1)
+
+        if 'FUTURE' in strategy:
+            ltp = state.client.get_ltp(token)
+            ltp = safe_float(ltp) if ltp is not None else safe_float(state.client.SYMBOLDICT.get(token, {}).get('ltp'))
+            if entry_price == 0:
+                return 0.0
+            pct = (ltp - entry_price) / entry_price * 100.0
+            if 'SHORT' in strategy:
+                pct = -pct
+            pnl_rs = (pct / 100.0) * entry_price * lot_size
+            info['pnl_rs'] = pnl_rs
+            info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pnl_rs)
+            return pnl_rs
+
+        atm_symbol = info.get('atm_symbol')
+        hedge_symbol = info.get('hedge_symbol')
+        atm_ltp = state.client.get_option_ltp_by_symbol(atm_symbol)
+        hedge_ltp = state.client.get_option_ltp_by_symbol(hedge_symbol)
+        current_net = safe_float(atm_ltp) - safe_float(hedge_ltp)
+        entry_net = safe_float(info.get('entry_net_premium', 0))
+        pnl_rs = (entry_net - current_net) * lot_size
+        basis = safe_float(info.get('atm_premium_entry', 0))
+        pnl_pct = ((entry_net - current_net) / abs(basis) * 100.0) if basis else 0.0
+        info['pnl_rs'] = pnl_rs
+        info['pnl_pct'] = pnl_pct
+        info['max_profit_pct'] = max(info.get('max_profit_pct', 0.0), pnl_pct)
+        info['max_pnl_rs'] = max(info.get('max_pnl_rs', 0.0), pnl_rs)
+        return pnl_rs
+
+    def check_sl(self, state: OrbiterState, syncer):
+        """Check SL/TP logic and perform exits."""
+        results = []
+        total_pnl = 0.0
+
+        for token, info in list(state.active_positions.items()):
+            pnl_rs = self._compute_position_pnl(state, token, info)
+            total_pnl += pnl_rs
+
+            # Individual SL filters
+            for f in self.sl_filters:
+                res = f.evaluate(info, info.get('entry_price', 0), state.client.SYMBOLDICT.get(token, {}))
+                if res and res.get('hit'):
+                    info['exit_reason'] = res.get('reason')
+                    state.active_positions.pop(token, None)
+                    results.append(res)
+                    self.log_closed_positions([info])
+                    break
+
+        # Global TSL
+        if state.config.get('GLOBAL_TSL_ENABLED'):
+            target = state.config.get('TOTAL_TARGET_PROFIT_RS', 0)
+            pct = state.config.get('GLOBAL_TSL_PCT', 0)
+            if total_pnl >= target and target > 0:
+                state.global_tsl_active = True
+                state.max_portfolio_pnl = max(state.max_portfolio_pnl, total_pnl)
+            if state.global_tsl_active:
+                state.max_portfolio_pnl = max(state.max_portfolio_pnl, total_pnl)
+                floor = state.max_portfolio_pnl * (1 - pct / 100.0)
+                if total_pnl < floor:
+                    reason = f"Global TSL Hit | Peak ₹{state.max_portfolio_pnl:.2f} | Floor ₹{floor:.2f}"
+                    results.extend(self.square_off_all(state, reason=reason))
+                    return results
+
+        # Portfolio-level mass exit (disabled if GLOBAL_TSL_ENABLED)
+        target = state.config.get('TOTAL_TARGET_PROFIT_RS', 0)
+        if not state.config.get('GLOBAL_TSL_ENABLED'):
+            if target and total_pnl >= target:
+                results.extend(self.square_off_all(state, reason="Target Hit"))
+                return results
+
+        stop = state.config.get('TOTAL_STOP_LOSS_RS', 0)
+        if stop and total_pnl <= -abs(stop):
+            results.extend(self.square_off_all(state, reason="Stop Loss Hit"))
+            return results
+
+        return results
+
+    def square_off_all(self, state: OrbiterState, reason: str = "Generic"):
+        closed = []
+        for token, info in list(state.active_positions.items()):
+            entry_price = safe_float(info.get('entry_price', 0))
+            ltp = safe_float(state.client.get_ltp(token))
+            if not ltp:
+                ltp = safe_float(state.client.SYMBOLDICT.get(token, {}).get('ltp'))
+            pct_change = ((ltp - entry_price) / (entry_price or 1)) * 100.0
+
+            api = getattr(state.client, 'api', None)
+            if api and hasattr(api, 'place_order'):
+                api.place_order(buy_or_sell='S', product_type='I', exchange=token.split('|')[0],
+                                tradingsymbol=info.get('symbol'), quantity=info.get('lot_size', 1),
+                                discloseqty=0, price_type='MKT')
+
+            closed.append({
+                'symbol': info.get('symbol'),
+                'pct_change': pct_change,
+                'reason': reason,
+            })
+            state.active_positions.pop(token, None)
+
+        if closed:
+            self.log_closed_positions(closed)
+            send_telegram_msg(f"✅ Mass Square Off Complete ({len(closed)} positions) | Reason: {reason}")
+
+        return closed

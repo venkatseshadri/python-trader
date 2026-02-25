@@ -4,10 +4,12 @@
 """
 from typing import Dict, Any
 
-def check_trailing_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] = None) -> Dict[str, Any]:
+def check_trailing_sl(data, candle_data=None, **kwargs) -> Dict[str, Any]:
     """Profit Guard Pro (V2): Trailing based on hard Cash PnL (₹)"""
     result = {'hit': False, 'pct': 0.0, 'reason': ''}
     try:
+        from orbiter.utils.utils import safe_float
+        position = kwargs.get('position', {})
         # ✅ Get values from the position dict
         max_pnl_rs = position.get('max_pnl_rs', 0.0)
         current_pnl_rs = position.get('pnl_rs', 0.0) # Calculated in Executor

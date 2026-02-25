@@ -1,22 +1,31 @@
-# Last Technical Change: v3.13.1 Power Hour Aggressive Mode
+# Last Technical Change: v4.0.0 SRP Architecture Makeover & Dynamic CLI Strategies
 
-**Date:** 2026-02-23
-**Status:** COMPLETED (Build: `v3.13.1`)
+**Date:** 2026-02-25
+**Status:** COMPLETED (Build: `v4.0.0`)
 
 ## 1. Strategic Outcomes
-Deployed an aggressive configuration for the final hour of the MCX session. This "Power Hour" mode is designed to capture rapid late-session mean reversions and ratio divergences to recover the current drawdown.
+Executed a massive architectural overhaul of the Orbiter codebase to strictly enforce the Single Responsibility Principle (SRP). The monolithic structure has been dismantled into highly cohesive, decoupled domains, and the execution engine is now fully headless and dynamically configurable via the command line.
 
 ## 2. Technical Adjustments
 
-### A. Configuration Tuning (`config/config.py`)
-- **`TRADE_SCORE`:** Lowered from 0.50 to 0.40 to increase entry sensitivity.
-- **`TOP_N`:** Reduced from 10 to 3 to concentrate margin on the highest-probability signals.
+### A. Core Architecture Dismantling
+- Decommissioned the legacy `orbiter/core/client.py` and `orbiter/config/config.py` monoliths.
+- Introduced `orbiter/core/` domain boundaries:
+  - `broker/`: Pure Anti-Corruption Layer for Shoonya API.
+  - `engine/`: Pure rule evaluation, state management, and execution dispatching.
+  - `analytics/`: Pure financial, tax, and margin reporting.
+- Introduced `orbiter/strategies/`: JSON-only algorithm definitions (no Python logic).
+- Introduced `orbiter/bot/`: Isolated Telegram C2 layer.
 
-### B. Deployment Integrity
-- Verified the removal of stale lock files on the Pi.
-- Ensured segment-specific logic is correctly isolating MCX for Ratio Raider.
+### B. Dynamic CLI Bootstrapping (`utils/argument_parser.py`)
+- Implemented a robust CLI argument parser.
+- The system can now seamlessly hot-swap algorithms on startup: `python3 orbiter/main.py --simulation=true --strategyId=nifty_fno_topn_trend`
+- Added comprehensive fallback logic to `system.json` defaults and failsafe mechanisms for invalid inputs.
+
+### C. Documentation & Testing Validation
+- Authored SRP-focused `README.md` files for every major domain directory, explicitly defining responsibilities and strict boundaries.
+- Re-aligned the unit testing suite in `orbiter/tests/unit/` to validate the new `ArgumentParser` logic, `BrokerClient` encapsulation, and `SessionManager` dependency injection.
 
 ## 3. Mission Status
-- **Goal Status:** **Aggressive Scalping Enabled.**
-- **RPi Environment:** Deploying v3.13.1 for the 22:00-23:30 window.
-- **Next Step:** Monitor live trade calls for Ratio Raider or Range Raider triggers.
+- **Goal Status:** **v4.0.0 SRP Architecture Deployed.**
+- **Next Step:** Address any pre-existing algorithmic/filter test failures exposed by the new modular boundaries and finalize the transition to live trading using the dynamically loaded JSON strategies.

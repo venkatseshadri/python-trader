@@ -2,104 +2,113 @@ import os
 import json
 import datetime
 import calendar
+import logging
 import time as _time
 from typing import Dict, Optional, Any, List
 from .master import ScripMaster
+
+logger = logging.getLogger("ORBITER")
 
 class ContractResolver:
     def __init__(self, scrip_master: ScripMaster):
         self.master = scrip_master
 
-    def _is_last_thursday(self, d: datetime.date) -> bool:
-        last_day = calendar.monthrange(d.year, d.month)[1]
-        last_date = datetime.date(d.year, d.month, last_day)
-        while last_date.weekday() != 3: last_date -= datetime.timedelta(days=1)
-        return d == last_date
-
-    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str):
-        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT', 'FUTIDX') else 'NFO'
+    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str, exchange_override: str = None):
+        exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         expiry_str = expiry.isoformat()
-        return [row for row in self.master.DERIVATIVE_OPTIONS if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('expiry') == expiry_str and row.get('exchange') == exchange]
+        return [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
 
-    def _select_expiry(self, symbol: str, expiry_type: str, instrument: str) -> Optional[datetime.date]:
-        exchange = 'MCX' if instrument in ('OPTCOM', 'FUTCOM', 'OPTFUT', 'FUTIDX') else 'NFO'
-        if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
-        
+    def _select_expiry(self, symbol: str, expiry_type: str, instrument: str, exchange_override: str = None) -> Optional[datetime.date]:
+        exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
+        try:
+            last_refresh = getattr(self.master, "_last_refresh_time", 0) or 0
+            if (not self.master.DERIVATIVE_LOADED) or (not self.master.DERIVATIVE_OPTIONS):
+                if _time.time() - last_refresh > 300:
+                    self.master.download_scrip_master(exchange)
+                    setattr(self.master, "_last_refresh_time", _time.time())
+        except Exception:
+            pass
+
         def find_exp():
             exps = set()
             for row in self.master.DERIVATIVE_OPTIONS:
-                if row.get('symbol') == symbol and row.get('instrument') == instrument and row.get('exchange') == exchange:
-                    exp = self.master._parse_expiry_date(row.get('expiry'))
+                if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("exchange") == exchange:
+                    exp = self.master._parse_expiry_date(row.get("expiry"))
                     if exp: exps.add(exp)
             return exps
-
-        expiries = find_exp()
         
+        expiries = find_exp()
         if not expiries: return None
+        
         today = datetime.date.today()
         valid = sorted(d for d in expiries if d >= today)
         if not valid: return None
-        if expiry_type == "monthly":
-            monthly = [d for d in valid if self._is_last_thursday(d)]
-            return monthly[0] if monthly else valid[0]
+
+        base = expiry_type.lower()
+        offset = 0
+        if "+" in base:
+            parts = base.split("+")
+            base = parts[0]
+            try: offset = int(parts[1])
+            except: offset = 0
+
+        if base == "weekly" or base == "current":
+            return valid[offset] if offset < len(valid) else valid[-1]
+        elif base == "monthly":
+            monthlies = []
+            for i in range(len(valid)):
+                curr = valid[i]
+                if i == len(valid) - 1 or valid[i+1].month != curr.month:
+                    monthlies.append(curr)
+            return monthlies[offset] if offset < len(monthlies) else monthlies[-1]
+
+        if base == "next": return valid[1] if len(valid) > 1 else valid[0]
+        if base == "far": return valid[2] if len(valid) > 2 else valid[-1]
         return valid[0]
 
-    def get_near_future(self, symbol: str, exchange: str, api) -> Optional[Dict[str, str]]:
-        try:
-            ret = api.searchscrip(exchange=exchange, searchtext=symbol)
-            if ret and ret.get('stat') == 'Ok' and 'values' in ret:
-                candidates, today = [], datetime.date.today()
-                for scrip in ret['values']:
-                    if scrip.get('instname') in ('FUTSTK', 'FUTIDX', 'FUTCOM') and scrip.get('symname') == symbol:
-                        exp = self.master._parse_expiry_date(scrip.get('exp') or scrip.get('exd'))
-                        if exp and exp >= today: candidates.append((exp, scrip['token'], scrip.get('tsym')))
-                if candidates:
-                    candidates.sort(key=lambda x: x[0])
-                    return {'token': f"{exchange}|{candidates[0][1]}", 'tsym': candidates[0][2]}
-        except Exception: pass
-        if exchange == 'NFO':
-            futures = [row for row in self.master.DERIVATIVE_OPTIONS if row.get('symbol') == symbol and row.get('instrument') in ('FUTSTK', 'FUTIDX')]
-            valid = []
-            for f in futures:
-                exp = self.master._parse_expiry_date(f.get('expiry'))
-                if exp and exp >= datetime.date.today(): valid.append((exp, f))
-            if valid:
-                valid.sort(key=lambda x: x[0])
-                return {'token': f"NFO|{valid[0][1]['token']}", 'tsym': valid[0][1]['tradingsymbol']}
-        return None
-
-    def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int, expiry_type: str, instrument: Optional[str] = None) -> Dict[str, Any]:
-        # 🔥 Dynamic Instrument Detection (v3.14.5)
-        if not instrument:
-            is_index = symbol.upper() in ('NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX')
-            instrument = 'OPTIDX' if is_index else 'OPTSTK'
-            
-        expiry = self._select_expiry(symbol, expiry_type, instrument)
-        if not expiry: return {'ok': False, 'reason': 'no_expiry'}
-        rows = self._get_option_rows(symbol, expiry, instrument)
-        strikes = sorted({row.get('strike') for row in rows if row.get('strike')})
-        if not strikes: return {'ok': False, 'reason': 'no_strikes'}
+    def resolve_option_symbol(self, symbol: str, ltp: float, option_type: str, strike_logic: str, expiry_type: str = "current", exchange: str = None) -> Dict[str, Any]:
+        is_index = symbol.upper() in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX")
+        instrument = "OPTIDX" if is_index else "OPTSTK"
+        expiry = self._select_expiry(symbol, expiry_type, instrument, exchange_override=exchange)
+        if not expiry: return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
+        rows = self._get_option_rows(symbol, expiry, instrument, exchange_override=exchange)
+        strikes = sorted({float(row.get("strike")) for row in rows if row.get("strike")})
+        if not strikes: return {"ok": False, "reason": "no_strikes"}
         atm_strike = min(strikes, key=lambda s: abs(s - ltp))
-        diffs = sorted({round(strikes[i+1]-strikes[i], 2) for i in range(len(strikes)-1) if strikes[i+1]>strikes[i]})
-        step = diffs[0] if diffs else None
-        if atm_strike is None or not step: return {'ok': False, 'reason': 'no_atm_or_step'}
-        
-        opt_type = 'PE' if side.upper() == 'PUT' else 'CE'
-        h_strike = round(atm_strike - hedge_steps * step, 2) if opt_type == 'PE' else round(atm_strike + hedge_steps * step, 2)
-        
-        def find_best(s, t):
-            matches = [r for r in rows if r.get('option_type') == t]
-            if not matches: return None
-            # Exact or closest
-            best = min(matches, key=lambda r: abs(float(r.get('strike', 0)) - s))
-            return best if abs(float(best.get('strike', 0)) - s) / (s or 1) <= 0.05 else None
-
-        h_row, a_row = find_best(h_strike, opt_type), find_best(atm_strike, opt_type)
-        if not h_row or not a_row: return {'ok': False, 'reason': 'option_symbol_not_found'}
-        
+        atm_idx = strikes.index(atm_strike)
+        target_idx = atm_idx
+        if "+" in strike_logic: target_idx += int(strike_logic.split("+")[1])
+        elif "-" in strike_logic: target_idx -= int(strike_logic.split("-")[1])
+        target_idx = max(0, min(len(strikes) - 1, target_idx))
+        target_strike = strikes[target_idx]
+        matches = [r for r in rows if r.get("option_type") == option_type.upper() and float(r.get("strike")) == target_strike]
+        if not matches: return {"ok": False, "reason": "contract_not_found"}
+        res = matches[0]
         return {
-            'ok': True, 'expiry': expiry.isoformat(), 'atm_strike': a_row['strike'], 'hedge_strike': h_row['strike'],
-            'lot_size': int(a_row.get('lot_size') or 0), 'atm_symbol': a_row['tradingsymbol'], 'hedge_symbol': h_row['tradingsymbol'],
-            'side': side.upper(), 'exchange': h_row.get('exchange', 'NFO')
+            "ok": True,
+            "tradingsymbol": res["tradingsymbol"],
+            "strike": res["strike"],
+            "token": res["token"],
+            "exchange": res["exchange"],
+            "lot_size": int(res.get("lotsize", 0))
+        }
+
+    def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int = 4, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Dict[str, Any]:
+        is_put = (side.upper() == "PUT")
+        atm_res = self.resolve_option_symbol(symbol, ltp, "PE" if is_put else "CE", "ATM", expiry_type)
+        if not atm_res["ok"]: return atm_res
+        hedge_logic = f"ATM-{hedge_steps}" if is_put else f"ATM+{hedge_steps}"
+        hedge_res = self.resolve_option_symbol(symbol, ltp, "PE" if is_put else "CE", hedge_logic, expiry_type)
+        if not hedge_res["ok"]: return hedge_res
+        return {
+            "ok": True,
+            "side": side.upper(),
+            "atm_symbol": atm_res["tradingsymbol"],
+            "atm_token": atm_res["token"],
+            "hedge_symbol": hedge_res["tradingsymbol"],
+            "hedge_token": hedge_res["token"],
+            "lot_size": atm_res["lot_size"],
+            "exchange": atm_res["exchange"],
+            "expiry": expiry_type
         }

@@ -1,6 +1,5 @@
 import numpy as np
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def institutional_flip_filter(data, candle_data, **kwargs):
     """
@@ -9,6 +8,7 @@ def institutional_flip_filter(data, candle_data, **kwargs):
     Patterns: BULL_FLIP, BEAR_FLIP, YHIGH_BREAK, YLOW_BREAK.
     """
     token = kwargs.get('token')
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     ltp = safe_float(data.get('lp', 0))
     yest_high = safe_float(data.get('ph', 0)) # Previous High

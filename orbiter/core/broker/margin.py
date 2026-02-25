@@ -6,13 +6,19 @@ class MarginCalculator:
 
     def calculate_span_for_spread(self, spread: Dict[str, Any], api, actid, product_type: str = "I", haircut: float = 0.20) -> Dict[str, Any]:
         """Calculate margin for a 2-leg spread"""
+        import logging
+        logger = logging.getLogger("ORBITER")
+        logger.trace(f"[MarginCalculator.calculate_span_for_spread] - Calculating for spread: {spread}")
+
         def get_row(tsym):
             for row in self.master.DERIVATIVE_OPTIONS:
                 if row.get('tradingsymbol') == tsym: return row
             return None
 
         atm_row, hedge_row = get_row(spread.get('atm_symbol')), get_row(spread.get('hedge_symbol'))
-        if not atm_row or not hedge_row: return {'ok': False, 'reason': 'option_symbol_not_found'}
+        if not atm_row or not hedge_row:
+            logger.trace(f"[MarginCalculator.calculate_span_for_spread] - Failed to find rows for {spread.get('atm_symbol')} or {spread.get('hedge_symbol')}")
+            return {'ok': False, 'reason': 'option_symbol_not_found'}
 
         def format_date(raw):
             try:
@@ -35,9 +41,11 @@ class MarginCalculator:
             }
 
         positionlist = [make_pos(hedge_row, "B"), make_pos(atm_row, "S")]
+        logger.trace(f"[MarginCalculator.calculate_span_for_spread] - PositionList: {positionlist}")
         try:
             # 🔥 Pass actid explicitly (v3.14.8)
             ret = api.span_calculator(actid, positionlist)
+            logger.trace(f"[MarginCalculator.calculate_span_for_spread] - API Response: {ret}")
             if not isinstance(ret, dict) or ret.get('stat') != 'Ok':
                 return {'ok': False, 'reason': f"span_err:{ret.get('emsg', 'unknown')}"}
             
@@ -59,24 +67,51 @@ class MarginCalculator:
 
     def calculate_future_margin(self, future_details: Dict[str, Any], api, actid, product_type: str = "I", haircut: float = 0.20) -> Dict[str, Any]:
         """Calculate margin for a single future contract"""
+        import logging
+        logger = logging.getLogger("ORBITER")
+        
         def get_row(tsym):
+            if not tsym: return None
+            logger.trace(f"[MarginCalculator.get_row] - Searching for tsym: {tsym}")
             for row in self.master.DERIVATIVE_OPTIONS:
                 if row.get('tradingsymbol') == tsym: return row
+            # Fallback: token lookup if tsym fails
+            token = future_details.get('token')
+            if token:
+                logger.trace(f"[MarginCalculator.get_row] - tsym failed, searching by token: {token}")
+                for row in self.master.DERIVATIVE_OPTIONS:
+                    if str(row.get('token')) == str(token): return row
+            
+            logger.trace(f"[MarginCalculator.get_row] - Row NOT found. Options count: {len(self.master.DERIVATIVE_OPTIONS)}")
+            if len(self.master.DERIVATIVE_OPTIONS) > 0:
+                logger.trace(f"[MarginCalculator.get_row] - Sample options: {self.master.DERIVATIVE_OPTIONS[:3]}")
             return None
 
         row = get_row(future_details.get('tsym'))
-        if not row: return {'ok': False, 'reason': 'future_symbol_not_found'}
+        if not row: 
+            logger.debug(f"[MarginCalculator.calculate_future_margin] - Future row not found for: {future_details}")
+            return {'ok': False, 'reason': 'future_symbol_not_found'}
 
         def format_date(raw):
+            if not raw: return ""
+            text = str(raw).upper()
+            if text.startswith('M') and len(text) > 5: # Likely M19MAR26
+                text = text[1:]
+            
             try:
                 from datetime import datetime
-                return datetime.strptime(raw, "%Y-%m-%d").strftime("%d-%b-%Y").upper()
-            except Exception: return str(raw)
+                # Handle 19MAR26 or 27-FEB-2026 or 2026-03-19
+                for fmt in ("%d-%b-%Y", "%d%b%y", "%Y-%m-%d"):
+                    try:
+                        return datetime.strptime(text, fmt).strftime("%d-%b-%Y").upper()
+                    except ValueError: continue
+                return text
+            except Exception: return text
 
         def make_pos(row, side):
             qty = int(future_details.get('lot_size', 0))
             inst = row.get('instrument') or "FUTSTK"
-            exch = "MCX" if inst in ("OPTCOM", "FUTCOM") else "NFO"
+            exch = row.get('exchange') or "NFO"
             return {
                 "prd": "M" if product_type == "I" else product_type,
                 "exch": exch, "instname": inst, "symname": row.get('symbol'),
@@ -88,8 +123,10 @@ class MarginCalculator:
             }
 
         positionlist = [make_pos(row, "B")]
+        logger.trace(f"[MarginCalculator.calculate_future_margin] - PositionList: {positionlist}")
         try:
             ret = api.span_calculator(actid, positionlist)
+            logger.trace(f"[MarginCalculator.calculate_future_margin] - API Response: {ret}")
             if not isinstance(ret, dict) or ret.get('stat') != 'Ok':
                 return {'ok': False, 'reason': f"span_err:{ret.get('emsg', 'unknown')}"}
             

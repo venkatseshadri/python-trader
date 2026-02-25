@@ -1,0 +1,4 @@
+[
+  {"symbol": "NIFTY", "token": "26000", "exchange": "NSE"},
+  {"symbol": "BANKNIFTY", "token": "26009", "exchange": "NSE"}
+]

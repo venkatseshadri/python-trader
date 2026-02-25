@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from orbiter.core.analytics.summary import SummaryManager, TaxCalculator
-from orbiter.core.engine.syncer import Syncer
-from orbiter.core.engine.state import OrbiterState
+from orbiter.core.engine.runtime.syncer import Syncer
 import datetime
 
 class TestAnalyticsAndSync(unittest.TestCase):

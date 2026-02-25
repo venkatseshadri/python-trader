@@ -5,6 +5,8 @@ from orbiter.core.analytics.summary import SummaryManager
 
 class TestMarginReporting(unittest.TestCase):
     def setUp(self):
+        from orbiter.utils.constants_manager import ConstantsManager
+        ConstantsManager._instance = None
         # 1. Mock the Shoonya API
         self.mock_api = MagicMock()
         

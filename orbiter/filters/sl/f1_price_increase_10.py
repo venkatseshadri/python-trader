@@ -4,14 +4,18 @@
 """
 from typing import Dict, Any
 
-def check_sl(position: Dict[str, Any], current_ltp: float, data: Dict[str, Any] = None) -> Dict[str, Any]:
+def check_sl(data, candle_data=None, **kwargs) -> Dict[str, Any]:
     """Return dict with {'hit': bool, 'pct': float, 'reason': str}"""
     result = {'hit': False, 'pct': 0.0, 'reason': ''}
     try:
+        from orbiter.utils.utils import safe_float
+        position = kwargs.get('position', {})
+        current_ltp = safe_float(data.get('lp', 0))
+        
         strategy = position.get('strategy', '')
         entry_price = float(position.get('entry_price', 0))
         entry_atr = float(position.get('entry_atr', 0))
-        mult = float(position.get('atr_sl_mult', 1.5))
+        mult = float(kwargs.get('mult', position.get('atr_sl_mult', 1.5)))
         
         # 1. Total Cash SL Check (Highest Priority)
         entry_net = position.get('entry_net_premium')

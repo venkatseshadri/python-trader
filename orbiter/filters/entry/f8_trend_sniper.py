@@ -1,7 +1,6 @@
 import numpy as np
 import talib
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def trend_sniper_filter(data, candle_data, **kwargs):
     """
@@ -10,6 +9,7 @@ def trend_sniper_filter(data, candle_data, **kwargs):
     This acts as a high-quality gatekeeper for multi-stock execution.
     """
     token = kwargs.get('token')
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     if not candle_data or len(candle_data) < 30:
         return {'score': 0.00}
@@ -21,16 +21,24 @@ def trend_sniper_filter(data, candle_data, **kwargs):
     if len(closes) < 30:
         return {'score': 0.00}
 
-    # 1. Calculate ADX(14)
-    adx_vals = talib.ADX(highs, lows, closes, timeperiod=14)
-    current_adx = adx_vals[-1] if not np.isnan(adx_vals[-1]) else 0.0
+    # 1. Use Optimized Indicators if available
+    indicators = kwargs.get('indicators', {})
     
-    # 2. Calculate EMA 5 & 9
-    ema5 = talib.EMA(closes, timeperiod=5)
-    ema9 = talib.EMA(closes, timeperiod=9)
-    
-    e5 = ema5[-1]
-    e9 = ema9[-1]
+    if 'adx' in indicators and 'ema5' in indicators and 'ema9' in indicators:
+        current_adx = indicators['adx']
+        e5 = indicators['ema5']
+        e9 = indicators['ema9']
+    else:
+        # 1. Calculate ADX(14)
+        adx_vals = talib.ADX(highs, lows, closes, timeperiod=14)
+        current_adx = adx_vals[-1] if not np.isnan(adx_vals[-1]) else 0.0
+        
+        # 2. Calculate EMA 5 & 9
+        ema5 = talib.EMA(closes, timeperiod=5)
+        ema9 = talib.EMA(closes, timeperiod=9)
+        
+        e5 = ema5[-1]
+        e9 = ema9[-1]
 
     score = 0.00
     # 3. Sniper Logic (ADX > 25)

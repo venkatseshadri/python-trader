@@ -1,7 +1,6 @@
 import numpy as np
 import talib
-from config.config import VERBOSE_LOGS, SUPER_TREND_PERIOD, SUPER_TREND_MULTIPLIER
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def calculate_st_values(highs, lows, closes, period, multiplier):
     """Internal helper to calculate SuperTrend array."""
@@ -63,10 +62,13 @@ def supertrend_filter(data, candle_data, **kwargs):
     """
     token = kwargs.get('token')
     weight = kwargs.get('weight', 20)
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
+    period = kwargs.get('period', 10)
+    multiplier = kwargs.get('multiplier', 3)
     
     ltp = safe_float(data.get('lp', 0))
-    if ltp == 0 or not candle_data or len(candle_data) < 30:
-        return {'score': 0.00}
+    if ltp == 0 or not candle_data or len(candle_data) < 15:
+        return {'score': 0.00, 'supertrend': 0.0, 'direction': "⚪ WAIT", 'direction_numeric': 0}
 
     # 1. Prepare Data
     highs = np.array([safe_float(c['inth']) for c in candle_data if c.get('stat')=='Ok'], dtype=float)
@@ -77,7 +79,7 @@ def supertrend_filter(data, candle_data, **kwargs):
         return {'score': 0.00}
 
     # 2. Calculate SuperTrend Line (Full series)
-    st_series = calculate_st_values(highs, lows, closes, SUPER_TREND_PERIOD, SUPER_TREND_MULTIPLIER)
+    st_series = calculate_st_values(highs, lows, closes, period, multiplier)
     latest_st = st_series[-1]
 
     # 3. Timeframe Logic (using 1m history as proxy for high TFs)
@@ -123,5 +125,6 @@ def supertrend_filter(data, candle_data, **kwargs):
     return {
         'score': score,
         'supertrend': latest_st,
-        'direction': "🟢 BULL" if bias == "BULL" else "🔴 BEAR"
+        'direction': "🟢 BULL" if bias == "BULL" else "🔴 BEAR",
+        'direction_numeric': 1 if bias == "BULL" else -1
     }

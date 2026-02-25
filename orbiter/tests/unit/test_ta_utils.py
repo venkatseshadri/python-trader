@@ -4,9 +4,9 @@ import numpy as np
 import os
 import json
 import talib
-from filters.entry.f4_supertrend import supertrend_filter
-from filters.entry.f5_ema_scope import ema_scope_filter
-from filters.entry.f6_ema_gap import ema_gap_expansion_filter
+from orbiter.filters.entry.f4_supertrend import supertrend_filter
+from orbiter.filters.entry.f5_ema_scope import ema_scope_filter
+from orbiter.filters.entry.f6_ema_gap import ema_gap_expansion_filter
 
 def load_ta_snapshots():
     path = os.path.join(os.path.dirname(__file__), '../data/ta_golden_values.json')
@@ -60,7 +60,7 @@ def test_indicators_against_golden_values(snapshot, mocker):
 
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_PERIOD', 10)
     mocker.patch('filters.entry.f4_supertrend.SUPER_TREND_MULTIPLIER', 3)
-    mocker.patch('config.config.VERBOSE_LOGS', False)
+    mocker.patch('orbiter.config.values.VERBOSE_LOGS', False)
 
     tick_data = {'lp': str(snapshot['close'])}
     
@@ -71,7 +71,7 @@ def test_indicators_against_golden_values(snapshot, mocker):
     # F6: EMA Gap
     f6_result = ema_gap_expansion_filter(tick_data, candle_data, token='26000')
     # F7: ATR Momentum
-    from filters.entry.f7_atr_relative import atr_momentum_filter
+    from orbiter.filters.entry.f7_atr_relative import atr_momentum_filter
     f7_result = atr_momentum_filter(tick_data, candle_data, token='26000')
 
     print(f"ST:   Calc={st_result['supertrend']:.2f}, Golden={snapshot['supertrend_10_3']} (diff={abs(st_result['supertrend']-snapshot['supertrend_10_3']):.2f})")

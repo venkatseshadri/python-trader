@@ -1,0 +1,162 @@
+import time
+from datetime import datetime, time as dt_time
+import pytz
+import math
+import numpy as np
+import re
+import traceback
+from orbiter.utils.utils import safe_float, get_today_orb_times
+from .state import OrbiterState
+
+
+class Evaluator:
+    @staticmethod
+    def _time_key(raw):
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        if " " in text:
+            text = text.split(" ")[-1]
+        parts = text.split(":")
+        if len(parts) >= 2:
+            try:
+                return int(parts[0]) * 60 + int(parts[1])
+            except ValueError:
+                return None
+        return None
+
+    @staticmethod
+    def _candle_stats(candles, time_key_func):
+        ok = [c for c in candles or [] if c.get('stat') == 'Ok']
+        if not ok:
+            return None, None, None, None
+
+        keyed = [(c, time_key_func(c.get('time') or c.get('tm') or c.get('intt') or c.get('t'))) for c in ok]
+        with_time = [pair for pair in keyed if pair[1] is not None]
+        ordered = [pair[0] for pair in sorted(with_time, key=lambda x: x[1])] if with_time else list(reversed(ok))
+        first = ordered[0]
+
+        opens = [safe_float(c.get('into')) for c in ok if safe_float(c.get('into')) > 0]
+        highs = [safe_float(c.get('inth') or c.get('h')) for c in ok if safe_float(c.get('inth') or c.get('h')) > 0]
+        lows = [safe_float(c.get('intl') or c.get('l')) for c in ok if safe_float(c.get('intl') or c.get('l')) > 0]
+        closes = [safe_float(c.get('intc') or c.get('c')) for c in ok if safe_float(c.get('intc') or c.get('c')) > 0]
+
+        open_val = opens[0] if opens else safe_float(first.get('into') or first.get('o') or first.get('intc'))
+        close_val = closes[-1] if closes else safe_float(ordered[-1].get('intc') or ordered[-1].get('c'))
+        high_val = max(highs) if highs else None
+        low_val = min(lows) if lows else None
+
+        return open_val, high_val, low_val, close_val
+
+    def evaluate_filters(self, state: OrbiterState, token):
+        """Evaluate entry filters and resolve price data"""
+        data = state.client.SYMBOLDICT.get(token)
+        has_live_data = bool(data)
+        token_id = token.split("|")[-1]
+        if not data:
+            data = {'lp': 0, 'token': token_id}
+
+        websocket_token = data.get('tk') or data.get('token') or token_id
+
+        # ⭐ SIMULATION: Fetch last LTP via REST if missing
+        if state.config.get('SIMULATION', False) and safe_float(data.get('lp', 0)) == 0:
+            try:
+                q_exch = token.split("|")[0] if "|" in token else 'NSE'
+                quote = state.client.api.get_quotes(exchange=q_exch, token=token_id)
+                if quote and quote.get('lp'):
+                    data['lp'] = data['ltp'] = float(quote['lp'])
+                    state.client.SYMBOLDICT[token] = data
+            except Exception:
+                pass
+
+        start_time, end_time = get_today_orb_times(simulation=state.config.get('SIMULATION', False))
+        start_ts, end_ts = int(start_time.timestamp()), int(end_time.timestamp())
+        exchange = token.split("|")[0] if "|" in token else 'NSE'
+
+        try:
+            # 🔥 Optimization (v3.13.4): Use primed candles if available
+            candle_data = data.get('candles', [])
+
+            if not candle_data:
+                candle_data = state.client.api.get_time_price_series(
+                    exchange=exchange, token=websocket_token,
+                    starttime=start_ts, endtime=end_ts, interval=1
+                )
+
+            if not candle_data and token == state.symbols[0]:
+                time.sleep(0.5)
+                candle_data = state.client.api.get_time_price_series(
+                    exchange=exchange, token=websocket_token,
+                    starttime=start_ts, endtime=end_ts, interval=1
+                )
+
+            # 🔥 Robust NIFTY Fallback (v3.14.9)
+            symbol_out = state.client.get_symbol(token_id, exchange=exchange) if hasattr(state.client, "get_symbol") else token
+            if not candle_data and symbol_out.upper() == 'NIFTY':
+                if state.verbose_logs:
+                    print(f"⚠️ NIFTY history missing. Forcing LTP sync for {token}")
+                # If we can't get history, we use the current OHLC from quote to satisfy filters
+                quote = state.client.api.get_quotes(exchange=exchange, token=token_id)
+                if quote and quote.get('lp'):
+                    data['lp'] = data['ltp'] = float(quote['lp'])
+                    data['o'], data['h'], data['l'], data['c'] = float(quote['open']), float(quote['high']), float(quote['low']), float(quote['close'])
+                    # Inject a single "mock" candle so filters don't exit early
+                    candle_data = [{
+                        'stat': 'Ok',
+                        'intc': quote['lp'],
+                        'into': quote['open'],
+                        'inth': quote['high'],
+                        'intl': quote['low'],
+                        'time': datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+                    }]
+
+            candle_open, candle_high, candle_low, candle_close = self._candle_stats(candle_data, self._time_key)
+
+            # Resolve Prices & Stats BEFORE filters
+            day_open = data.get('o') or data.get('open')
+            day_high = data.get('h') or data.get('high')
+            day_low = data.get('l') or data.get('low')
+            day_close = data.get('c') or data.get('close')
+
+            ltp = safe_float(data.get('ltp', data.get('lp', 0)) or 0)
+            if ltp == 0 and candle_close is not None:
+                ltp = safe_float(candle_close)
+
+            data['lp'] = data['ltp'] = ltp
+            if not safe_float(day_open):
+                day_open = candle_open
+            if not safe_float(day_high):
+                day_high = candle_high
+            if not safe_float(day_low):
+                day_low = candle_low
+            if not safe_float(day_close):
+                day_close = candle_close
+
+            data['o'], data['h'], data['l'], data['c'] = day_open, day_high, day_low, day_close
+            if token not in state.client.SYMBOLDICT or not state.client.SYMBOLDICT[token].get('lp'):
+                state.client.SYMBOLDICT[token] = data
+
+            # Evaluate Filters
+            filters = state.filters.get_filters() if hasattr(state.filters, "get_filters") else []
+            weights = state.config.get('ENTRY_WEIGHTS') or []
+            if not weights:
+                # Default weights (one per filter)
+                weights = [1.0] * len(filters)
+
+            total = 0.0
+            results = {}
+            for i, f in enumerate(filters):
+                res = f.evaluate(data, candle_data)
+                results[f.key] = res
+                score = res.get('score', 0)
+                weight = weights[i] if i < len(weights) else 1.0
+                total += score * weight
+
+            state.filter_results_cache[token] = results
+            return total
+        except Exception as e:
+            print(f"⚠️ Evaluator error: {e}")
+            if state.verbose_logs:
+                traceback.print_exc()
+        return 0.0
+

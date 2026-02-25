@@ -6,6 +6,8 @@ class TestAutomaticPriming(unittest.TestCase):
     @patch('orbiter.core.broker.ConnectionManager')
     @patch('orbiter.core.broker.ScripMaster')
     def test_prime_candles_success(self, mock_master, mock_conn):
+        from orbiter.utils.constants_manager import ConstantsManager
+        ConstantsManager._instance = None
         client = BrokerClient()
         client.conn.api = MagicMock()
         

@@ -1,9 +1,9 @@
 import pytest
 import json
 import os
-from filters.entry.f1_orb import orb_filter
-from filters.sl.f1_price_increase_10 import check_sl
-from filters.tp.f2_trailing_sl import check_trailing_sl
+from orbiter.filters.entry.f1_orb import orb_filter
+from orbiter.filters.sl.f1_price_increase_10 import check_sl
+from orbiter.filters.tp.f2_trailing_sl import check_trailing_sl
 
 def load_scenarios():
     path = os.path.join(os.path.dirname(__file__), '../data/scenario_data.json')

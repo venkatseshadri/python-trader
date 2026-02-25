@@ -7,8 +7,7 @@ Drop-in replacement - F1/F2/F3 PERFECTLY consistent
 
 import talib
 import numpy as np
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def ema5_above_9ema_filter(data, candle_data, **kwargs):
     """
@@ -17,6 +16,7 @@ def ema5_above_9ema_filter(data, candle_data, **kwargs):
     """
     token = kwargs.get('token')
     weight = kwargs.get('weight', 18)
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     if not candle_data or len(candle_data) < 9:
         if VERBOSE_LOGS:
@@ -35,16 +35,20 @@ def ema5_above_9ema_filter(data, candle_data, **kwargs):
             print(f"🔴 5EMA/9EMA {token}: Valid candles={len(closes)}")
         return {'score': 0.00, 'ema5': 0.00, 'ema9': 0.00}
     
-    # 🔥 Calculate both EMAs
-    try:
-        talib.set_compatibility(1)
-        ema5_values = talib.EMA(closes, timeperiod=5)
-        ema9_values = talib.EMA(closes, timeperiod=9)
-    finally:
-        talib.set_compatibility(0)
-    
-    latest_ema5 = round(ema5_values[-1], 2)
-    latest_ema9 = round(ema9_values[-1], 2)
+    # 🔥 Calculate both EMAs (Use optimized context if available)
+    indicators = kwargs.get('indicators', {})
+    latest_ema5 = indicators.get('ema5')
+    latest_ema9 = indicators.get('ema9')
+
+    if latest_ema5 is None or latest_ema9 is None:
+        try:
+            talib.set_compatibility(1)
+            ema5_values = talib.EMA(closes, timeperiod=5)
+            ema9_values = talib.EMA(closes, timeperiod=9)
+            latest_ema5 = round(ema5_values[-1], 2)
+            latest_ema9 = round(ema9_values[-1], 2)
+        finally:
+            talib.set_compatibility(0)
     
     if latest_ema5 == 0:
         return {'score': 0.00, 'ema5': latest_ema5, 'ema9': latest_ema9}

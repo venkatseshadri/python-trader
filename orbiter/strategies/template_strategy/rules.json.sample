@@ -1,0 +1,30 @@
+{
+  "strategies": [
+    {
+      "name": "Sample_Entry_Rule",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
+          { "fact": "filter.orb", "operator": "greaterThan", "value": 0.5 }
+        ]
+      },
+      "order_operations": [
+        { 
+          "type": "trade.place_order", 
+          "params": { 
+            "derivative": "option",
+            "side": "BUY", 
+            "product": "NRML",
+            "quantity": 50,
+            "symbol": "NIFTY",
+            "option": "CE",
+            "strike": "ATM",
+            "expiry": "monthly+0"
+          } 
+        }
+      ]
+    }
+  ]
+}

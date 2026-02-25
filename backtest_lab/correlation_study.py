@@ -9,16 +9,16 @@ def analyze_correlations(file_path):
     
     # 1. Numeric Correlation with Abs_Move%
     numeric_cols = [
-        'Gap%', 'EMA_Crosses', 'PreRev_EMA_Gap', 'PreRev_ADX', 
-        'PreRev_ATR_Ratio', 'B1_Move', 'Abs_Move%'
+        'Gap%', 'EMA_5_9_Crosses', 'EMA20_Slope', 'Trend_Move_Pts', 
+        'PB_Depth%', 'B1_Move%', 'B4_Move%', 'Abs_Move%'
     ]
     corr_matrix = df[numeric_cols].corr()['Abs_Move%'].sort_values(ascending=False)
     
     # 2. Boolean Impact Analysis (Average Abs_Move% when True vs False)
     bool_cols = [
-        'Trend_Aligned', 'LTP_gt_YHigh', 'Open_gt_YClose', 'EMA_Always_Correct',
-        'Pullback_Happened', 'Reversal_Confirmed', 'Sideways_Post_Gap', 
-        'ADX_Exhaustion', 'PrePeak_Compression'
+        'Trend_Aligned', 'LTP_gt_YHigh', 'Open_gt_YClose', 'EMA5_gt_9_Always',
+        'Ribbon_Compressed', 'Is_Reversal', 'Sideways_Post_Gap', 
+        'ADX_Exhaustion', 'ATR_Compression', 'PrePB_Small_Candles'
     ]
     
     impacts = []

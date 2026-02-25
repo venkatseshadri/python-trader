@@ -9,7 +9,7 @@ from .entry.f7_atr_relative import atr_momentum_filter
 from .entry.f8_trend_sniper import trend_sniper_filter
 from .entry.f9_institutional_flip import institutional_flip_filter
 from .entry.f10_range_raider import range_raider_filter
-from .entry.ef11_ratio_raider import ratio_raider_filter
+from .entry.f11_ratio_raider import ratio_raider_filter
 from .sl.f1_price_increase_10 import check_sl as sl_price_increase_10
 from .sl.f2_5ema_below_9ema import sl_5ema_below_9ema
 from .sl.sl_supertrend_reversal import sl_supertrend_reversal

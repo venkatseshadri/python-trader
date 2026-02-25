@@ -1,60 +1,49 @@
 import unittest
-from unittest.mock import MagicMock, patch
-from orbiter.core.engine.executor import Executor
-from orbiter.core.engine.state import OrbiterState
-import datetime
-import pytz
+from unittest.mock import MagicMock
+from orbiter.core.engine.action.executor import ActionExecutor
+
 
 class TestEngineExecutorCore(unittest.TestCase):
-
     def setUp(self):
-        self.mock_log_buy = MagicMock()
-        self.mock_log_closed = MagicMock()
-        self.executor = Executor(self.mock_log_buy, self.mock_log_closed, [], [])
-        
-        self.mock_client = MagicMock()
-        self.mock_client.SYMBOLDICT = {}
-        self.state = OrbiterState(self.mock_client, [], [], {'TOP_N': 5, 'TRADE_SCORE': 0.5})
+        self.state = MagicMock()
+        self.executor = ActionExecutor(self.state)
 
-    def test_square_off_all_futures(self):
-        """Verify mass square off for future positions"""
-        token = "MCX|467013"
-        self.state.active_positions[token] = {
-            'symbol': 'CRUDEOIL', 'entry_price': 5700.0, 'lot_size': 100, 
-            'strategy': 'FUTURE_LONG', 'entry_time': datetime.datetime.now()
-        }
-        self.mock_client.get_ltp.return_value = 5750.0
-        
-        with patch('orbiter.core.engine.executor.send_telegram_msg') as mock_send:
-            res = self.executor.square_off_all(self.state, reason="Test Exit")
-            
-            self.assertEqual(len(res), 1)
-            self.assertEqual(res[0]['pct_change'], 0.8771929824561403)
-            self.assertEqual(len(self.state.active_positions), 0) # Should be cleared
-            mock_send.assert_called_once()
-            self.assertIn("Mass Square Off Complete", mock_send.call_args[0][0])
+    def test_route_option_order(self):
+        self.executor._option_live.execute = MagicMock(return_value={"ok": True})
+        self.executor._future_live.execute = MagicMock()
+        self.executor._equity_live.execute = MagicMock()
 
-    def test_check_sl_logic_trigger(self):
-        """Verify SL filter trigger and position removal"""
-        token = "NFO|12345"
-        self.state.active_positions[token] = {
-            'symbol': 'TEST', 'entry_price': 100.0, 'lot_size': 1, 
-            'strategy': 'FUTURE_LONG', 'entry_time': datetime.datetime.now()
-        }
-        self.mock_client.SYMBOLDICT[token] = {'ltp': 95.0}
-        
-        # Add a mock SL filter that triggers
-        mock_filter = MagicMock()
-        mock_filter.evaluate.return_value = {'hit': True, 'reason': 'Price Drop', 'pct': -5.0}
-        self.executor.sl_filters = [mock_filter]
-        
-        mock_syncer = MagicMock()
-        
-        res = self.executor.check_sl(self.state, mock_syncer)
-        
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0]['reason'], 'Price Drop')
-        self.assertNotIn(token, self.state.active_positions) # Should be removed
+        res = self.executor.place_order(option="CE", strike="ATM", symbol="NIFTY")
+
+        self.executor._option_live.execute.assert_called_once()
+        self.executor._future_live.execute.assert_not_called()
+        self.executor._equity_live.execute.assert_not_called()
+        self.assertEqual(res, {"ok": True})
+
+    def test_route_future_order(self):
+        self.executor._future_live.execute = MagicMock(return_value={"ok": True})
+        self.executor._option_live.execute = MagicMock()
+        self.executor._equity_live.execute = MagicMock()
+
+        res = self.executor.place_order(derivative="future", symbol="RELIANCEFUT")
+
+        self.executor._future_live.execute.assert_called_once()
+        self.executor._option_live.execute.assert_not_called()
+        self.executor._equity_live.execute.assert_not_called()
+        self.assertEqual(res, {"ok": True})
+
+    def test_route_equity_order(self):
+        self.executor._equity_live.execute = MagicMock(return_value={"ok": True})
+        self.executor._option_live.execute = MagicMock()
+        self.executor._future_live.execute = MagicMock()
+
+        res = self.executor.place_order(symbol="RELIANCE")
+
+        self.executor._equity_live.execute.assert_called_once()
+        self.executor._option_live.execute.assert_not_called()
+        self.executor._future_live.execute.assert_not_called()
+        self.assertEqual(res, {"ok": True})
+
 
 if __name__ == '__main__':
     unittest.main()

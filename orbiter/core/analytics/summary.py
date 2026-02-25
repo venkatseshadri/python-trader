@@ -97,9 +97,22 @@ class SummaryManager:
 
     def generate_pnl_report(self, state) -> str:
         """Report total day summary including realized and unrealized PnL."""
-        is_sim = state.config.get('SIMULATION', False)
+        config = getattr(state, 'config', {})
+        if not isinstance(config, dict):
+            config = {}
+        is_sim = config.get('SIMULATION', False)
         msg = [f"📊 <b>Session Summary ({self.segment})</b>{' [SIM]' if is_sim else ''}"]
         msg.append("-" * 25)
+
+        def _safe_number(value, default=0.0):
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                try:
+                    return float(value)
+                except ValueError:
+                    return default
+            return default
         
         active_pnl = 0.0
         active_lines = []
@@ -145,9 +158,14 @@ class SummaryManager:
                 active_lines.append(f"⚠️ <code>{info.get('symbol', token)}</code>: Calculation Error")
                 print(f"❌ PnL Calc Error for {token}: {e}")
         
-        realized_pnl = getattr(state, 'realized_pnl', 0.0)
+        realized_pnl = _safe_number(getattr(state, 'realized_pnl', 0.0), 0.0)
         total_pnl = active_pnl + realized_pnl
         trade_count = getattr(state, 'trade_count', 0)
+        if not isinstance(trade_count, int):
+            try:
+                trade_count = int(trade_count)
+            except Exception:
+                trade_count = 0
 
         msg.append(f"🎯 <b>Total Day PnL:</b> <b>₹{total_pnl:,.2f}</b>")
         msg.append(f"✅ <b>Realized:</b>  ₹{realized_pnl:,.2f} ({trade_count} trades)")

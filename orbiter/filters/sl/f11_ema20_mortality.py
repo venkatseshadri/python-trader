@@ -1,7 +1,7 @@
 import pandas as pd
 import talib
 import numpy as np
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def resample_to_15min(minute_candles):
     """
@@ -41,14 +41,16 @@ def resample_to_15min(minute_candles):
     
     return df_15
 
-def trend_mortality_sl(position, ltp, data):
+def trend_mortality_sl(data, candle_data=None, **kwargs):
     """
     🎯 SL: TREND MORTALITY (15-min EMA20)
     Law: If 15m candle closes below EMA20, the trend is dead (61% probability).
     """
-    raw_candles = data.get('candles', [])
+    raw_candles = candle_data if candle_data is not None else data.get('candles', [])
     if not raw_candles or len(raw_candles) < 60: 
         return {'hit': False}
+
+    position = kwargs.get('position', {})
 
     # 1. Resample to 15-min
     df_15 = resample_to_15min(raw_candles)

@@ -1,0 +1,13 @@
+{
+  "name": "Template Strategy",
+  "exchange_id": "nfo",
+  "files": {
+    "rules_file": "orbiter/strategies/template_strategy/rules.json",
+    "instruments_file": "orbiter/strategies/template_strategy/instruments.json",
+    "filters_file": "orbiter/strategies/template_strategy/filters.json"
+  },
+  "strategy_parameters": {
+    "lot_size": 1,
+    "max_drawdown": 5000
+  }
+}

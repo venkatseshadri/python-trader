@@ -1,0 +1,40 @@
+{
+  "entry": {
+    "orb": { 
+      "enabled": false, 
+      "weight": 25, 
+      "buffer_pct": 0.2,
+      "start_time": "09:15",
+      "end_time": "09:30",
+      "timeframe": "15m"
+    },
+    "price_above_5ema": { "enabled": false, "weight": 20, "timeframe": "5m" },
+    "ema5_above_9ema": { "enabled": false, "weight": 18, "timeframe": "5m" },
+    "supertrend": { "enabled": false, "weight": 20, "period": 10, "multiplier": 3, "timeframe": "15m" },
+    "ema_scope": { "enabled": false, "weight": 10, "timeframe": "5m" },
+    "ema_gap": { "enabled": false, "weight": 10, "timeframe": "5m" },
+    "atr_relative": { "enabled": false, "weight": 10, "timeframe": "5m" },
+    "trend_sniper": { "enabled": false, "timeframe": "15m" },
+    "institutional_flip": { "enabled": false, "timeframe": "1d" },
+    "range_raider": { "enabled": false, "timeframe": "5m" },
+    "ratio_raider": { "enabled": false, "timeframe": "5m" },
+    "adx": { "enabled": true, "time_period": 14, "threshold": 25, "timeframe": "15m" },
+    "ema_fast": { "enabled": true, "time_period": 5, "timeframe": "5m" },
+    "ema_slow": { "enabled": true, "time_period": 9, "timeframe": "5m" },
+    "rsi": { "enabled": true, "time_period": 14, "timeframe": "15m" }
+  },
+  "exit": {
+    "tp": {
+      "fixed_percent": { "enabled": true, "percent": 0.25, "timeframe": "1m" },
+      "premium_decay": { "enabled": false, "percent": 10, "timeframe": "1m" },
+      "trailing_sl": { "enabled": false, "retracement_pct": 40, "timeframe": "1m" },
+      "dynamic_budget": { "enabled": false, "timeframe": "1d" }
+    },
+    "sl": {
+      "fixed_percent": { "enabled": true, "percent": 0.15, "timeframe": "1m" },
+      "below_5ema": { "enabled": false, "timeframe": "5m" },
+      "smart_atr": { "enabled": false, "mult": 1.5, "timeframe": "1m" },
+      "trend_mortality": { "enabled": false, "timeframe": "15m" }
+    }
+  }
+}

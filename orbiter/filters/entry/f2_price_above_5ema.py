@@ -7,8 +7,7 @@ Drop-in replacement for existing orbiter
 
 import talib
 import numpy as np
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def price_above_5ema_filter(data, candle_data, **kwargs):
     """
@@ -17,6 +16,7 @@ def price_above_5ema_filter(data, candle_data, **kwargs):
     """
     token = kwargs.get('token')
     weight = kwargs.get('weight', 20)
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     ltp = safe_float(data.get('lp', 0))
     if ltp == 0:
@@ -41,13 +41,18 @@ def price_above_5ema_filter(data, candle_data, **kwargs):
             print(f"🔴 5EMA {token}: Valid candles={len(closes)}")
         return {'score': 0.00, 'ema5': 0.00}
     
-    # 🔥 Calculate EMA5
-    try:
-        talib.set_compatibility(1)
-        ema5_values = talib.EMA(closes, timeperiod=5)
-        latest_ema5 = round(ema5_values[-1], 2)
-    finally:
-        talib.set_compatibility(0)
+    # 🔥 Calculate EMA5 (Use optimized context if available)
+    indicators = kwargs.get('indicators', {})
+    latest_ema5 = indicators.get('ema5')
+    
+    if latest_ema5 is None:
+        # Fallback: Calculate manually
+        try:
+            talib.set_compatibility(1)
+            ema5_values = talib.EMA(closes, timeperiod=5)
+            latest_ema5 = round(ema5_values[-1], 2)
+        finally:
+            talib.set_compatibility(0)
     
     # 🎯 ORB-STYLE SIMPLE MATH (NO complex ratio)
     dist_pct = safe_float((ltp - latest_ema5) / ltp)

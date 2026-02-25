@@ -25,7 +25,7 @@ class TestMCXParity(unittest.TestCase):
         missing_in_config = map_tokens - config_tokens
         extra_in_config = config_tokens - map_tokens
         
-        self.assertEqual(len(missing_in_config), 0, f"Tokens in JSON map but MISSING from config.py: {missing_in_config}")
+        self.assertEqual(len(missing_in_config), 0, f"Tokens in JSON map but MISSING from orbiter.config.py: {missing_in_config}")
         self.assertEqual(len(extra_in_config), 0, f"Tokens in config.py but MISSING from JSON map: {extra_in_config}")
         
         # 4. Basic Integrity: Ensure we have the 15 expected tokens

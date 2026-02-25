@@ -327,6 +327,10 @@ def log_scan_metrics(metrics, tab_name="scan_metrics"):
     if not metrics:
         return
 
+    import logging
+    logger = logging.getLogger("ORBITER")
+    logger.trace(f"[sheets.log_scan_metrics] - Received {len(metrics)} metrics for tab {tab_name}")
+
     creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
     creds = Credentials.from_service_account_file(creds_path, scopes=SCOPE)
     client = gspread.authorize(creds)
@@ -456,8 +460,10 @@ def log_scan_metrics(metrics, tab_name="scan_metrics"):
 
     # Apply updates
     if updates:
+        logger.trace(f"[sheets.log_scan_metrics] - Batch updating {len(updates)} rows in {tab_name}. First row: {updates[0]['values'][0]}")
         sheet.batch_update(updates)
     if new_rows:
+        logger.trace(f"[sheets.log_scan_metrics] - Appending {len(new_rows)} new rows to {tab_name}. First row: {new_rows[0]}")
         sheet.append_rows(new_rows)
 
     print(f"✅ {len(metrics)} scan metrics → Google Sheets [{tab_name}] @ {timestamp}")

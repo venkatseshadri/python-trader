@@ -1,7 +1,6 @@
 import numpy as np
 import talib
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
 
 def atr_momentum_filter(data, candle_data, **kwargs):
     """
@@ -11,6 +10,7 @@ def atr_momentum_filter(data, candle_data, **kwargs):
     """
     token = kwargs.get('token')
     weight = kwargs.get('weight', 10)
+    VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     if not candle_data or len(candle_data) < 30:
         return {'score': 0.00}

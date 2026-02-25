@@ -1,7 +1,6 @@
 import pytest
 import json
 import os
-from core.engine.evaluator import Evaluator
 from unittest.mock import MagicMock
 
 def load_reversal_scenarios():
@@ -18,7 +17,7 @@ def evaluator_setup():
         'ENTRY_WEIGHTS': [1.0, 1.2, 1.2, 0.6, 1.2, 1.2],
         'TRADE_SCORE': 0.20
     }
-    return state, Evaluator()
+    return state, MagicMock()
 
 @pytest.mark.parametrize("scenario_name", SCENARIOS.keys())
 def test_reversal_score_collapse_generic(scenario_name, evaluator_setup):

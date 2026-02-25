@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-🚀 f1_orb_simple.py - SIMPLIFIED F1_ORB (2/3 Momentum + 1/3 Distance)
-2 DECIMAL PLACES - Production ready drop-in replacement
-"""
-
 import json
 import os
 from datetime import datetime, timedelta
 import math
-from config.config import VERBOSE_LOGS
-from utils.utils import safe_float
+from orbiter.utils.utils import safe_float
+
+VERBOSE_LOGS = False
 
 # 📂 Load Research Master for dynamic weighting
 _base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,10 +15,11 @@ if os.path.exists(_weights_path):
     with open(_weights_path) as f:
         ORB_RESEARCH_MASTER = json.load(f)
 
-def calculate_orb_range(ret, token):
-    """KEEP EXISTING ORB RANGE CALC (9:15-9:30 1min candles)"""
-    if VERBOSE_LOGS:
-        print(f"🔍 API Response={len(ret) if ret else 0} candles")
+def calculate_orb_range(ret, start_time_str='09:15', end_time_str='09:30', **kwargs):
+    v_logs = kwargs.get('VERBOSE_LOGS', False)
+    token = kwargs.get('token', 'UNKNOWN')
+    if v_logs:
+        print(f'🔍 API Response={len(ret) if ret else 0} candles')
     
     if not ret or len(ret) == 0:
         return None, None, None
@@ -33,33 +30,27 @@ def calculate_orb_range(ret, token):
         raw = candle.get('time') or candle.get('tm') or candle.get('intt') or candle.get('t')
         if not raw: return None
         text = str(raw).strip()
-        if " " in text:
-            text = text.split(" ")[-1]
-        parts = text.split(":")
+        if ' ' in text: text = text.split(' ')[-1]
+        parts = text.split(':')
         if len(parts) >= 2:
-            try:
-                hour = int(parts[0])
-                minute = int(parts[1])
-                return hour * 60 + minute
-            except ValueError:
-                return None
+            try: return int(parts[0]) * 60 + int(parts[1])
+            except: return None
         return None
 
-    # Filter for 9:15-9:30 (555-570 mins)
-    orb_cutoff = 9 * 60 + 30
-    orb_start = 9 * 60 + 15
+    try:
+        sh, sm = map(int, start_time_str.split(':'))
+        eh, em = map(int, end_time_str.split(':'))
+        orb_start = sh * 60 + sm
+        orb_cutoff = eh * 60 + em
+    except:
+        orb_start, orb_cutoff = 9*60+15, 9*60+30
     
     orb_ok = []
     for c in ok:
         t = time_key(c)
-        if t is not None and orb_start <= t <= orb_cutoff:
-            orb_ok.append(c)
+        if t is not None and orb_start <= t <= orb_cutoff: orb_ok.append(c)
 
-    # Fallback: if no candles in 9:15-9:30, take the first 15 candles of the day
-    if not orb_ok and ok:
-        if VERBOSE_LOGS:
-            print(f"⚠️ No 9:15-9:30 candles for {token}, taking first 15 available")
-        orb_ok = ok[:15]
+    if not orb_ok and ok: orb_ok = ok[:15]
 
     highs = [safe_float(c.get('inth') or c.get('h')) for c in orb_ok if (c.get('inth') or c.get('h')) is not None]
     lows = [safe_float(c.get('intl') or c.get('l')) for c in orb_ok if (c.get('intl') or c.get('l')) is not None]
@@ -70,73 +61,45 @@ def calculate_orb_range(ret, token):
         orb_open = safe_float(first.get('into') or first.get('o') or first.get('intc') or first.get('c') or 0) or None
     
     if highs and lows:
-        h_val = max(highs)
-        l_val = min(lows)
-        if VERBOSE_LOGS:
-            print(f"📊 ORB {token}: ₹{l_val:.2f} - ₹{h_val:.2f} (Open: ₹{orb_open or 0:.2f})")
+        h_val, l_val = max(highs), min(lows)
+        if v_logs: print(f'📊 ORB {token}: ₹{l_val:.2f} - ₹{h_val:.2f} (Open: ₹{orb_open or 0:.2f})')
         return h_val, l_val, orb_open
     return None, None, None
 
 def orb_filter(data, ret, **kwargs):
-    """
-    🎯 SIMPLIFIED F1_ORB: 2/3 MOMENTUM + 1/3 DISTANCE (2 DECIMAL PLACES)
-    """
-    token = kwargs.get('token')
-    weight = kwargs.get('weight', 25)
-    buffer_pct = kwargs.get('buffer_pct', 0.2)
-    
+    token = kwargs.get('token', 'UNKNOWN')
+    v_logs = kwargs.get('VERBOSE_LOGS', False)
     ltp = safe_float(data.get('lp', 0) or 0)
     day_open = safe_float(data.get('o', 0) or data.get('pc', 0) or 0)
     
-    if not token or ltp == 0:
-        return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
+    if not token or ltp == 0: return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
     
-    # GET ORB RANGE
-    orb_high, orb_low, orb_open = calculate_orb_range(ret, token)
-    if not orb_high or not orb_low:
-        return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
+    orb_high, orb_low, orb_open = calculate_orb_range(ret, **kwargs)
+    if not orb_high or not orb_low: return {'score': 0.00, 'orb_high': 0.00, 'orb_low': 0.00, 'orb_size': 0.00}
     
-    # ✅ FIX: Use orb_open (9:15 candle) if live day_open is missing/zero
-    if day_open == 0 and orb_open:
-        day_open = orb_open
-
+    if day_open == 0 and orb_open: day_open = orb_open
     orbsize = orb_high - orb_low
     
-    # 1️⃣ DISTANCE SCORE (Raw %pts)
     if ltp > orb_high:
         dist_pct = safe_float((ltp - orb_high) / ltp)
-        distance_score = round(dist_pct * 100, 2)  # Raw %pts
-        direction = "🟢 ORB BULL"
+        distance_score = round(dist_pct * 100, 2)
     elif ltp < orb_low:
         dist_pct = safe_float((orb_low - ltp) / ltp)
-        distance_score = round(-dist_pct * 100, 2)  # Raw %pts
-        direction = "🔴 ORB BEAR"
+        distance_score = round(-dist_pct * 100, 2)
     else:
         distance_score = 0.00
-        direction = "➖ INSIDE"
     
-    # 2️⃣ MOMENTUM SCORE (Raw %pts from Day Open)
     mom_pct = (ltp - day_open) / ltp
-    momentum_score = round(mom_pct * 100, 2)  # Raw %pts
-    
-    # 3️⃣ TOTAL F1 (Sum of %pts)
+    momentum_score = round(mom_pct * 100, 2)
     base_f1_score = distance_score + momentum_score
     
-    # 🧪 APPLY RESEARCH MULTIPLIERS
-    # Extract symbol from token (e.g. 'NSE|SBIN' -> 'SBIN')
     symbol_name = token.split('|')[-1] if '|' in token else token
-    research = ORB_RESEARCH_MASTER.get(symbol_name, {"reliability": 0.8, "precision": 0.8, "efficiency": 0.5}) # Default conservative
-    
-    # Redefined Formula: f(ORB) = Base * (Rel * Prec * Eff)
+    research = ORB_RESEARCH_MASTER.get(symbol_name, {'reliability': 0.8, 'precision': 0.8, 'efficiency': 0.5})
     research_multiplier = research['reliability'] * research['precision'] * research['efficiency']
     f1_score = round(base_f1_score * research_multiplier, 2)
     
-    if VERBOSE_LOGS:
-        dist_str = f"{abs(dist_pct*100):.2f}%" if 'dist_pct' in locals() and dist_pct != 0 else "0.00%"
-        mom_str = f"{mom_pct*100:.2f}%"
-        print(f"📊 F1_REDEFINED {token}: Base={base_f1_score:>5.2f} x Mult={research_multiplier:.3f} -> Final F1={f1_score:>5.2f}")
+    if v_logs: print(f'📊 F1_REDEFINED {token}: Base={base_f1_score:>5.2f} x Mult={research_multiplier:.3f} -> Final F1={f1_score:>5.2f}')
     
-    #return f1_score, round(orb_high, 2), round(orb_low, 2), round(orb_open or 0, 2), round(orbsize, 2)
     return {
         'score': f1_score,
         'orb_high': round(orb_high, 2),
@@ -144,10 +107,3 @@ def orb_filter(data, ret, **kwargs):
         'orb_open': round(orb_open or 0, 2),
         'orb_size': round(orbsize, 2)
     }
-
-def get_today_orb_times():
-    """Existing ORB time logic"""
-    today = datetime.today()
-    start_time = today.replace(hour=9, minute=15, second=0, microsecond=0)
-    end_time = today.replace(hour=9, minute=30, second=0, microsecond=0)
-    return start_time, end_time

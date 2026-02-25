@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from core.analytics.summary import SummaryManager
+from orbiter.core.analytics.summary import SummaryManager
 
 class TestScanLogic(unittest.TestCase):
     def setUp(self):

@@ -104,3 +104,12 @@ def safe_price_array(candle_data, min_len=5):
     if arr.dtype != np.float64:
         arr = arr.astype(np.float64)
     return arr
+
+def merge_dicts(dict1: dict, dict2: dict) -> dict:
+    """Recursively merges two dictionaries."""
+    for key, value in dict2.items():
+        if key in dict1 and isinstance(dict1[key], dict) and isinstance(value, dict):
+            merge_dicts(dict1[key], value)
+        else:
+            dict1[key] = value
+    return dict1
