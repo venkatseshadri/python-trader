@@ -1,0 +1,23 @@
+{
+  "VALID_EXCHANGES": ["NSE", "BSE", "NFO", "BFO", "MCX", "CDS"],
+  "definitions": {
+    "nse": {
+      "exchange_name": "NSE",
+      "segment_name": "NSE",
+      "is_derivative": false,
+      "default_product": "CNC"
+    },
+    "nfo": {
+      "exchange_name": "NSE",
+      "segment_name": "NFO",
+      "is_derivative": true,
+      "default_product": "MIS"
+    },
+    "mcx": {
+      "exchange_name": "MCX",
+      "segment_name": "MCX",
+      "is_derivative": true,
+      "default_product": "NRML"
+    }
+  }
+}

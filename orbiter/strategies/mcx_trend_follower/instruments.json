@@ -1,0 +1,10 @@
+[
+  {"symbol": "CRUDEOIL", "token": "472790", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "NATURALGAS", "token": "475111", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "GOLD", "token": "472788", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "SILVER", "token": "458305", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "COPPER", "token": "477167", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "ZINC", "token": "477172", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "LEAD", "token": "477169", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "ALUMINIUM", "token": "477166", "exchange": "MCX", "instrument_type": "future", "derivative": "future"}
+]

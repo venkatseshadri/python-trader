@@ -32,6 +32,9 @@ backtest_lab/nifty_1pct_movers_detailed.csv
 *.CSV
 *.zip
 *.json
+!project.json
+!orbiter/config/*.json
+!orbiter/strategies/**/*.json
 !orbiter/data/*.json # Keep config JSONs
 !orbiter/data/span/cache.json
 !backtest_results/*.xlsx

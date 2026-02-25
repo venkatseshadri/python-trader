@@ -1,0 +1,12 @@
+{
+  "name": "NIFTY 50 NFO Expiry Day Short Straddle",
+  "exchange_id": "nfo",
+  "files": {
+    "rules_file": "orbiter/strategies/nifty_50_nfo_expiry_day_short_straddle/rules.json",
+    "instruments_file": "orbiter/strategies/nifty_50_nfo_expiry_day_short_straddle/instruments.json",
+    "filters_file": "orbiter/strategies/nifty_50_nfo_expiry_day_short_straddle/filters.json"
+  },
+  "strategy_parameters": {
+    "lots": 1
+  }
+}

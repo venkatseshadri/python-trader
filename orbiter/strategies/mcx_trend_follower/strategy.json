@@ -1,0 +1,16 @@
+{
+  "name": "MCX Commodities TopN Trend",
+  "exchange_id": "mcx",
+  "strategy_type": "top_n",
+  "files": {
+    "rules_file": "orbiter/strategies/mcx_trend_follower/rules.json",
+    "instruments_file": "orbiter/strategies/mcx_trend_follower/instruments.json",
+    "filters_file": "orbiter/strategies/mcx_trend_follower/filters.json"
+  },
+  "strategy_parameters": {
+    "top_n": 3,
+    "trend_score_threshold": 0.40,
+    "lot_multiplier": 1,
+    "max_drawdown": 10000
+  }
+}

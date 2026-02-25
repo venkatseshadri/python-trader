@@ -1,0 +1,10 @@
+{
+  "candle_data_mapping": {
+    "close_key": "intc",
+    "high_key": "inth",
+    "low_key": "intl",
+    "status_key": "stat",
+    "volume_key": "v",
+    "open_key": "into"
+  }
+}

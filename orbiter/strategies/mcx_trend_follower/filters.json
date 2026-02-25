@@ -1,0 +1,24 @@
+{
+  "entry": {
+    "adx": { "enabled": true, "time_period": 14, "threshold": 20, "timeframe": "15m" },
+    "ema_fast": { "enabled": true, "time_period": 5, "timeframe": "5m" },
+    "ema_slow": { "enabled": true, "time_period": 9, "timeframe": "5m" },
+    "supertrend": { "enabled": true, "period": 10, "multiplier": 3, "timeframe": "15m" }
+  },
+  "scoring": {
+    "combined_score": {
+      "enabled": true,
+      "weight_adx": 0.4,
+      "weight_ema_slope": 0.3,
+      "weight_supertrend": 0.3
+    }
+  },
+  "exit": {
+    "tp": {
+      "trailing_sl": { "enabled": true, "retracement_pct": 30, "timeframe": "1m" }
+    },
+    "sl": {
+      "smart_atr": { "enabled": true, "mult": 2.0, "timeframe": "1m" }
+    }
+  }
+}

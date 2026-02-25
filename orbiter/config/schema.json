@@ -1,0 +1,46 @@
+{
+  "rule_schema": {
+    "rules_key": "strategies",
+    "conditions_key": "market_signals",
+    "actions_key": "order_operations",
+    "priority_key": "priority",
+    "sequence_key": "sequence",
+    "fact_key": "fact",
+    "operator_key": "operator",
+    "value_key": "value",
+    "all_of_key": "allOf",
+    "any_of_key": "anyOf"
+  },
+  "fact_definition_schema": {
+    "facts_key": "facts",
+    "provider_key": "provider",
+    "method_key": "method",
+    "params_key": "params",
+    "inputs_key": "inputs"
+  },
+  "session_schema": {
+    "active_strategy_path_key": "active_strategy_path"
+  },
+  "ghost_position_schema": {
+    "default_template_key": "default_ghost_position_template",
+    "strategy_derivation_key": "strategy_derivation",
+    "set_field_key": "set_field",
+    "value_if_qty_positive_key": "value_if_qty_positive",
+    "value_if_qty_negative_key": "value_if_qty_negative",
+    "conditions_key": "market_signals",
+    "actions_key": "order_operations"
+  },
+  "global_schema": {
+    "trade_score_key": "trade_score",
+    "log_level_key": "log_level"
+  },
+  "strategy_schema": {
+    "name_key": "name",
+    "exchange_id_key": "exchange_id",
+    "files_key": "files",
+    "rules_file_key": "rules_file",
+    "instruments_file_key": "instruments_file",
+    "strategy_parameters_key": "strategy_parameters",
+    "enabled_facts_key": "enabled_facts"
+  }
+}

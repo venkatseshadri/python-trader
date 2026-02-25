@@ -1,0 +1,12 @@
+{
+  "trade_score": 0.40,
+  "top_n": 1,
+  "option_execute": false,
+  "option_product_type": "I",
+  "option_price_type": "MKT",
+  "option_expiry": "weekly",
+  "hedge_steps": 4,
+  "update_interval": 5,
+  "verbose_logs": true,
+  "log_level": "TRACE"
+}

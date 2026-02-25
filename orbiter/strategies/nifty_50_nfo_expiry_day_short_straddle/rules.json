@@ -1,0 +1,36 @@
+{
+  "strategies": [
+    {
+      "name": "NIFTY_Iron_Condor_Entry",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "value": true },
+          { "fact": "portfolio.active_positions", "value": 0 }
+        ]
+      },
+      "order_operations": [
+        { 
+          "sequence": 1,
+          "type": "trade.place_order", 
+          "params": { "derivative": "option", "side": "B", "option": "CE", "strike": "ATM+4", "remark": "HEDGE_CE", "expiry": "weekly+0" } 
+        },
+        { 
+          "sequence": 1,
+          "type": "trade.place_order", 
+          "params": { "derivative": "option", "side": "B", "option": "PE", "strike": "ATM-4", "remark": "HEDGE_PE", "expiry": "weekly+0" } 
+        },
+        { 
+          "sequence": 2,
+          "type": "trade.place_order", 
+          "params": { "derivative": "option", "side": "S", "option": "CE", "strike": "ATM", "remark": "MAIN_CE", "expiry": "weekly+0" } 
+        },
+        { 
+          "sequence": 2,
+          "type": "trade.place_order", 
+          "params": { "derivative": "option", "side": "S", "option": "PE", "strike": "ATM", "remark": "MAIN_PE", "expiry": "weekly+0" } 
+        }
+      ]
+    }
+  ]
+}

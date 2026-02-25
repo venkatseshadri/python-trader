@@ -1,0 +1,41 @@
+{
+  "nfo": {
+    "market_start": "09:15:00",
+    "market_end": "15:30:00",
+    "trade_start": "09:30:00",
+    "trade_end": "15:15:00",
+    "plumbing": {
+      "exchange_name": "NSE",
+      "segment_name": "NFO",
+      "default_product": "MIS",
+      "option_instrument": "OPTIDX"
+    },
+    "execution_policy": {
+      "price_type_overrides": {
+        "NIFTY": "MKT",
+        "BANKNIFTY": "MKT"
+      },
+      "default_price_type": "LMT",
+      "slippage_buffer_pct": 1.5,
+      "lot_size_overrides": {
+        "NIFTY": 65
+      }
+    }
+  },
+  "mcx": {
+    "market_start": "09:00:00",
+    "market_end": "23:30:00",
+    "trade_start": "17:00:00",
+    "trade_end": "23:15:00",
+    "plumbing": {
+      "exchange_name": "MCX",
+      "segment_name": "MCX",
+      "default_product": "NRML",
+      "option_instrument": "OPTFUT"
+    },
+    "execution_policy": {
+      "default_price_type": "LMT",
+      "slippage_buffer_pct": 2.0
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "default_ghost_position_template": {
+    "entry_time": "NOW",
+    "strategy": "UNKNOWN_BROKER_IMPORT",
+    "regime": "SIDEWAYS",
+    "total_margin": 50000.0,
+    "tp_trail_activation": 1.5,
+    "tp_trail_gap": 0.75
+  },
+  "strategy_derivation": [
+    {
+      "name": "Derive Future Strategy",
+      "conditions": {
+        "allOf": [
+          { "fact": "p.producttype", "operator": "equal", "value": "F" }
+        ]
+      },
+      "actions": [
+        { "set_field": "strategy", "value_if_qty_positive": "FUTURE_LONG", "value_if_qty_negative": "FUTURE_SHORT" }
+      ]
+    },
+    {
+      "name": "Derive Option Index Strategy (Example)",
+      "conditions": {
+        "allOf": [
+          { "fact": "p.producttype", "operator": "equal", "value": "O" },
+          { "fact": "p.instname", "operator": "equal", "value": "OPTIDX" }
+        ]
+      },
+      "actions": [
+        { "set_field": "strategy", "value_if_qty_positive": "OPTION_INDEX_LONG", "value_if_qty_negative": "OPTION_INDEX_SHORT" }
+      ]
+    }
+  ]
+}

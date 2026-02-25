@@ -1,0 +1,29 @@
+{
+  "app_name": "orbiter",
+  "version": "0.1.0",
+  "structure": {
+    "package": "orbiter",
+    "config": "orbiter/config",
+    "rules": "orbiter/rules",
+    "logs": "logs/system",
+    "data": "orbiter/data",
+    "strategies": "orbiter/strategies"
+  },
+  "mandatory_files": {
+    "system_config": "orbiter/config/system.json",
+    "session_config": "orbiter/config/session.json",
+    "system_rules": "orbiter/rules/system.json",
+    "fact_definitions": "orbiter/rules/fact_definitions.json",
+    "global_config": "orbiter/config/global.json",
+    "broker_credentials": "ShoonyaApi-py/cred.yml",
+    "constants": "orbiter/config/constants.json",
+    "schema": "orbiter/config/schema.json",
+    "ghost_position_template": "orbiter/config/ghost_position_template.json",
+    "broker_data_mapping": "orbiter/config/broker_data_mapping.json",
+    "exchange_config": "orbiter/config/exchange_config.json"
+  },
+  "settings": {
+    "session_state_file": "orbiter/data/session_state.json",
+    "span_cache_file": "orbiter/data/span_cache.json"
+  }
+}

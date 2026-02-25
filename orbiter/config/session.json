@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "session_rules": {
+    "eod_square_off_time": "15:15:00",
+    "conflict_check_enabled": true
+  },
+  "active_strategy_path": "nifty_fno_topn_trend/strategy.json"
+}

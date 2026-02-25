@@ -1,0 +1,49 @@
+{
+  "scoring_rules": [
+    {
+      "name": "Calculate Commodity Trend Score",
+      "priority": 10,
+      "scoring_expression": "market_adx * filters_scoring_combined_score_weight_adx + (market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_combined_score_weight_ema_slope + filter_supertrend_direction_numeric * filters_scoring_combined_score_weight_supertrend",
+      "description": "Combines ADX strength, EMA slope momentum, and SuperTrend direction for commodity trend scoring."
+    }
+  ],
+  "strategies": [
+    {
+      "name": "MCX_TopN_Trend_Execution",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy.trend_score",
+      "order_operations": [
+        { 
+          "type": "trade.place_order", 
+          "params": { 
+            "derivative": "future",
+            "side": "BUY", 
+            "product": "NRML",
+            "qty": 1,
+            "exchange": "MCX",
+            "remark": "MCX_TOPN_BULL"
+          } 
+        },
+        { 
+          "type": "trade.place_order", 
+          "params": { 
+            "derivative": "future",
+            "side": "SELL", 
+            "product": "NRML",
+            "qty": 1,
+            "exchange": "MCX",
+            "remark": "MCX_TOPN_BEAR"
+          } 
+        }
+      ]
+    }
+  ]
+}

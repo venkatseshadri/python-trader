@@ -1,0 +1,11 @@
+{
+  "paths": {
+    "log_dir": "logs/system",
+    "lock_file": ".orbiter.lock",
+    "overrides_file": "orbiter/config/overrides.json"
+  },
+  "bootstrap": {
+    "auto_login": true,
+    "default_update_interval": 5
+  }
+}
