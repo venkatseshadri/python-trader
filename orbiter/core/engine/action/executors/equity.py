@@ -10,7 +10,17 @@ class EquityActionExecutor(BaseActionExecutor):
         side = params.get('side', 'B').upper()
         qty = int(params.get('qty', 1))
         
+        # Check paper trade mode
+        paper_trade = self.state.config.get('paper_trade', True)
+        if paper_trade:
+            return self._simulate(side, symbol, exch, qty, params)
+        
         return self._fire(side, symbol, exch, qty, params)
+
+    def _simulate(self, side: str, tsym: str, exch: str, qty: int, params: Dict) -> Any:
+        import logging
+        logging.getLogger("ORBITER").info(f"🔬 SIM-EQUITY: {side} {tsym} | QTY: {qty}")
+        return {"stat": "Ok", "simulated": True, "tsym": tsym}
 
     def _fire(self, side: str, tsym: str, exch: str, qty: int, params: Dict) -> Any:
         self._log_fire(side, tsym, qty, live=True)

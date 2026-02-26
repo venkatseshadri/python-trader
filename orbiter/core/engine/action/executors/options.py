@@ -34,6 +34,12 @@ class OptionActionExecutor(BaseActionExecutor):
         exch = res['exchange']
         qty = res['lot_size'] * int(params.get('qty_multiplier', 1))
         
+        # Check paper trade mode
+        paper_trade = self.state.config.get('paper_trade', True)
+        if paper_trade:
+            logging.getLogger("ORBITER").info(f"🔬 SIM-OPTION: {side} {tsym} | QTY: {qty}")
+            return {"stat": "Ok", "simulated": True, "tsym": tsym}
+        
         return self._fire(side, tsym, exch, qty, params)
 
     def _fire(self, side: str, tsym: str, exch: str, qty: int, params: Dict) -> Any:
