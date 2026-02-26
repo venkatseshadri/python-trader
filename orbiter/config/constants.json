@@ -7,7 +7,7 @@
     "engine_shutdown": "engine.shutdown",
     "session_hibernate": "session.hibernate",
     "trade_place_spread": "trade.place_spread",
-    "trade_place_future_order": "trade.place_place_future_order",
+    "trade_place_future_order": "trade.place_future_order",
     "trade_square_off_all": "trade.square_off_all",
     "trade_send_alert": "trade.send_alert"
   },
