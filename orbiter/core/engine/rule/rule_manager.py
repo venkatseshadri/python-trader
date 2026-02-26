@@ -36,6 +36,7 @@ class RuleManager:
         self._score_evaluators = {} 
         
         self.rule_sets = self._load_and_compile_rules()
+        logger.trace(f"📋 Initialized with {len(self.rule_sets)} rule sets")
         self.scoring_rules = self._load_and_compile_scoring_rules()
 
     def register_provider(self, provider: Callable[[], Dict[str, Any]]):
