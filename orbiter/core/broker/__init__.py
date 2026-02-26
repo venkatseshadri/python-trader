@@ -48,7 +48,14 @@ class BrokerClient:
         self.span_cache_path = None
         self._span_cache = None
         
-        self.download_scrip_master('MCX' if self.segment_name == 'mcx' else 'NFO')
+        # Download appropriate scrip master based on segment
+        if self.segment_name == 'mcx':
+            exchange = 'MCX'
+        elif self.segment_name == 'bfo':
+            exchange = 'BFO'
+        else:
+            exchange = 'NFO'
+        self.download_scrip_master(exchange)
         logger.debug(f"[{self.__class__.__name__}.__init__] - Scrip master downloaded for segment: {self.segment_name.upper()}")
         
         self.load_symbol_mapping()

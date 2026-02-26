@@ -58,7 +58,9 @@ class TelegramCommandListener:
         self._thread = None
         self._cleanup_pending = False
         self._cleanup_timestamp = 0
-
+        self._frozen = False
+        self._auto_unfreeze_scheduled = False
+        
     def start(self):
         if self.token and not self.running:
             self.running = True
@@ -66,8 +68,33 @@ class TelegramCommandListener:
             self._thread.start()
             print("🎧 Telegram Command Listener started.")
 
+    def is_frozen(self):
+        """Check if trading is frozen"""
+        return self._frozen
+        
+    def freeze(self):
+        """Freeze trading"""
+        self._frozen = True
+        print("❄️ Trading frozen via Telegram")
+        
+    def unfreeze(self):
+        """Unfreeze trading"""
+        self._frozen = False
+        self._auto_unfreeze_scheduled = False
+        print("▶️ Trading unfrozen via Telegram")
+
     def _listen_loop(self):
+        import pytz
         while self.running:
+            # Check for auto-unfreeze at 15:30 IST
+            if self._frozen and self._auto_unfreeze_scheduled:
+                import datetime
+                ist = pytz.timezone('Asia/Kolkata')
+                now = datetime.datetime.now(ist)
+                if now.hour == 15 and now.minute >= 30:
+                    self.unfreeze()
+                    send_telegram_msg("☀️ <b>AUTO-UNFREEZE</b>\n\nNFO session ended. Trading enabled.")
+            
             try:
                 url = f"https://api.telegram.org/bot{self.token}/getUpdates"
                 params = {"offset": self.last_update_id + 1, "timeout": 30}
@@ -129,8 +156,22 @@ class TelegramCommandListener:
                     send_telegram_msg(msg)
             elif cmd == "/scan":
                  if "scan" in self.callbacks:
-                    msg = self.callbacks["scan"]()
-                    send_telegram_msg(msg)
+                     msg = self.callbacks["scan"]()
+                     send_telegram_msg(msg)
+            elif cmd == "/freeze":
+                self._frozen = True
+                self._auto_unfreeze_scheduled = True
+                msg = "❄️ <b>TRADING FROZEN</b>\n\nAll trade executions are blocked.\nAuto-unfreeze scheduled at 15:30."
+                send_telegram_msg(msg)
+                if "freeze" in self.callbacks:
+                    self.callbacks["freeze"]()
+            elif cmd == "/unfreeze":
+                self._frozen = False
+                self._auto_unfreeze_scheduled = False
+                msg = "▶️ <b>TRADING UNFROZEN</b>\n\nAll trade executions enabled."
+                send_telegram_msg(msg)
+                if "unfreeze" in self.callbacks:
+                    self.callbacks["unfreeze"]()
             elif cmd == "/help":
                 msg = [
                     "🤖 <b>Orbiter C2 - Command Reference</b>",
@@ -144,6 +185,10 @@ class TelegramCommandListener:
                     "🔍 <code>/scan</code> - <b>Market Pulse:</b> Live scan count and Top 10 movers.",
                     "",
                     "🤖 <code>/q &lt;question&gt;</code> - <b>AI Explainer:</b> Ask why a trade was taken.",
+                    "",
+                    "❄️ <code>/freeze</code> - <b>Freeze Trading:</b> Block all trade executions.",
+                    "",
+                    "▶️ <code>/unfreeze</code> - <b>Unfreeze Trading:</b> Enable trade executions.",
                     "",
                     "ℹ️ <code>/version</code> - <b>Bot Version</b>",
                     "",

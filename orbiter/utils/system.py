@@ -34,8 +34,8 @@ def bootstrap() -> str:
     # Initialize ConstantsManager early
     ConstantsManager(root)
 
-    # Parse CLI facts (side-effect only)
-    ArgumentParser.parse_cli_to_facts(sys.argv[1:])
+    # Parse CLI facts (with project_root for proper config loading)
+    ArgumentParser.parse_cli_to_facts(sys.argv[1:], project_root=root)
 
     return root
 

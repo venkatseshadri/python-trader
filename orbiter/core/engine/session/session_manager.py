@@ -6,12 +6,14 @@ from datetime import datetime, time as dt_time
 import logging
 from orbiter.utils.data_manager import DataManager
 from orbiter.utils.schema_manager import SchemaManager
+from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
 
 class SessionManager:
     def __init__(self, project_root: str, simulation: bool = False, strategy_id: str = None):
         self.project_root = project_root
+        self.constants = ConstantsManager.get_instance(project_root)
         self.schema_manager = SchemaManager.get_instance(project_root)
         
         # 1. Load Root Configs

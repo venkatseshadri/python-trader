@@ -1,0 +1,12 @@
+{
+  "name": "SENSEX BFO Expiry Day Short Straddle",
+  "exchange_id": "bfo",
+  "files": {
+    "rules_file": "orbiter/strategies/sensex_bfo_expiry_day_short_straddle/rules.json",
+    "instruments_file": "orbiter/strategies/sensex_bfo_expiry_day_short_straddle/instruments.json",
+    "filters_file": "orbiter/strategies/sensex_bfo_expiry_day_short_straddle/filters.json"
+  },
+  "strategy_parameters": {
+    "lots": 1
+  }
+}

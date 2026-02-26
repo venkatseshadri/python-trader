@@ -16,6 +16,8 @@ class ActionExecutor:
     Facade Executor. 
     Routes generic action requests to specialized workers (Equity, Option, Future).
     """
+    _frozen = False  # Class-level freeze flag
+    
     def __init__(self, state):
         self.state = state
         self.constants = ConstantsManager.get_instance()
@@ -28,10 +30,26 @@ class ActionExecutor:
         self._future_live = FutureActionExecutor(state)
         self._future_sim  = FutureSimulationExecutor(state)
 
+    @classmethod
+    def set_frozen(cls, frozen: bool):
+        """Set frozen state - blocks all real trades"""
+        cls._frozen = frozen
+        
+    @classmethod
+    def is_frozen(cls) -> bool:
+        """Check if trading is frozen"""
+        return cls._frozen
+    
     def place_order(self, **params: Dict):
         """
         🚀 Generic Order Operation Router
         """
+        # 0. Check if frozen - block real trades
+        is_live = params.get('execute', True)
+        if is_live and ActionExecutor._frozen:
+            logger.warning("⛔ TRADE BLOCKED: System is frozen. Use /unfreeze to enable trading.")
+            return {"stat": "Ok", "blocked": True, "reason": "frozen"}
+        
         # 1. Determine Mode
         is_live = params.get('execute', True)
         

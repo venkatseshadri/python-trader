@@ -7,5 +7,12 @@
   "bootstrap": {
     "auto_login": true,
     "default_update_interval": 5
+  },
+"strategy_codes": {
+    "m1": "mcx_trend_follower",
+    "n1": "nifty_fno_topn_trend",
+    "n2": "nifty_50_nfo_expiry_day_short_straddle",
+    "s1": "bsensex_bfo_topn_trend",
+    "s2": "sensex_bfo_expiry_day_short_straddle"
   }
 }

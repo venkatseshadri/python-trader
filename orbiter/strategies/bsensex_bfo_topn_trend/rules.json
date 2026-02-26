@@ -1,0 +1,74 @@
+{
+  "scoring_rules": [
+    {
+      "name": "Calculate SENSEX/BANKEX Index Trend Score",
+      "priority": 10,
+      "market_signals": {
+        "allOf": [
+          { "fact": "instrument.expiry_cycle", "operator": "equal", "value": "weekly" },
+          { "fact": "instrument.instrument_type", "operator": "equal", "value": "index" }
+        ]
+      },
+      "scoring_expression": "market.adx * filters.scoring.combined_score.weight_adx + (market.ema_fast - market.ema_slow) / market.ema_slow * 100 * filters.scoring.combined_score.weight_ema_slope + market.supertrend_dir * filters.scoring.combined_score.weight_supertrend * 10",
+      "description": "Combines ADX strength, EMA slope (momentum), and SuperTrend direction for weekly index trend scoring on BSE."
+    },
+    {
+      "name": "Calculate BSE Stock Option Score",
+      "priority": 15,
+      "market_signals": {
+        "allOf": [
+          { "fact": "instrument.expiry_cycle", "operator": "equal", "value": "monthly" },
+          { "fact": "instrument.instrument_type", "operator": "equal", "value": "stock" },
+          { "fact": "instrument.derivative", "operator": "equal", "value": "option" }
+        ]
+      },
+      "scoring_expression": "market.adx * filters.scoring.combined_score.weight_adx + (market.ema_fast - market.ema_slow) / market.ema_slow * 100 * filters.scoring.combined_score.weight_ema_slope + market.supertrend_dir * filters.scoring.combined_score.weight_supertrend * 10",
+      "description": "Combines ADX strength, EMA slope, and SuperTrend direction for BSE stock option trend scoring."
+    }
+  ],
+  "strategies": [
+    {
+      "name": "BSE_FNO_TopN_Trend_Execution",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy.trend_score",
+      "order_operations": [
+        { 
+          "type": "trade.place_order", 
+          "params": { 
+            "derivative": "option",
+            "side": "BUY", 
+            "product": "NRML",
+            "qty": 10,
+            "exchange": "BSE",
+            "remark": "BSE_TOPN_BULL",
+            "strike_logic": "ATM+1",
+            "option": "CE",
+            "expiry": "weekly+0"
+          } 
+        },
+        { 
+          "type": "trade.place_order", 
+          "params": { 
+            "derivative": "option",
+            "side": "SELL", 
+            "product": "NRML",
+            "qty": 10,
+            "exchange": "BSE",
+            "remark": "BSE_TOPN_BEAR",
+            "strike_logic": "ATM-1",
+            "option": "PE",
+            "expiry": "weekly+0"
+          } 
+        }
+      ]
+    }
+  ]
+}

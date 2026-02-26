@@ -1,0 +1,15 @@
+{
+  "name": "BSE SENSEX F&O TopN Trend",
+  "exchange_id": "bfo",
+  "strategy_type": "top_n",
+  "files": {
+    "rules_file": "orbiter/strategies/bsensex_bfo_topn_trend/rules.json",
+    "instruments_file": "orbiter/strategies/bsensex_bfo_topn_trend/instruments.json",
+    "filters_file": "orbiter/strategies/bsensex_bfo_topn_trend/filters.json"
+  },
+  "strategy_parameters": {
+    "top_n": 3,
+    "trend_score_threshold": 0.40,
+    "priming_lookback_mins": 240
+  }
+}

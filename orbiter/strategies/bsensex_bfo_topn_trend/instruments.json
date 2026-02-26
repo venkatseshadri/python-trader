@@ -1,0 +1,18 @@
+[
+  {"symbol": "SENSEX", "token": "825565", "exchange": "BSE", "derivative": "option", "instrument_type": "index", "expiry_cycle": "weekly"},
+  {"symbol": "BANKEX", "token": "826463", "exchange": "BSE", "derivative": "option", "instrument_type": "index", "expiry_cycle": "monthly"},
+  {"symbol": "RELIANCE", "token": "500325", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "HDFCBANK", "token": "500180", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "TCS", "token": "532540", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "INFY", "token": "500209", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "ICICIBANK", "token": "532174", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "SBIN", "token": "500112", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "AXISBANK", "token": "532215", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "KOTAKBANK", "token": "500247", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "BAJFINANCE", "token": "500034", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "TITAN", "token": "500114", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "LT", "token": "500510", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "HINDUNILVR", "token": "500696", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "ITC", "token": "500875", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
+  {"symbol": "MARUTI", "token": "532500", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"}
+]

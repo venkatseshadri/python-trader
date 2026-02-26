@@ -89,6 +89,16 @@ class OrbiterApp:
                 **engine_kwargs,
             )
             
+            # If office mode, send freeze signal to RPI
+            if engine_kwargs.get("office_mode"):
+                try:
+                    from orbiter.utils.telegram_notifier import send_telegram_msg
+                    send_telegram_msg("🏢 <b>OFFICE MODE ACTIVE</b>\n\nMBP is taking over trading.\nFreezing RPI...")
+                    send_telegram_msg("/freeze")
+                    logger.info("📤 Sent freeze signal to RPI via Telegram")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to send freeze to RPI: {e}")
+            
             self.registration_manager.engine = self.engine
             self.registration_manager.update_registrations_for_engine()
 

@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "enabled": true,
+  "check_time": "10:00",
+  "check_time_buffer_minutes": 5,
+  "strategies": {
+    "sideways": {
+      "strategyId": "sensex_bfo_expiry_day_short_straddle",
+      "strategyCode": "s2"
+    },
+    "trending": {
+      "strategyId": "bsensex_bfo_topn_trend",
+      "strategyCode": "s1"
+    }
+  },
+  "condition": {
+    "fact": "market.adx",
+    "operator": "less_than",
+    "value": 25,
+    "timeframe": "15m"
+  },
+  "fallback": {
+    "action": "use_default",
+    "default_strategy": "s1"
+  }
+}

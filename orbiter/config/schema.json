@@ -42,5 +42,8 @@
     "instruments_file_key": "instruments_file",
     "strategy_parameters_key": "strategy_parameters",
     "enabled_facts_key": "enabled_facts"
+  },
+  "system_schema": {
+    "strategy_codes_key": "strategy_codes"
   }
 }

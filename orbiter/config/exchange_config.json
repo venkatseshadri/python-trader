@@ -37,5 +37,29 @@
       "default_price_type": "LMT",
       "slippage_buffer_pct": 2.0
     }
+  },
+  "bfo": {
+    "market_start": "09:15:00",
+    "market_end": "15:30:00",
+    "trade_start": "09:30:00",
+    "trade_end": "15:15:00",
+    "plumbing": {
+      "exchange_name": "BSE",
+      "segment_name": "BFO",
+      "default_product": "NRML",
+      "option_instrument": "OPTIDX"
+    },
+    "execution_policy": {
+      "price_type_overrides": {
+        "SENSEX": "MKT"
+      },
+      "default_price_type": "LMT",
+      "slippage_buffer_pct": 1.5,
+      "lot_size_overrides": {
+        "SENSEX": 20,
+        "SENSEX50": 75,
+        "BANKEX": 30
+      }
+    }
   }
 }

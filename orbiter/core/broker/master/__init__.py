@@ -49,6 +49,14 @@ class ScripMaster:
         derivatives_file = None
         if segment_name == 'nfo':
             derivatives_file = os.path.join(data_path, self.constants.get('magic_strings', 'nfo_derivatives_file'))
+        elif segment_name == 'bfo':
+            # BSE F&O - load from bfo_symbols if available
+            bfo_file = os.path.join(data_path, 'bfo_symbols.json')
+            if os.path.exists(bfo_file):
+                derivatives_file = bfo_file
+            else:
+                logger.warning(f"BFO symbols file not found at {bfo_file}. Will attempt download.")
+                derivatives_file = None
         elif segment_name == 'mcx':
              # 🚀 Fix for MCX segment specific mapping file
             map_file = os.path.join(self.project_root, 'orbiter/data/mcx_futures_map.json')
