@@ -22,6 +22,10 @@ project_root = os.path.dirname(base_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# 🎯 Print version at startup
+from orbiter.utils.version import load_version
+print(f"✨ ORBITER v{load_version(project_root)}")
+
 from orbiter.utils.system import bootstrap
 from orbiter.utils.logger import setup_logging
 from orbiter.utils.lock import manage_lockfile, LOCK_ACQUIRE, LOCK_RELEASE
