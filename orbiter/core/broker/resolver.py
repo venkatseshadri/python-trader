@@ -108,7 +108,38 @@ class ContractResolver:
             "atm_token": atm_res["token"],
             "hedge_symbol": hedge_res["tradingsymbol"],
             "hedge_token": hedge_res["token"],
-            "lot_size": atm_res["lot_size"],
-            "exchange": atm_res["exchange"],
-            "expiry": expiry_type
+            "lot_size": atm_res["lot_size"]
         }
+
+    def get_near_future(self, symbol: str, exchange: str, api) -> Optional[Dict]:
+        """Get the nearest expiry future contract for a symbol."""
+        try:
+            exchange = exchange.upper()
+            if not self.master.DERIVATIVE_LOADED:
+                self.master.download_scrip_master(exchange)
+            
+            instrument = "FUTIDX" if symbol in ("NIFTY", "BANKNIFTY", "SENSEX", "BANKEX") else "FUTCOM"
+            
+            futures = [r for r in self.master.DERIVATIVE_OPTIONS 
+                      if r.get("symbol") == symbol 
+                      and r.get("instrument") == instrument
+                      and r.get("exchange") == exchange]
+            
+            if not futures:
+                return None
+            
+            # Sort by expiry and get the nearest
+            futures.sort(key=lambda x: x.get("expiry", ""))
+            nearest = futures[0]
+            return {
+                "ok": True,
+                "symbol": nearest.get("symbol"),
+                "expiry": nearest.get("expiry"),
+                "token": nearest.get("token"),
+                "tradingsymbol": nearest.get("tradingsymbol"),
+                "exchange": nearest.get("exchange"),
+                "lot_size": int(nearest.get("lotsize", 1))
+            }
+        except Exception as e:
+            logger.error(f"Error getting near future: {e}")
+            return None
