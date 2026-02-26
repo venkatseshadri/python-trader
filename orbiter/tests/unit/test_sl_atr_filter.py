@@ -32,7 +32,8 @@ class TestSmartATRSLFilter(unittest.TestCase):
             'future_max_loss_pct': 5.0,
         }
 
-        res = check_sl(position, current_ltp, {})
+        tick_data = {'lp': str(current_ltp)}
+        res = check_sl(tick_data, position=position)
         self.assertIn('hit', res)
         self.assertIn('reason', res)
 

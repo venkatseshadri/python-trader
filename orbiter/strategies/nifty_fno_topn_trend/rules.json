@@ -41,31 +41,21 @@
       "scoring_fact": "strategy.trend_score",
       "order_operations": [
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { 
-            "derivative": "option",
-            "side": "BUY", 
-            "product": "MIS",
-            "qty": 10,
-            "exchange": "NSE",
-            "remark": "NIFTY_TOPN_BULL",
+            "side": "BUY",
             "strike_logic": "ATM+1",
-            "option": "CE",
-            "expiry": "weekly+0"
+            "option_type": "CE",
+            "expiry_type": "weekly+0"
           } 
         },
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { 
-            "derivative": "option",
             "side": "SELL", 
-            "product": "MIS",
-            "qty": 10,
-            "exchange": "NSE",
-            "remark": "NIFTY_TOPN_BEAR",
             "strike_logic": "ATM-1",
-            "option": "PE",
-            "expiry": "weekly+0"
+            "option_type": "PE",
+            "expiry_type": "weekly+0"
           } 
         }
       ]

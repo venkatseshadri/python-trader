@@ -13,22 +13,22 @@
       "order_operations": [
         { 
           "sequence": 1,
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { "derivative": "option", "side": "B", "option": "CE", "strike": "ATM+4", "remark": "HEDGE_CE", "expiry": "weekly+0", "exchange": "BSE" } 
         },
         { 
           "sequence": 1,
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { "derivative": "option", "side": "B", "option": "PE", "strike": "ATM-4", "remark": "HEDGE_PE", "expiry": "weekly+0", "exchange": "BSE" } 
         },
         { 
           "sequence": 2,
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { "derivative": "option", "side": "S", "option": "CE", "strike": "ATM", "remark": "MAIN_CE", "expiry": "weekly+0", "exchange": "BSE" } 
         },
         { 
           "sequence": 2,
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { "derivative": "option", "side": "S", "option": "PE", "strike": "ATM", "remark": "MAIN_PE", "expiry": "weekly+0", "exchange": "BSE" } 
         }
       ]

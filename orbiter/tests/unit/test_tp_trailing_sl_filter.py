@@ -25,7 +25,8 @@ class TestTrailingSLFilter(unittest.TestCase):
             'entry_price': entry,
         }
 
-        res = check_trailing_sl(position, current, {})
+        tick_data = {'lp': str(current)}
+        res = check_trailing_sl(tick_data, position=position)
         # We don't assert hit/no-hit; just ensure no crash and valid output
         self.assertIn('hit', res)
         self.assertIn('reason', res)

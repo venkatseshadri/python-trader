@@ -17,7 +17,7 @@ class TestFilterObservation(unittest.TestCase):
         current_net = 11.0
         data = {'current_net_premium': current_net}
         
-        res = check_sl(position, 4000.0, data)
+        res = check_sl(data, position=position)
         self.assertFalse(res['hit'], "Filter should NOT hit in Observation Mode")
         
     def test_cash_sl_still_works(self):
@@ -34,7 +34,7 @@ class TestFilterObservation(unittest.TestCase):
         current_net = 15.0
         data = {'current_net_premium': current_net}
         
-        res = check_sl(position, 4000.0, data)
+        res = check_sl(data, position=position)
         self.assertTrue(res['hit'], "Secondary Cash SL should still trigger")
         self.assertIn("Total PnL", res['reason'])
 

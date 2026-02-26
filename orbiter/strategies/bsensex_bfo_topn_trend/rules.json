@@ -41,22 +41,30 @@
       "scoring_fact": "strategy.trend_score",
       "order_operations": [
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { 
-            "derivative": "option",
             "side": "BUY", 
-            "product": "NRML",
-            "qty": 10,
+            "product": "C",
             "exchange": "BSE",
             "remark": "BSE_TOPN_BULL",
             "strike_logic": "ATM+1",
-            "option": "CE",
-            "expiry": "weekly+0"
+            "option_type": "CE",
+            "expiry_type": "weekly+0"
           } 
         },
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_spread", 
           "params": { 
+            "side": "SELL", 
+            "product": "C",
+            "exchange": "BSE",
+            "remark": "BSE_TOPN_BEAR",
+            "strike_logic": "ATM-1",
+            "option_type": "PE",
+            "expiry_type": "weekly+0"
+          } 
+        }
+      ] 
             "derivative": "option",
             "side": "SELL", 
             "product": "NRML",

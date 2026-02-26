@@ -12,7 +12,7 @@ class TestProfitGuardPro(unittest.TestCase):
             'tsl_activation_rs': 1000
         }
         
-        res = check_trailing_sl(position, 1000.0, {})
+        res = check_trailing_sl({}, position=position)
         self.assertTrue(res['hit'])
         self.assertIn("Cash TSL Hit", res['reason'])
         self.assertIn("Floor ₹1200", res['reason'])
@@ -29,7 +29,7 @@ class TestProfitGuardPro(unittest.TestCase):
         
         # 90% of 2500 is 2250 drop. 2500 - 2250 = ₹250 floor.
         # But Peak-Lock forces floor to ₹500.
-        res = check_trailing_sl(position, 1000.0, {})
+        res = check_trailing_sl({}, position=position)
         self.assertTrue(res['hit'])
         self.assertIn("Floor ₹500", res['reason'])
 

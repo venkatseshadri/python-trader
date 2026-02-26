@@ -15,11 +15,13 @@ class TestSmartATRSL(unittest.TestCase):
         # SL should be at 1000 - (10 * 1.5) = 985.0
         
         # Test 1: No hit at 990
-        res = check_sl(position, 990.0, {})
+        data = {'lp': '990.0'}
+        res = check_sl(data, position=position)
         self.assertFalse(res['hit'])
         
         # Test 2: Hit at 984
-        res = check_sl(position, 984.0, {})
+        data = {'lp': '984.0'}
+        res = check_sl(data, position=position)
         self.assertTrue(res['hit'])
         self.assertIn("LTP 984.00 <= SL 985.00", res['reason'])
 
@@ -38,12 +40,12 @@ class TestSmartATRSL(unittest.TestCase):
         
         # Test 1: No hit at 12.0 premium
         data = {'current_net_premium': 12.0}
-        res = check_sl(position, 1000.0, data)
+        res = check_sl(data, position=position)
         self.assertFalse(res['hit'])
         
         # Test 2: Hit at 13.0 premium
         data = {'current_net_premium': 13.0}
-        res = check_sl(position, 1000.0, data)
+        res = check_sl(data, position=position)
         self.assertTrue(res['hit'])
         self.assertIn("Premium 13.00 > Threshold 12.50", res['reason'])
 
