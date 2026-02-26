@@ -1,0 +1,87 @@
+{
+  "name": "Orbiter System Lifecycle Rules",
+  "version": "1.0",
+  "strategies": [
+    {
+      "name": "System Setup",
+      "priority": 1000,
+      "market_signals": {
+        "allOf": [
+          { "fact": "app.initialized", "operator": "equal", "value": false }
+        ]
+      },
+      "order_operations": [
+        { "type": "app.setup", "params": {} }
+      ]
+    },
+    {
+      "name": "System Login",
+      "priority": 900,
+      "market_signals": {
+        "allOf": [
+          { "fact": "app.initialized", "operator": "equal", "value": true },
+          { "fact": "app.logged_in", "operator": "equal", "value": false }
+        ]
+      },
+      "order_operations": [
+        { "type": "app.login", "params": {} }
+      ]
+    },
+    {
+      "name": "Data Priming",
+      "priority": 800,
+      "market_signals": {
+        "allOf": [
+          { "fact": "app.initialized", "operator": "equal", "value": true },
+          { "fact": "app.logged_in", "operator": "equal", "value": true },
+          { "fact": "app.primed", "operator": "equal", "value": false }
+        ]
+      },
+      "order_operations": [
+        { "type": "app.prime_data", "params": {} }
+      ]
+    },
+    {
+      "name": "Market Open Loop",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_open", "operator": "equal", "value": true },
+          { "fact": "session.is_eod", "operator": "equal", "value": false },
+          { "fact": "app.initialized", "operator": "equal", "value": true },
+          { "fact": "app.logged_in", "operator": "equal", "value": true },
+          { "fact": "app.primed", "operator": "equal", "value": true }
+        ]
+      },
+      "order_operations": [
+        { "type": "engine.tick", "params": {} }
+      ]
+    },
+    {
+      "name": "EOD Shutdown",
+      "priority": 200,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_eod", "operator": "equal", "value": true },
+          { "fact": "app.initialized", "operator": "equal", "value": true }
+        ]
+      },
+      "order_operations": [
+        { "type": "engine.shutdown", "params": { "reason": "EOD" } },
+        { "type": "app.stop", "params": {} }
+      ]
+    },
+    {
+      "name": "Off-Market Hibernation",
+      "priority": 50,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_open", "operator": "equal", "value": false }
+        ]
+      },
+      "order_operations": [
+        { "type": "session.hibernate", "params": { "duration": 60 } }
+      ]
+    }
+  ]
+}

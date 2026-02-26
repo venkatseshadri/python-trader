@@ -1,0 +1,142 @@
+{
+  "facts": {
+    "market.adx": {
+      "provider": "talib",
+      "method": "ADX",
+      "params": { "timeperiod": 14 },
+      "inputs": ["high", "low", "close"]
+    },
+    "market.ema_fast": {
+      "provider": "talib",
+      "method": "EMA",
+      "params": { "timeperiod": 5 },
+      "inputs": ["close"]
+    },
+    "market.ema_slow": {
+      "provider": "talib",
+      "method": "EMA",
+      "params": { "timeperiod": 9 },
+      "inputs": ["close"]
+    },
+    "market.rsi": {
+      "provider": "talib",
+      "method": "RSI",
+      "params": { "timeperiod": 14 },
+      "inputs": ["close"]
+    },
+    "filter.orb": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f1_orb",
+      "method": "orb_filter",
+      "params": { "weight": 25, "buffer_pct": 0.2 }
+    },
+    "filter.price_above_5ema": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f2_price_above_5ema",
+      "method": "price_above_5ema_filter",
+      "params": { "weight": 20 }
+    },
+    "filter.ema5_above_9ema": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f3_5ema_above_9ema",
+      "method": "ema5_above_9ema_filter",
+      "params": { "weight": 18 }
+    },
+    "filter.supertrend": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f4_supertrend",
+      "method": "supertrend_filter",
+      "params": { "weight": 20, "period": 10, "multiplier": 3 }
+    },
+    "filter.ema_scope": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f5_ema_scope",
+      "method": "ema_scope_filter",
+      "params": { "weight": 10 }
+    },
+    "filter.ema_gap": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f6_ema_gap",
+      "method": "ema_gap_expansion_filter",
+      "params": { "weight": 10 }
+    },
+    "filter.atr_relative": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f7_atr_relative",
+      "method": "atr_momentum_filter",
+      "params": { "weight": 10 }
+    },
+    "filter.trend_sniper": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f8_trend_sniper",
+      "method": "trend_sniper_filter",
+      "params": { }
+    },
+    "filter.institutional_flip": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f9_institutional_flip",
+      "method": "institutional_flip_filter",
+      "params": { }
+    },
+    "filter.range_raider": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f10_range_raider",
+      "method": "range_raider_filter",
+      "params": { }
+    },
+    "filter.ratio_raider": {
+      "provider": "custom",
+      "module": "orbiter.filters.entry.f11_ratio_raider",
+      "method": "ratio_raider_filter",
+      "params": { }
+    },
+    "sl.below_5ema": {
+      "provider": "custom",
+      "module": "orbiter.filters.sl.f1_below_5ema",
+      "method": "sl_below_5ema",
+      "params": { }
+    },
+    "sl.smart_atr": {
+      "provider": "custom",
+      "module": "orbiter.filters.sl.f1_price_increase_10",
+      "method": "check_sl",
+      "params": { "mult": 1.5 }
+    },
+    "sl.trend_mortality": {
+      "provider": "custom",
+      "module": "orbiter.filters.sl.f11_ema20_mortality",
+      "method": "trend_mortality_sl",
+      "params": { }
+    },
+    "tp.premium_decay": {
+      "provider": "custom",
+      "module": "orbiter.filters.tp.f1_premium_decay_10",
+      "method": "check_tp",
+      "params": { "percent": 10 }
+    },
+    "tp.trailing_sl": {
+      "provider": "custom",
+      "module": "orbiter.filters.tp.f2_trailing_sl",
+      "method": "check_trailing_sl",
+      "params": { "retracement_pct": 40 }
+    },
+    "tp.dynamic_budget": {
+      "provider": "custom",
+      "module": "orbiter.filters.tp.f4_dynamic_budget",
+      "method": "evaluate",
+      "params": { }
+    },
+    "option.theta": {
+      "provider": "custom",
+      "module": "orbiter.core.broker.broker_client",
+      "method": "get_option_theta",
+      "params": {
+        "symbol": "instrument.symbol",
+        "expiry_date": "instrument.expiry",
+        "strike_price": "instrument.strike",
+        "option_type": "instrument.option_type"
+      },
+      "inputs": ["instrument.symbol", "instrument.expiry", "instrument.strike", "instrument.option_type"]
+    }
+  }
+}
