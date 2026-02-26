@@ -71,6 +71,8 @@ class RuleManager:
         return facts
 
     def evaluate(self, source: Any, context: str = "global", **extra_facts) -> List[dict]:
+        logger.trace(f"📋 Rule Manager evaluate called with context: {context}")
+        logger.trace(f"📋 Rule sets loaded: {len(self.rule_sets)}")
         facts = self._get_common_facts(source)
         ins_ctx = self.constants.get('fact_contexts', 'instrument_context')
 

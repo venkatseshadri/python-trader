@@ -248,7 +248,9 @@ class OrbiterApp:
                 logger.trace(f"Current State: Init={self.initialized}, Login={self.logged_in}, Primed={self.primed}")
 
                 # Get facts from rule manager
-                facts = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'app_context'))
+                app_context = self.constants.get('fact_contexts', 'app_context')
+                logger.trace(f"📋 App context: {app_context}")
+                facts = self.rule_manager.evaluate(source=self, context=app_context)
                 logger.trace(f"📋 Facts from rule_manager: {facts}")
                 
                 actions = facts
