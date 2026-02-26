@@ -26,7 +26,6 @@
           "params": { 
             "derivative": "future",
             "side": "BUY", 
-            "product": "NRML",
             "qty": 1,
             "exchange": "MCX",
             "remark": "MCX_TOPN_BULL"
@@ -37,7 +36,6 @@
           "params": { 
             "derivative": "future",
             "side": "SELL", 
-            "product": "NRML",
             "qty": 1,
             "exchange": "MCX",
             "remark": "MCX_TOPN_BEAR"

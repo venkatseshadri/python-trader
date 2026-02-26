@@ -95,7 +95,7 @@ class ArgumentParser:
         
         # Known arguments - process these, but still pass through unknown args
         # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution'}
+        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -116,12 +116,12 @@ class ArgumentParser:
                     
                     # Only process known args for logic
                     if k_clean in known_args:
-                        if k_clean == 'strategy_id':
+                        if k_clean in ('strategy_id', 'strategycode'):
                             parsed_strategy_input = v
-                        elif k_clean == 'strategy_code':
+                        elif k_clean in ('strategy_code',):
                             parsed_strategy_input = v
                             use_strategy_code = True
-                        elif k_clean == 'strategy_execution':
+                        elif k_clean in ('strategy_execution', 'strategyexecution'):
                             strategy_execution = v
                         elif k_clean == 'paper_trade':
                             paper_trade_set = True

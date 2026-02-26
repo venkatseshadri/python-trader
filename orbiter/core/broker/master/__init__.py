@@ -138,8 +138,15 @@ class ScripMaster:
                 logger.error(f"[{self.__class__.__name__}.load_mappings] - Error loading derivatives from {derivatives_file}: {e}. Traceback: {traceback.format_exc()}")
         
     def download_scrip_master(self, exchange: str):
-        logger.debug(f"[{self.__class__.__name__}.download_scrip_master] - Download Scrip Master called for exchange: {exchange}. (Currently a no-op, assumes mappings loaded from file).")
-        pass
+        """Load the scrip master mappings for the given exchange."""
+        logger.debug(f"[{self.__class__.__name__}.download_scrip_master] - Loading mappings for exchange: {exchange}.")
+        
+        # Map exchange to segment name
+        segment_map = {'MCX': 'mcx', 'NFO': 'nfo', 'BFO': 'bfo', 'NSE': 'nse'}
+        segment = segment_map.get(exchange.upper(), exchange.lower())
+        
+        # Load mappings for the segment
+        self.load_mappings(segment)
     
     def _parse_expiry_date(self, raw: str) -> Optional["datetime.date"]:
         if not raw: return None

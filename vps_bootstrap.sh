@@ -23,7 +23,7 @@ fi
 
 # 3. Project Environment
 echo "📦 Setting up Python Virtual Environment..."
-cd ~/python/python-trader
+cd "$(dirname "$0")"
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip

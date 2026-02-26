@@ -115,21 +115,34 @@ class ContractResolver:
         """Get the nearest expiry future contract for a symbol."""
         try:
             exchange = exchange.upper()
+            
+            # Ensure derivatives are loaded
             if not self.master.DERIVATIVE_LOADED:
                 self.master.download_scrip_master(exchange)
             
-            instrument = "FUTIDX" if symbol in ("NIFTY", "BANKNIFTY", "SENSEX", "BANKEX") else "FUTCOM"
+            instrument = "FUTIDX" if symbol.upper() in ("NIFTY", "BANKNIFTY", "SENSEX", "BANKEX") else "FUTCOM"
             
             futures = [r for r in self.master.DERIVATIVE_OPTIONS 
-                      if r.get("symbol") == symbol 
+                      if r.get("symbol") == symbol.upper() 
                       and r.get("instrument") == instrument
                       and r.get("exchange") == exchange]
             
             if not futures:
+                logger.warning(f"No futures found for {symbol} on {exchange}")
                 return None
             
-            # Sort by expiry and get the nearest
-            futures.sort(key=lambda x: x.get("expiry", ""))
+            # Sort by expiry date - parse expiry string to datetime for proper sorting
+            from datetime import datetime
+            def parse_expiry(expiry_str):
+                if not expiry_str:
+                    return datetime.max
+                try:
+                    # Format: 27FEB26 -> 27-Feb-2026
+                    return datetime.strptime(expiry_str, "%d%b%y")
+                except:
+                    return datetime.max
+            
+            futures.sort(key=lambda x: parse_expiry(x.get("expiry", "")))
             nearest = futures[0]
             return {
                 "ok": True,

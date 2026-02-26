@@ -1,4 +1,8 @@
 {
+  "defaults": {
+    "retention": "DAY",
+    "remarks_template": "ORBITER_{strategy}"
+  },
   "nfo": {
     "market_start": "09:15:00",
     "market_end": "15:30:00",
@@ -7,7 +11,7 @@
     "plumbing": {
       "exchange_name": "NSE",
       "segment_name": "NFO",
-      "default_product": "MIS",
+      "default_product": "I",
       "option_instrument": "OPTIDX"
     },
     "execution_policy": {
@@ -30,11 +34,11 @@
     "plumbing": {
       "exchange_name": "MCX",
       "segment_name": "MCX",
-      "default_product": "NRML",
+      "default_product": "I",
       "option_instrument": "OPTFUT"
     },
     "execution_policy": {
-      "default_price_type": "LMT",
+      "default_price_type": "MKT",
       "slippage_buffer_pct": 2.0
     }
   },
@@ -46,7 +50,7 @@
     "plumbing": {
       "exchange_name": "BSE",
       "segment_name": "BFO",
-      "default_product": "NRML",
+      "default_product": "M",
       "option_instrument": "OPTIDX"
     },
     "execution_policy": {

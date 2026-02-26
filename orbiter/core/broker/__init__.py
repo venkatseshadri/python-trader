@@ -39,6 +39,7 @@ class BrokerClient:
         # 🛡️ Load Execution Policy for the segment
         from orbiter.utils.data_manager import DataManager
         exch_config = DataManager.load_config(project_root, 'mandatory_files', 'exchange_config')
+        self.exchange_config = exch_config  # Store full config for access by action executors
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
         
         self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
@@ -412,16 +413,19 @@ class BrokerClient:
                         logger.trace(f"[{self.__class__.__name__}.place_future_order] - Found lot size in Memory Cache: {lot_size}")
         
         if lot_size <= 0:
+            tsym = res.get('tsym') or res.get('tradingsymbol')
             for r in self.master.DERIVATIVE_OPTIONS:
-                if r.get('tradingsymbol') == res['tsym']:
+                if r.get('tradingsymbol') == tsym:
                     lot_size = int(r.get('lotsize', 0))
                     break
         
         if lot_size <= 0: 
-            logger.error(f"[{self.__class__.__name__}.place_future_order] - Invalid lot size for {res['tsym']}.")
+            tsym = res.get('tsym') or res.get('tradingsymbol')
+            logger.error(f"[{self.__class__.__name__}.place_future_order] - Invalid lot size for {tsym}.")
             return {'ok': False, 'reason': 'invalid_lot_size'}
         
-        details = {'tsym': res['tsym'], 'lot_size': lot_size, 'exchange': exchange, 'token': res['token']}
+        tsym = res.get('tsym') or res.get('tradingsymbol')
+        details = {'tsym': tsym, 'lot_size': lot_size, 'exchange': exchange, 'token': res.get('token', '')}
         logger.debug(f"[{self.__class__.__name__}.place_future_order] - Future order details resolved: {details}")
         return self.executor.place_future_order(details, kwargs['side'], kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
 
