@@ -11,7 +11,7 @@ from orbiter.utils.constants_manager import ConstantsManager
 logger = logging.getLogger("ORBITER")
 
 class SessionManager:
-    def __init__(self, project_root: str, simulation: bool = False, strategy_id: str = None):
+    def __init__(self, project_root: str, paper_trade: bool = False, strategy_id: str = None):
         self.project_root = project_root
         self.constants = ConstantsManager.get_instance(project_root)
         self.schema_manager = SchemaManager.get_instance(project_root)
@@ -64,15 +64,20 @@ class SessionManager:
         logger.info(f"🚀 Loaded: {self.strategy_bundle.get('name')} with {len(self.filters)} filter groups.")
 
     def get_session_facts(self) -> dict:
+        import os
         ist = pytz.timezone('Asia/Kolkata')
         now = datetime.now(ist).time()
         m_start = dt_time.fromisoformat(self.op_config.get("market_start", "09:15:00"))
         m_end = dt_time.fromisoformat(self.op_config.get("market_end", "15:30:00"))
         t_start = dt_time.fromisoformat(self.op_config.get("trade_start", m_start.isoformat()))
         t_end = dt_time.fromisoformat(self.op_config.get("trade_end", "15:15:00"))
+        
+        # Override: Force market open if environment variable set
+        force_open = os.environ.get("ORBITER_SIMULATE_MARKET_HOURS", "false").lower() == "true"
+        
         return {
-            "session.is_open": m_start <= now < m_end,
-            "session.is_trade_window": t_start <= now < t_end,
+            "session.is_open": force_open or (m_start <= now < m_end),
+            "session.is_trade_window": force_open or (t_start <= now < t_end),
             "session.is_eod": False, # 🔥 HARDCODED FALSE FOR TESTING
             "session.time": now.strftime("%H:%M:%S")
         }

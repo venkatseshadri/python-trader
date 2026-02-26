@@ -45,7 +45,7 @@ class OrbiterApp:
         # 4. Infrastructure
         self.session_manager = SessionManager(
             project_root, 
-            context.get('simulation', False), 
+            context.get('paper_trade', False), 
             strategy_id=context.get('strategyid')
         )
         self.action_manager = ActionManager()
@@ -69,20 +69,73 @@ class OrbiterApp:
         logger.info(f"Login status updated: {self.logged_in}")
         return ok
 
+    def _evaluate_dynamic_strategy(self):
+        """Evaluate dynamic strategy config and select strategy based on market regime."""
+        dynamic_config = self.context.get('dynamic_strategy_config')
+        if not dynamic_config or not dynamic_config.get('enabled', False):
+            return
+        
+        from orbiter.utils.yf_adapter import get_market_adx, get_market_regime
+        
+        # Get regime from Yahoo Finance
+        regime = get_market_regime('SENSEX')
+        adx = get_market_adx('SENSEX')
+        
+        logger.info(f"📊 Market Regime Check: SENSEX ADX = {adx} -> {regime.upper()}")
+        
+        # Select strategy based on regime
+        strategies = dynamic_config.get('strategies', {})
+        if regime == 'sideways':
+            strategy = strategies.get('sideways', {})
+        elif regime == 'trending':
+            strategy = strategies.get('trending', {})
+        else:
+            strategy = strategies.get('trending', {})  # Default to trending
+        
+        if strategy:
+            strategy_code = strategy.get('strategyCode')
+            strategy_id = strategy.get('strategyId')
+            logger.info(f"🎯 Dynamic Strategy Selected: {strategy_code or strategy_id} ({regime})")
+            # Store selected strategy - will be used by engine
+            self.context['selected_strategy_code'] = strategy_code
+            self.context['selected_strategy_id'] = strategy_id
+
     def setup(self, **params):
         """Action: Builds the engine and registers its generic capabilities."""
         logger.debug(f"[{self.__class__.__name__}.setup] - Initializing engine components with params: {params}")
+        
+        # 🚀 Evaluate dynamic strategy BEFORE building engine
+        dynamic_config = self.context.get('dynamic_strategy_config')
+        selected_strategy_id = None
+        if dynamic_config and dynamic_config.get('enabled'):
+            self._evaluate_dynamic_strategy()
+            selected_code = self.context.get('selected_strategy_code')
+            selected_id = self.context.get('selected_strategy_id')
+            if selected_code:
+                # Resolve strategy code to full strategy ID
+                from orbiter.utils.argument_parser import ArgumentParser
+                selected_strategy_id = ArgumentParser._resolve_strategy(selected_code, self.project_root)
+                logger.info(f"🔄 Restarting engine with strategy: {selected_code} -> {selected_strategy_id}")
+        
         try:
             # Merge context with params, but pass only engine-supported kwargs.
             full_params = {**self.context, **params}
             engine_kwargs = {
-                "simulation": bool(full_params.get("simulation", False)),
+                "paper_trade": bool(full_params.get("paper_trade", True)),
                 "office_mode": bool(full_params.get("office_mode", False)),
             }
             dropped_keys = sorted(k for k in full_params.keys() if k not in engine_kwargs)
             if dropped_keys:
                 logger.debug(f"Ignoring unsupported setup params: {dropped_keys}")
 
+            # Rebuild session_manager if dynamic strategy selected new strategy
+            if selected_strategy_id:
+                self.session_manager = SessionManager(
+                    self.project_root, 
+                    self.context.get('paper_trade', True), 
+                    strategy_id=selected_strategy_id
+                )
+            
             self.engine = EngineFactory.build_engine(
                 self.session_manager,
                 self.action_manager,
@@ -97,7 +150,7 @@ class OrbiterApp:
                     send_telegram_msg("/freeze")
                     logger.info("📤 Sent freeze signal to RPI via Telegram")
                 except Exception as e:
-                    logger.warning(f"⚠️ Failed to send freeze to RPI: {e}")
+                    logger.warning(f"Failed to send Telegram freeze: {e}")
             
             self.registration_manager.engine = self.engine
             self.registration_manager.update_registrations_for_engine()
@@ -124,7 +177,10 @@ class OrbiterApp:
             # 🔥 Run heavy history retrieval in a background thread
             import threading
             def _bg_prime():
-                lookback = self.session_manager.strategy_bundle.get('strategy_parameters', {}).get('priming_lookback_mins', 120)
+                params = self.session_manager.strategy_bundle.get('strategy_parameters', {})
+                lookback = params.get('priming_lookback_mins', 120)
+                interval = params.get('priming_interval', 5)
+                self.engine.state.client._priming_interval = interval
                 self.engine.state.client.prime_candles(self.engine.state.symbols, lookback_mins=lookback)
                 logger.info("✅ Background Data Priming Complete.")
 

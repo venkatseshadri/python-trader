@@ -79,8 +79,22 @@ class Engine:
                     extra_facts[f"instrument.{k}"] = v
             
             # 📊 Collect Reporting Metrics
+            # 🔄 For BSE stocks, use NSE NIFTY data for ADX calculation
+            data_token = token
+            data_exch = exch
+            raw_data = None
+            if exch == 'BSE':
+                # Use NIFTY on NSE for ADX calculation
+                nifty_token = '26000'  # NIFTY 50
+                nifty_lookup = f"NSE|{nifty_token}"
+                nifty_data = self.state.client.SYMBOLDICT.get(nifty_lookup)
+                if nifty_data and nifty_data.get('candles'):
+                    logger.info(f"🔄 Using NSE NIFTY data for ADX on BSE stock")
+                    raw_data = nifty_data
+            
             # Fallback lookup: try prefixed key, then raw token
-            raw_data = self.state.client.SYMBOLDICT.get(lookup_key)
+            if not raw_data:
+                raw_data = self.state.client.SYMBOLDICT.get(lookup_key)
             if not raw_data:
                 logger.trace(f"[{self.__class__.__name__}.tick] - Prefixed lookup failed for {lookup_key}. Trying raw token: {token}")
                 raw_data = self.state.client.SYMBOLDICT.get(token, {})

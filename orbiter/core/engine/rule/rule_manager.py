@@ -82,11 +82,28 @@ class RuleManager:
                 token_raw = extra_facts.get('token')
                 token = token_raw.get('token') if isinstance(token_raw, dict) else token_raw
                 exch = extra_facts.get('instrument_exchange') or extra_facts.get('instrument.exchange') or 'NSE'
-                lookup_key = f"{exch}|{token}"
+                logger.info(f"🔍 Token: {token} | Exchange: {exch}")
                 
-                raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
-                if not raw_data:
-                    raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                # 🔄 For BSE stock options, use BFO index data for ADX calculation
+                if exch == 'BSE':
+                    index_token = '1165486'  # SENSEX on BFO
+                    index_exchange = 'BFO'
+                    index_lookup_key = f"BFO|{index_token}"
+                    raw_data = source.state.client.SYMBOLDICT.get(index_lookup_key)
+                    if raw_data:
+                        exch = 'BFO'
+                        token = index_token
+                        logger.info(f"🔄 Using BFO SENSEX data for ADX on BSE instrument")
+                    else:
+                        lookup_key = f"{exch}|{token}"
+                        raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
+                        if not raw_data:
+                            raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                else:
+                    lookup_key = f"{exch}|{token}"
+                    raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
+                    if not raw_data:
+                        raw_data = source.state.client.SYMBOLDICT.get(token, {})
                 
                 candles = raw_data.get('candles', [])
                 standardized = self.fact_converter.convert_candle_data(candles)
@@ -105,6 +122,9 @@ class RuleManager:
                     **extra_facts
                 )
                 tech_facts_flat["instrument.symbol"] = raw_data.get('symbol', 'UNKNOWN')
+                
+                defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0}
+                facts.update(defaults)
                 for k, v in tech_facts_flat.items():
                     facts[k.replace('.', '_')] = v
 

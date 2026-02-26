@@ -47,6 +47,7 @@ class BrokerClient:
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
         self.span_cache_path = None
         self._span_cache = None
+        self._priming_interval = 5  # Default 5-min candles
         
         # Download appropriate scrip master based on segment
         if self.segment_name == 'mcx':
@@ -167,13 +168,14 @@ class BrokerClient:
                     key = f"{exch}|{token}"
                 
                 ex, tk = key.split('|')
-                # Use 5-minute interval as verified in test_tpseries.py
+                # Get interval from strategy parameters, default to 5 minutes
+                interval = self._priming_interval if hasattr(self, '_priming_interval') else 5
                 res = self.api.get_time_price_series(
                     exchange=ex, 
                     token=tk, 
                     starttime=start_dt.timestamp(), 
                     endtime=end_dt.timestamp(), 
-                    interval=5
+                    interval=interval
                 )
                 
                 if res and isinstance(res, list):

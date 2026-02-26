@@ -1,6 +1,6 @@
 [
-  {"symbol": "SENSEX", "token": "825565", "exchange": "BSE", "derivative": "option", "instrument_type": "index", "expiry_cycle": "weekly"},
-  {"symbol": "BANKEX", "token": "826463", "exchange": "BSE", "derivative": "option", "instrument_type": "index", "expiry_cycle": "monthly"},
+  {"symbol": "SENSEX", "token": "1165486", "exchange": "BFO", "derivative": "fut", "instrument_type": "index", "expiry_cycle": "weekly", "for_data": true},
+  {"symbol": "BANKEX", "token": "1165487", "exchange": "BFO", "derivative": "fut", "instrument_type": "index", "expiry_cycle": "weekly", "for_data": true},
   {"symbol": "RELIANCE", "token": "500325", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
   {"symbol": "HDFCBANK", "token": "500180", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},
   {"symbol": "TCS", "token": "532540", "exchange": "BSE", "derivative": "option", "instrument_type": "stock", "expiry_cycle": "monthly"},

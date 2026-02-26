@@ -10,6 +10,7 @@
   "strategy_parameters": {
     "top_n": 3,
     "trend_score_threshold": 0.40,
-    "priming_lookback_mins": 240
+    "priming_lookback_mins": 240,
+    "priming_interval": 1
   }
 }

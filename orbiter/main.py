@@ -7,6 +7,12 @@ import sys
 import logging
 import traceback
 
+# 🔊 Enable DEBUG logging for external APIs (Shoonya, WebSocket, urllib3)
+logging.getLogger("NorenRestApiPy").setLevel(logging.DEBUG)
+logging.getLogger("urllib3").setLevel(logging.DEBUG)
+logging.getLogger("websocket").setLevel(logging.DEBUG)
+logging.getLogger("websockets").setLevel(logging.DEBUG)
+
 # 🌍 1. Path Resolution & Environment Setup
 # This file is at project_root/orbiter/main.py
 base_dir = os.path.dirname(os.path.abspath(__file__))

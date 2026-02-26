@@ -65,25 +65,24 @@ class ArgumentParser:
         Turns list of CLI args into facts dict.
         
         Examples:
-        - ['--simulation=true', '--strategyCode=m1'] -> {simulation: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
-        - ['--strategyExecution=dynamic'] -> {simulation: True, strategy_execution: 'dynamic'}
-        - ['--office_mode=true'] -> {simulation: False, office_mode: True}
+        - ['--paper_trade=true', '--strategyCode=m1'] -> {paper_trade: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
+        - ['--strategyExecution=dynamic'] -> {paper_trade: True, strategy_execution: 'dynamic'}
+        - ['--office_mode=true'] -> {paper_trade: False, office_mode: True}
         
         Mode Matrix:
-        | simulation | office_mode | Result |
-        |------------|-------------|--------|
-        | false      | false       | LIVE TRADING |
-        | true       | false       | SIMULATION (no real data, paper trades) |
-        | false      | true        | OFFICE MODE (live data, no trades) |
-        | true       | true        | Invalid combination |
+        | paper_trade | office_mode | Result |
+        |-------------|-------------|--------|
+        | false       | false       | LIVE TRADING |
+        | true        | false       | PAPER TRADING (simulated orders) |
+        | false       | true        | OFFICE MODE (live data, no trades) |
         
         Raises:
             ValueError: If both --strategyExecution=dynamic and --strategyCode/--strategyId are provided
-            ValueError: If conflicting simulation/office_mode flags
+            ValueError: If conflicting paper_trade/office_mode flags
         """
         logger = logging.getLogger(__name__)
         facts = {
-            'simulation': True,  # Default to simulation for safety
+            'paper_trade': True,  # Default to paper trade for safety
             'office_mode': False,
             'strategy_execution': 'fixed'
         }
@@ -91,11 +90,12 @@ class ArgumentParser:
         parsed_strategy_input = None
         use_strategy_code = False
         strategy_execution = 'fixed'
-        simulation_set = False
+        paper_trade_set = False
         office_mode_set = False
         
         # Known arguments - process these, but still pass through unknown args
-        known_args = {'simulation', 'office_mode', 'strategyid', 'strategycode', 'strategyexecution'}
+        # Use kebab-case in CLI, convert to snake_case internally
+        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -116,39 +116,39 @@ class ArgumentParser:
                     
                     # Only process known args for logic
                     if k_clean in known_args:
-                        if k_clean == 'strategyid':
+                        if k_clean == 'strategy_id':
                             parsed_strategy_input = v
-                        elif k_clean == 'strategycode':
+                        elif k_clean == 'strategy_code':
                             parsed_strategy_input = v
                             use_strategy_code = True
-                        elif k_clean == 'strategyexecution':
+                        elif k_clean == 'strategy_execution':
                             strategy_execution = v
-                        elif k_clean == 'simulation':
-                            simulation_set = True
+                        elif k_clean == 'paper_trade':
+                            paper_trade_set = True
                         elif k_clean == 'office_mode':
                             office_mode_set = True
                 else:
                     k_clean = clean.lower().replace("-", "_")
                     facts[k_clean] = True
-                    if k_clean == 'simulation':
-                        simulation_set = True
+                    if k_clean == 'paper_trade':
+                        paper_trade_set = True
                     elif k_clean == 'office_mode':
                         office_mode_set = True
         
-        # Validate simulation + office_mode combination
-        if simulation_set and office_mode_set:
-            if facts['simulation'] and facts['office_mode']:
+        # Validate paper_trade + office_mode combination
+        if paper_trade_set and office_mode_set:
+            if facts['paper_trade'] and facts['office_mode']:
                 raise ValueError(
-                    "Invalid combination: Cannot use both --simulation=true and --office_mode=true. "
-                    "Use --office_mode=true for live data without trades, or --simulation=true for paper trading."
+                    "Invalid combination: Cannot use both --paper_trade=true and --office_mode=true. "
+                    "Use --office_mode=true for live data without trades, or --paper_trade=true for paper trading."
                 )
         
         # Set defaults based on flags
-        if not simulation_set and not office_mode_set:
-            facts['simulation'] = True
+        if not paper_trade_set and not office_mode_set:
+            facts['paper_trade'] = True
             facts['office_mode'] = False
         elif office_mode_set and facts['office_mode']:
-            facts['simulation'] = False
+            facts['paper_trade'] = False
         
         # Handle dynamic vs fixed mode
         if strategy_execution == 'dynamic':
