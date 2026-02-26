@@ -22,7 +22,7 @@
       "scoring_fact": "strategy.trend_score",
       "order_operations": [
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_future_order", 
           "params": { 
             "derivative": "future",
             "side": "BUY", 
@@ -33,7 +33,7 @@
           } 
         },
         { 
-          "type": "trade.place_order", 
+          "type": "trade.place_future_order", 
           "params": { 
             "derivative": "future",
             "side": "SELL", 

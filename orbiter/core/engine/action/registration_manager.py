@@ -52,7 +52,6 @@ class RegistrationManager:
         self.action_manager.action_registry[self.constants.get('action_types', 'engine_shutdown')] = self.engine.shutdown
         self.action_manager.action_registry[self.constants.get('action_types', 'session_hibernate')] = self.session_manager.hibernate
         
-        self.action_manager.action_registry['trade.place_order'] = self.engine.action_logic.place_order
         self.action_manager.action_registry[self.constants.get('action_types', 'trade_place_spread')] = self.engine.action_logic.place_order
         self.action_manager.action_registry[self.constants.get('action_types', 'trade_place_future_order')] = self.engine.action_logic.place_order
         self.action_manager.action_registry[self.constants.get('action_types', 'trade_square_off_all')] = self.engine.action_logic.square_off_all
