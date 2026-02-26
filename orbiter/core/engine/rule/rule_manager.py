@@ -218,7 +218,10 @@ class RuleManager:
         return max_score
 
     def _load_and_compile_rules(self) -> List[Dict]:
-        return self._compile_rules(self.rule_schema.get('rules_key', 'strategies'), self.rule_sets)
+        logger.debug(f"📋 Loading rules from: {self.rules_file_path}")
+        rules = self._compile_rules(self.rule_schema.get('rules_key', 'strategies'), self.rule_sets)
+        logger.debug(f"📋 Loaded {len(rules)} rules")
+        return rules
 
     def _load_and_compile_scoring_rules(self) -> List[Dict]:
         return self._compile_rules(self.rule_schema.get('scoring_rules_key', 'scoring_rules'), self.scoring_rules)
