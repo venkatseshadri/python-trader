@@ -1,0 +1,46 @@
+# ============================================================================
+# CREDENTIALS FILE - COPY TO cred.yml AND FILL YOUR DETAILS
+# ============================================================================
+# Broker Selection: shoonya | flattrade | simulation
+# ============================================================================
+broker: shoonya
+
+# Shoonya/Flattrade Credentials
+user: YOUR_USERID
+pwd: YOUR_PASSWORD
+vc: YOUR_VENDOR_CODE
+apikey: YOUR_API_SECRET
+factor2: ""
+imei: C0FJFG7WW7
+
+# Auto-TOTP (optional - generates 2FA automatically)
+totp_key: ""
+
+# Example configurations:
+# ============================================================================
+# SHOONYA:
+# broker: shoonya
+# user: FA333160
+# pwd: YourPassword
+# vc: FA333160_U
+# apikey: your_api_key
+# totp_key: YourTOTPSecret
+# imei: C0FJFG7WW7
+
+# FLATTRADE:
+# broker: flattrade
+# user: FL123456
+# pwd: YourPassword
+# vc: FL123456
+# apikey: your_flattrade_api_key
+# totp_key: YourTOTPSecret
+# imei: C0FJFG7WW7
+
+# SIMULATION (Paper Trading):
+# broker: simulation
+# user: demo
+# pwd: demo
+# vc: demo
+# apikey: demo
+# (No real credentials needed)
+# ============================================================================
