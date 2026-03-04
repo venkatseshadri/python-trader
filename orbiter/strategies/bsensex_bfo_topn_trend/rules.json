@@ -65,18 +65,6 @@
           } 
         }
       ] 
-            "derivative": "option",
-            "side": "SELL", 
-            "product": "NRML",
-            "qty": 10,
-            "exchange": "BSE",
-            "remark": "BSE_TOPN_BEAR",
-            "strike_logic": "ATM-1",
-            "option": "PE",
-            "expiry": "weekly+0"
-          } 
-        }
-      ]
     }
   ]
 }
