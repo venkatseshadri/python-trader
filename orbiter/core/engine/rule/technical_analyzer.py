@@ -27,28 +27,30 @@ class TechnicalAnalyzer:
 
         try:
             # 1. EMAs (Trend)
-            indicators['ema5'] = self._ema(close, 5)
-            indicators['ema9'] = self._ema(close, 9)
-            indicators['ema20'] = self._ema(close, 20)
-            indicators['ema50'] = self._ema(close, 50)
+            indicators['market.ema5'] = indicators['market_ema5'] = self._ema(close, 5)
+            indicators['market.ema9'] = indicators['market_ema9'] = self._ema(close, 9)
+            indicators['market.ema20'] = indicators['market_ema20'] = self._ema(close, 20)
+            indicators['market.ema50'] = indicators['market_ema50'] = self._ema(close, 50)
+            indicators['market.ema_fast'] = indicators['market_ema_fast'] = indicators['market.ema5']
+            indicators['market.ema_slow'] = indicators['market_ema_slow'] = indicators['market.ema20']
             
             # 2. Oscillators (Momentum)
-            indicators['rsi'] = self._rsi(close, 14)
-            indicators['adx'] = self._adx(high, low, close, 14)
+            indicators['market.rsi'] = indicators['market_rsi'] = self._rsi(close, 14)
+            indicators['market.adx'] = indicators['market_adx'] = self._adx(high, low, close, 14)
             
             # 3. Volatility
-            indicators['atr'] = self._atr(high, low, close, 14)
+            indicators['market.atr'] = indicators['market_atr'] = self._atr(high, low, close, 14)
             
             # 4. SuperTrend (10, 3)
             st, st_dir = self._supertrend(high, low, close, 10, 3)
-            indicators['supertrend'] = st
-            indicators['supertrend_dir'] = st_dir
+            indicators['market.supertrend'] = indicators['market_supertrend'] = st
+            indicators['market.supertrend_dir'] = indicators['market_supertrend_dir'] = st_dir
 
             # 5. Bollinger Bands (20, 2)
             u, m, l = self._bbands(close, 20, 2)
-            indicators['bb_upper'] = u
-            indicators['bb_middle'] = m
-            indicators['bb_lower'] = l
+            indicators['market.bb_upper'] = indicators['market_bb_upper'] = u
+            indicators['market.bb_middle'] = indicators['market_bb_middle'] = m
+            indicators['market.bb_lower'] = indicators['market_bb_lower'] = l
             
         except Exception as e:
             logger.error(f"TechnicalAnalyzer Error: {e}")
