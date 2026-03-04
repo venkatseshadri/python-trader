@@ -162,3 +162,55 @@ class FlattradeApiPy(ShoonyaApiPy):
     """Flattrade API - uses ShoonyaApiPy with flattrade broker"""
     def __init__(self):
         super().__init__(broker="flattrade")
+
+# =====================================================
+# Flattrade Token Generation Support
+# =====================================================
+import hashlib
+import requests
+
+def get_flattrade_token(api_key: str, request_code: str, api_secret: str) -> str:
+    """
+    Generate Flattrade token using the OAuth-like flow.
+    
+    Steps:
+    1. Get authorization URL: https://auth.flattrade.in/?app_key=APIKEY
+    2. Login and get redirected with request_code
+    3. Call this function to exchange for token
+    
+    Args:
+        api_key: Your Flattrade API key
+        request_code: One-time code from redirect URL
+        api_secret: Your API secret
+    
+    Returns:
+        token: Access token for API calls
+    """
+    # Generate api_secret hash: SHA256(api_key + request_code + api_secret)
+    hash_input = api_key + request_code + api_secret
+    hash_signature = hashlib.sha256(hash_input.encode()).hexdigest()
+    
+    payload = {
+        "api_key": api_key,
+        "request_code": request_code,
+        "api_secret": hash_signature
+    }
+    
+    response = requests.post(
+        "https://authapi.flattrade.in/trade/apitoken",
+        json=payload
+    )
+    
+    result = response.json()
+    
+    if result.get("status") == "Ok":
+        return result.get("token")
+    else:
+        raise Exception(f"Flattrade token error: {result.get('emsg', 'Unknown error')}")
+
+
+def generate_flattrade_auth_url(api_key: str, redirect_url: str = "http://localhost/callback") -> str:
+    """
+    Generate Flattrade authorization URL for OAuth flow.
+    """
+    return f"https://auth.flattrade.in/?app_key={api_key}&redirect={redirect_url}"

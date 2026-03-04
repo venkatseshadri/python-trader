@@ -28,8 +28,8 @@ BROKER_ENDPOINTS = {
     },
     'flattrade': {
         'name': 'Flattrade',
-        'rest': 'https://pi.flattrade.in/NorenWClientTP/',
-        'websocket': 'wss://pi.flattrade.in/NorenWSTP/',
+        'rest': 'https://piconnect.flattrade.in/NorenWClientTP/',
+        'websocket': 'wss://piconnect.flattrade.in/NorenWSTP/',
         'broker_code': 'flattrade'
     },
     'simulation': {
