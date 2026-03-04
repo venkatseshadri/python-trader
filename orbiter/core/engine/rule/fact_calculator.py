@@ -37,9 +37,10 @@ class FactCalculator:
         indicators = self.analyzer.analyze(standardized_data)
         logger.trace(f"Indicators calculated: {list(indicators.keys())}")
         
-        # Add indicators as market.* facts
+        # Add indicators as market.* facts (BOTH dot and underscore formats)
         for k, v in indicators.items():
             facts[f"market.{k}"] = v
+            facts[f"market_{k}"] = v
         
         input_map = {k: v for k, v in standardized_data.items() if isinstance(v, np.ndarray)}
         
