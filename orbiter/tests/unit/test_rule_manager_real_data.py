@@ -1,11 +1,13 @@
 import unittest
 import json
 import os
+import logging
 from types import SimpleNamespace
 from orbiter.core.engine.rule.rule_manager import RuleManager
 from orbiter.core.engine.session.session_manager import SessionManager
 from orbiter.utils.constants_manager import ConstantsManager
 from orbiter.utils.schema_manager import SchemaManager
+from orbiter.utils.logger import setup_logging
 
 
 class TestRuleManagerRealData(unittest.TestCase):
@@ -13,8 +15,12 @@ class TestRuleManagerRealData(unittest.TestCase):
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         ConstantsManager._instance = None
         SchemaManager._instance = None
+        
+        # Setup logging with TRACE level
+        logging.getLogger().setLevel(logging.DEBUG)
+        setup_logging('TRACE', project_root)
 
-        session = SessionManager(project_root, simulation=True)
+        session = SessionManager(project_root, paper_trade=True)
         rules_path = os.path.join(project_root, session.get_active_rules_file())
         manager = RuleManager(project_root, rules_path, session)
 
