@@ -69,6 +69,17 @@ class ContractResolver:
 
     def resolve_option_symbol(self, symbol: str, ltp: float, option_type: str, strike_logic: str, expiry_type: str = "current", exchange: str = None) -> Dict[str, Any]:
         is_index = symbol.upper() in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX")
+        
+        # BSE F&O symbol mapping (BFO uses different symbol names)
+        bfo_symbol_map = {
+            "SENSEX": "BSXOPT",
+            "BANKEX": "BKXOPT"
+        }
+        
+        # If BFO exchange, use mapped symbol
+        if exchange and exchange.upper() == "BSE" and symbol.upper() in bfo_symbol_map:
+            symbol = bfo_symbol_map[symbol.upper()]
+        
         instrument = "OPTIDX" if is_index else "OPTSTK"
         expiry = self._select_expiry(symbol, expiry_type, instrument, exchange_override=exchange)
         if not expiry: return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
