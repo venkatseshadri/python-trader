@@ -3,7 +3,7 @@
     {
       "name": "Calculate Commodity Trend Score",
       "priority": 10,
-      "scoring_expression": "market_adx * filters_scoring_combined_score_weight_adx + (market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_combined_score_weight_ema_slope + filter_supertrend_direction_numeric * filters_scoring_combined_score_weight_supertrend",
+      "scoring_expression": "market_adx * filters_scoring_combined_score_weight_adx + (market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_combined_score_weight_ema_slope + market_supertrend_dir * filters_scoring_combined_score_weight_supertrend",
       "description": "Combines ADX strength, EMA slope momentum, and SuperTrend direction for commodity trend scoring."
     }
   ],

@@ -38,9 +38,9 @@ class FactCalculator:
         logger.trace(f"Indicators calculated: {list(indicators.keys())}")
         
         # Add indicators as market.* facts (BOTH dot and underscore formats)
+        # Indicators from TechnicalAnalyzer already have full key names like 'market_supertrend_dir'
         for k, v in indicators.items():
-            facts[f"market.{k}"] = v
-            facts[f"market_{k}"] = v
+            facts[k] = v  # Use key as-is
         
         input_map = {k: v for k, v in standardized_data.items() if isinstance(v, np.ndarray)}
         

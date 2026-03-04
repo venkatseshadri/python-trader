@@ -8,9 +8,9 @@
   "scoring": {
     "combined_score": {
       "enabled": true,
-      "weight_adx": 0.4,
-      "weight_ema_slope": 0.3,
-      "weight_supertrend": 0.3
+      "score_weight_adx": 0.4,
+      "score_weight_ema_slope": 0.3,
+      "score_weight_supertrend": 0.3
     }
   },
   "exit": {
