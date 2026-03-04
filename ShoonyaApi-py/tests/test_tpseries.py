@@ -7,6 +7,7 @@ import yaml
 import datetime
 import timeit
 import pytz
+import pyotp
 
 #supress debug messages for prod/tests
 logging.basicConfig(level=logging.DEBUG)
@@ -32,17 +33,28 @@ cred_path = os.path.join(base_dir, 'cred.yml')
 with open(cred_path) as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
-ret = api.login(userid = cred['user'], password = cred['pwd'], twoFA=cred['factor2'], vendor_code=cred['vc'], api_secret=cred['apikey'], imei=cred['imei'])
+# Generate dynamic TOTP if totp_key is available
+if cred.get('totp_key'):
+    totp = pyotp.TOTP(cred['totp_key'].replace(" ", ""))
+    factor2 = totp.now()
+    print(f"🤖 Automated TOTP generated: {factor2}")
+else:
+    factor2 = cred.get('factor2', '')
+
+ret = api.login(userid = cred['user'], password = cred['pwd'], twoFA=factor2, vendor_code=cred['vc'], api_secret=cred['apikey'], imei=cred['imei'])
 
 if ret != None:
     ist = pytz.timezone('Asia/Kolkata')
     now_ist = datetime.datetime.now(tz=ist)
-    lastBusDay = now_ist - datetime.timedelta(days=1)
+    lastBusDay = now_ist #- datetime.timedelta(days=1)
     while lastBusDay.weekday() >= 5:
         lastBusDay = lastBusDay - datetime.timedelta(days=1)
 
     start_dt = lastBusDay.replace(hour=9, minute=15, second=0, microsecond=0)
     end_dt = lastBusDay.replace(hour=15, minute=30, second=0, microsecond=0)
+    print("start_dt:", start_dt)
+    print("end_dt:", end_dt)
+
 
     starttime = timeit.default_timer()
     print("The start time is :",starttime)
