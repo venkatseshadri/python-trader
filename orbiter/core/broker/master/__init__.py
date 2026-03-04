@@ -75,15 +75,8 @@ class ScripMaster:
                                     'exchange': 'MCX',
                                     'lotsize': int(info[2]) if len(info) > 2 else 1,
                                     'instrument': 'FUTCOM',
-                                    'expiry': trading_symbol.replace(str(info[0]), '') # Approximation
+                                    'expiry': info[3] if len(info) > 3 else trading_symbol.replace(str(info[0]), '')
                                 }
-                                # Refine expiry string for format_date (e.g. 19MAR26)
-                                if contract['expiry'].startswith('M') and len(contract['expiry']) > 1:
-                                    # Handle mini prefix 'M'
-                                    possible_date = contract['expiry'][1:]
-                                    if possible_date:
-                                        contract['expiry'] = possible_date
-
                                 # Use a safer check for duplicates
                                 exists = False
                                 for d in self.DERIVATIVE_OPTIONS:
@@ -150,10 +143,43 @@ class ScripMaster:
     
     def _parse_expiry_date(self, raw: str) -> Optional["datetime.date"]:
         if not raw: return None
-        for fmt in ("%d-%b-%Y", "%d-%m-%Y", "%Y-%m-%d"):
-            try: return datetime.datetime.strptime(raw, fmt).date()
+        for fmt in ("%d-%b-%Y", "%d-%m-%Y", "%Y-%m-%d", "%d%b%y", "%d%b%Y"):
+            try: return datetime.datetime.strptime(raw.upper(), fmt).date()
             except ValueError: continue
         return None
+
+    def check_and_update_mcx_expiry(self) -> bool:
+        """Check if any MCX contracts are expired and update if needed. Returns True if update was performed."""
+        if not self.DERIVATIVE_OPTIONS:
+            return False
+        
+        today = datetime.datetime.now().date()
+        expired_contracts = []
+        
+        for contract in self.DERIVATIVE_OPTIONS:
+            if contract.get('exchange') != 'MCX':
+                continue
+            expiry_str = contract.get('expiry', '')
+            if not expiry_str:
+                continue
+            expiry_date = self._parse_expiry_date(expiry_str)
+            if expiry_date and expiry_date < today:
+                expired_contracts.append(contract)
+        
+        if expired_contracts:
+            logger.warning(f"Found {len(expired_contracts)} expired MCX contracts: {[c.get('tradingsymbol') for c in expired_contracts]}")
+            logger.info("Calling update_mcx_config.py to refresh contracts...")
+            try:
+                from orbiter.utils.mcx import update_mcx_config
+                update_mcx_config.main()
+                self.load_mappings('mcx')
+                logger.info("MCX contracts updated successfully.")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to update MCX contracts: {e}")
+                return False
+        
+        return False
 
     def get_equity_token(self, symbol: str) -> Optional[str]:
         logger.trace(f"[{self.__class__.__name__}.get_equity_token] - Getting equity token for symbol: {symbol}")

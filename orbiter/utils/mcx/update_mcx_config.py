@@ -95,6 +95,7 @@ def main():
             tok = nearest.get('token')
             tsym = nearest.get('tsym')
             ls = nearest.get('ls', 1)
+            exp_str = nearest.get('exd', '').replace('-', '').upper() if nearest.get('exd') else ''
             print(f"⚠️ {symbol:<15} -> {tok} ({tsym}) [Lot: {ls}] [EXPIRED?]")
         else:
             # Sort by expiry and get nearest
@@ -106,7 +107,7 @@ def main():
             exp_str = exp_date.strftime("%d%b%y")
             print(f"✅ {symbol:<15} -> {tok} ({tsym}) [Lot: {ls}] [Expiry: {exp_str}]")
             
-        futures_map[tok] = [symbol, tsym, int(ls) if ls else 1]
+        futures_map[tok] = [symbol, tsym, int(ls) if ls else 1, exp_str]
         time.sleep(0.2)
 
     if not futures_map:
