@@ -17,7 +17,8 @@ class SchemaManager:
         return cls._instance
 
     def _load_schema(self, project_root: str):
-        self._schema = DataManager.load_config(project_root, 'mandatory_files', 'schema')
+        schema_path = os.path.join(project_root, 'orbiter', 'config', 'schema.json')
+        self._schema = DataManager.load_json(schema_path)
     
     def get_key(self, schema_name: str, key_name: str | None = None, default: Any = None) -> Any:
         """
