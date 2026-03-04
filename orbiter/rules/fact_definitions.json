@@ -125,18 +125,6 @@
       "module": "orbiter.filters.tp.f4_dynamic_budget",
       "method": "evaluate",
       "params": { }
-    },
-    "option.theta": {
-      "provider": "custom",
-      "module": "orbiter.core.broker.broker_client",
-      "method": "get_option_theta",
-      "params": {
-        "symbol": "instrument.symbol",
-        "expiry_date": "instrument.expiry",
-        "strike_price": "instrument.strike",
-        "option_type": "instrument.option_type"
-      },
-      "inputs": ["instrument.symbol", "instrument.expiry", "instrument.strike", "instrument.option_type"]
     }
   }
 }
