@@ -1,5 +1,9 @@
 # ORBITER - Trading System Documentation
 
+> **Quick Links:**
+> - [Architecture Docs](./docs/ARCHITECTURE.md)
+> - [Configuration Docs](./docs/CONFIGURATION.md)
+
 ## CLI Flags
 
 ### Trading Modes
@@ -95,3 +99,83 @@ When using `--strategyExecution=dynamic`, the system:
 3. If ADX < 25 → selects sideways strategy (s2)
 
 This runs at startup to determine market regime for the day.
+
+## MCX Futures Update
+
+MCX contracts expire monthly. The system automatically checks for expired contracts and updates them.
+
+### Manual Update
+
+To manually update MCX contracts:
+
+```bash
+cd /Users/vseshadri/python
+source .venv/bin/activate
+PYTHONPATH=/Users/vseshadri/python python -m orbiter.utils.mcx.update_mcx_config
+```
+
+This will:
+1. Connect to Shoonya broker
+2. Search for current month futures for each commodity
+3. Update `data/mcx_futures_map.json` with new tokens and expiry dates
+
+### Auto-Update
+
+The `ScripMaster.check_and_update_mcx_expiry()` method checks for expired contracts at startup and automatically calls the update utility if needed.
+
+### mcx_futures_map.json Format
+
+```json
+{
+  "472790": [
+    "CRUDEOIL",
+    "CRUDEOILM19MAR26",
+    10,
+    "19Mar26"
+  ]
+}
+```
+
+Format: `[symbol, trading_symbol, lot_size, expiry_date]`
+
+## Scoring Flow
+
+Scoring uses the strategy-specific rules.json:
+
+1. **Scoring Rules** are defined in `rules.json` under `scoring_rules`
+2. **Scoring Expression** uses facts from TechnicalAnalyzer and filter weights
+3. **Filter Weights** are in `filters.json` under `scoring.combined_score`
+
+Example scoring expression:
+```
+market_adx * filters_scoring_combined_score_weight_adx + (market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_combined_score_weight_ema_slope + market_supertrend_dir * filters_scoring_combined_score_weight_supertrend
+```
+
+### Available Scoring Facts
+
+| Fact | Source | Description |
+|------|--------|-------------|
+| `market_adx` | TechnicalAnalyzer | ADX indicator (0-100) |
+| `market_ema_fast` | TechnicalAnalyzer | Fast EMA (5 period) |
+| `market_ema_slow` | TechnicalAnalyzer | Slow EMA (20 period) |
+| `market_supertrend_dir` | TechnicalAnalyzer | Direction: 1 (bull) or -1 (bear) |
+| `filters_scoring_combined_score_weight_*` | filters.json | Configurable weights |
+
+## Troubleshooting
+
+### Scores are 0.00
+
+Check:
+1. Rules file is loaded (use TRACE logging)
+2. Filter weights match scoring expression variables
+3. Technical indicators are calculated
+
+### Lock File Error
+
+```bash
+rm -f /Users/vseshadri/python/orbiter.lock
+```
+
+### Session Expired
+
+Re-authenticate or check credentials in `ShoonyaApi-py/cred.yml`
