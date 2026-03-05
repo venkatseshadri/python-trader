@@ -5,8 +5,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "index",
-    "expiry_cycle": "weekly",
-    "expiry_type": "weekly"
+    "expiry_cycle": "weekly"
   },
   {
     "symbol": "BANKNIFTY",
@@ -14,8 +13,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "index",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "FINNIFTY",
@@ -23,8 +21,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "index",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "MIDCPNIFTY",
@@ -32,8 +29,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "index",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "NIFTYNXT50",
@@ -41,8 +37,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "index",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "RELIANCE",
@@ -50,8 +45,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "TCS",
@@ -59,8 +53,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "HDFCBANK",
@@ -68,8 +61,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "INFY",
@@ -77,8 +69,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "ICICIBANK",
@@ -86,8 +77,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "SBIN",
@@ -95,8 +85,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "AXISBANK",
@@ -104,8 +93,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BHARTIARTL",
@@ -113,8 +101,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "HINDUNILVR",
@@ -122,8 +109,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "ITC",
@@ -131,8 +117,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "MARUTI",
@@ -140,8 +125,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "KOTAKBANK",
@@ -149,8 +133,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BAJFINANCE",
@@ -158,8 +141,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "ASIANPAINT",
@@ -167,8 +149,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "LT",
@@ -176,8 +157,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BAJAJ-AUTO",
@@ -185,8 +165,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "HDFCLIFE",
@@ -194,8 +173,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "TITAN",
@@ -203,8 +181,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "DLF",
@@ -212,8 +189,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "JSWSTEEL",
@@ -221,8 +197,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "ADANIPORTS",
@@ -230,8 +205,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "UPL",
@@ -239,8 +213,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "ONGC",
@@ -248,8 +221,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "TATAMOTORS",
@@ -257,8 +229,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "WIPRO",
@@ -266,8 +237,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BAJAJFINSV",
@@ -275,8 +245,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BPCL",
@@ -284,8 +253,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "COALINDIA",
@@ -293,8 +261,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "DRREDDY",
@@ -302,8 +269,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "EICHERMOT",
@@ -311,8 +277,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "GAIL",
@@ -320,8 +285,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "GRASIM",
@@ -329,8 +293,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "HCLTECH",
@@ -338,8 +301,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "HINDALCO",
@@ -347,8 +309,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "IOC",
@@ -356,8 +317,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "M&M",
@@ -365,8 +325,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "NTPC",
@@ -374,8 +333,7 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "POWERGRID",
@@ -383,7 +341,6 @@
     "exchange": "NSE",
     "derivative": "option",
     "instrument_type": "stock",
-    "expiry_cycle": "monthly",
-    "expiry_type": "monthly"
+    "expiry_cycle": "monthly"
   }
 ]
