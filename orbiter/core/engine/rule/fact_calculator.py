@@ -12,6 +12,8 @@ from .technical_analyzer import TechnicalAnalyzer
 
 logger = logging.getLogger("ORBITER")
 
+_yf_adx_cache = {'value': None, 'timestamp': 0}
+
 class FactCalculator:
     def __init__(self, project_root: str, fact_definitions: Dict[str, Any]):
         logger.trace(f"[FactCalculator.__init__] - Initializing with project_root: {project_root}")
@@ -23,6 +25,7 @@ class FactCalculator:
         self.analyzer = TechnicalAnalyzer()
 
     def calculate_technical_facts(self, standardized_data: Dict[str, np.ndarray], filter_config: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
+        import time
         facts = {}
         close_data = standardized_data.get('close')
         token = kwargs.get('token', 'UNKNOWN')
@@ -31,6 +34,22 @@ class FactCalculator:
         logger.info(f"🧮 Calculating Tech Facts for {token} | Bars: {data_len}")
 
         if close_data is None or len(close_data) < 20:
+            # 🔄 Fallback: Use Yahoo Finance ADX when broker candles are insufficient (e.g., outside market hours)
+            global _yf_adx_cache
+            current_time = time.time()
+            if _yf_adx_cache['value'] is None or (current_time - _yf_adx_cache['timestamp']) > 300:
+                try:
+                    from orbiter.utils.yf_adapter import get_market_adx
+                    yf_adx = get_market_adx('SENSEX', '5m')
+                    if yf_adx > 0:
+                        _yf_adx_cache = {'value': yf_adx, 'timestamp': current_time}
+                        logger.info(f"🔄 Using YF ADX fallback: {yf_adx}")
+                except Exception as e:
+                    logger.warning(f"YF ADX fallback failed: {e}")
+            
+            if _yf_adx_cache['value'] and _yf_adx_cache['value'] > 0:
+                facts['market.adx'] = facts['market_adx'] = _yf_adx_cache['value']
+            
             return facts
 
         # ⚡️ Optimize: Calculate indicators ONCE per tick

@@ -28,17 +28,7 @@
             "side": "BUY", 
             "qty": 1,
             "exchange": "MCX",
-            "remark": "MCX_TOPN_BULL"
-          } 
-        },
-        { 
-          "type": "trade.place_future_order", 
-          "params": { 
-            "derivative": "future",
-            "side": "SELL", 
-            "qty": 1,
-            "exchange": "MCX",
-            "remark": "MCX_TOPN_BEAR"
+            "remark": "MCX_TOPN"
           } 
         }
       ]
