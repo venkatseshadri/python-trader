@@ -153,7 +153,21 @@ class Engine:
             # Inject calculated tech facts into extra_facts so evaluate() doesn't re-calculate them poorly
             for k, v in tech_facts.items():
                 extra_facts[k.replace('.', '_')] = v
-
+            
+            # 🔥 Detailed scoring debug - log key indicators with weights
+            # Weights: ADX=0.4, EMA_slope=0.3, SuperTrend=0.3
+            adx = tech_facts.get('market.adx') or tech_facts.get('market_adx', 0)
+            ema_fast = tech_facts.get('market.ema_fast') or tech_facts.get('market_ema_fast', 0)
+            ema_slow = tech_facts.get('market.ema_slow') or tech_facts.get('market_ema_slow', 0)
+            supertrend = tech_facts.get('filter.supertrend_direction') or tech_facts.get('market_supertrend_dir', 0)
+            ema_slope = ((ema_fast - ema_slow) / ema_slow * 100) if ema_slow else 0
+            
+            # Manual score calculation: ADX*0.4 + EMA_slope*0.3 + SuperTrend*0.3
+            # SuperTrend is -1 or 1, so multiply by 100 to make it comparable
+            manual_score = (adx * 0.4) + (abs(ema_slope) * 0.3) + (supertrend * 100 * 0.3)
+            
+            logger.debug(f"📈 {symbol_name}: ADX={adx:.2f}*0.4 + EMA_slope={ema_slope:.3f}%*0.3 + ST={supertrend}*0.3 = Score:{manual_score:.2f}")
+            
             # 🔥 Scoring for visibility
             score = 0.0
             if tech_facts:
