@@ -171,6 +171,10 @@ def download_full_mcx_symbols():
         futures_map = {}
         today = date.today()
         
+        # Need to track base symbol separately from mini/micro variants
+        # CRUDEOIL and CRUDEOILM are DIFFERENT symbols!
+        base_symbol_map = {}  # Track which base symbols we've seen
+        
         for line in content.strip().split('\n'):
             # Skip header line
             if line.startswith('Exchange,'):
@@ -190,9 +194,13 @@ def download_full_mcx_symbols():
             exd = parts[6]  # DD-MON-YYYY
             instname = parts[7]  # FUTCOM, OPTFUT, etc.
             
-            # Only process MCX futures
+            # Only process MCX futures (FUTCOM or FUTIDX)
             if exchange != 'MCX' or instname not in ('FUTCOM', 'FUTIDX'):
                 continue
+            
+            # Check if this is an option (has strike price) - skip those
+            if len(parts) > 9 and parts[9] and parts[9] != '0':
+                continue  # Skip options
             
             # Parse expiry date
             try:
@@ -202,7 +210,8 @@ def download_full_mcx_symbols():
             except:
                 continue
             
-            # If we already have this symbol with a nearer expiry, skip
+            # Key: Use symbol as-is (CRUDEOIL, CRUDEOILM, etc. are different!)
+            # But only keep the nearest expiry for each
             if symbol in futures_map:
                 existing_exp = futures_map[symbol][3]
                 try:
