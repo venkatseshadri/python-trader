@@ -94,23 +94,30 @@ def test_bfo_tpseries_sensex_future(client):
 
 
 def test_bfo_tpseries_sensex_option(client):
-    """Test: Verify SENSEX Option (BFO|863172) historical data works."""
+    """Test: Verify SENSEX Option (BFO) historical data works.
+    
+    Note: Use ATM option (Mar 12 PE 79000 - token 845683) as far OTM options
+    may not have traded. Also avoid expiry day (Mar 5) as trading stops early.
+    """
     last_bus_day = _get_last_business_day()
     
-    # 2:00 PM to 3:30 PM (when options are most liquid)
-    start_dt = last_bus_day.replace(hour=14, minute=0, second=0, microsecond=0)
+    # Use yesterday's full day window when market was open
+    # March 5 is expiry day - options may have stopped trading
+    start_dt = last_bus_day.replace(hour=9, minute=15, second=0, microsecond=0)
     end_dt = last_bus_day.replace(hour=15, minute=30, second=0, microsecond=0)
 
-    # 863172 is SENSEX2630593800PE (Mar 5 expiry, 93800 strike PE)
+    # 845683 is SENSEX Mar 12 PE 79000 (ATM option - most liquid)
+    token = '845683' 
+    
     ret = client.api.get_time_price_series(
         exchange='BFO',
-        token='863172',
+        token=token,
         starttime=start_dt.timestamp(),
         endtime=end_dt.timestamp(),
-        interval=5
+        interval=15
     )
     
-    print(f"\n[BFO Option] Token: 863172 (SENSEX PE)")
+    print(f"\n[BFO Option] Token: {token} (Mar 12 PE 79000 - ATM)")
     print(f"  Request: {start_dt} to {end_dt}")
     print(f"  Response type: {type(ret)}")
     
@@ -122,9 +129,11 @@ def test_bfo_tpseries_sensex_option(client):
     else:
         print(f"  Response: {ret}")
     
-    # Options may not have traded in the window - this is expected
-    if ret is None or (isinstance(ret, dict) and ret.get('emsg')):
-        pytest.skip(f"No option data available (token may not have traded in window or token expired): {ret}")
+    # Should return data for ATM option
+    assert ret is not None
+    assert isinstance(ret, list)
+    assert len(ret) > 0
+    assert 'intc' in ret[0]
     
     assert ret is not None
     assert isinstance(ret, list)
