@@ -96,8 +96,13 @@ def test_bfo_tpseries_sensex_future(client):
 def test_bfo_tpseries_sensex_option(client):
     """Test: Verify SENSEX Option (BFO) historical data works.
     
-    Note: Use ATM option (Mar 12 PE 79000 - token 845683) as far OTM options
-    may not have traded. Also avoid expiry day (Mar 5) as trading stops early.
+    IMPORTANT: Token 845683 (Mar 12 PE 79000) expires weekly!
+    Update this token when the current weekly contract expires:
+    - Check bfo_symbols.json for the next week's ATM option token
+    - Look for BSXOPT with expiry = next Thursday's date
+    - Use ATM strike (closest to current SENSEX level ~79000)
+    
+    Example: When Mar 12 contract expires, update to Mar 19 ATM token.
     """
     last_bus_day = _get_last_business_day()
     
