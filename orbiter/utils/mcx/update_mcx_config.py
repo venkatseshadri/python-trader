@@ -172,18 +172,23 @@ def download_full_mcx_symbols():
         today = date.today()
         
         for line in content.strip().split('\n'):
-            parts = line.split('|')
-            if len(parts) < 10:
+            # Skip header line
+            if line.startswith('Exchange,'):
                 continue
                 
-            # Format: token|tsym|symbol|company|instname|exch|exd|strike|opt|ls
-            token = parts[0]
-            tsym = parts[1]
-            symbol = parts[2]
-            instname = parts[4]  # FUTCOM, OPTFUT, etc.
-            exchange = parts[5]
+            # Format: Exchange,Token,LotSize,GNGD,Symbol,TradingSymbol,Expiry,Instrument,OptionType,StrikePrice,TickSize
+            parts = line.split(',')
+            if len(parts) < 8:
+                continue
+            
+            # MCX,477176,10,0.1,GOLDTEN,GOLDTEN31MAR26,31-MAR-2026,FUTCOM,XX,0,1
+            exchange = parts[0]
+            token = parts[1]
+            lotsize = parts[2]
+            symbol = parts[4]
+            tsym = parts[5]
             exd = parts[6]  # DD-MON-YYYY
-            lotsize = parts[9]
+            instname = parts[7]  # FUTCOM, OPTFUT, etc.
             
             # Only process MCX futures
             if exchange != 'MCX' or instname not in ('FUTCOM', 'FUTIDX'):
@@ -197,7 +202,6 @@ def download_full_mcx_symbols():
             except:
                 continue
             
-            # Use symbol as-is (GOLDM, SILVERM, etc.)
             # If we already have this symbol with a nearer expiry, skip
             if symbol in futures_map:
                 existing_exp = futures_map[symbol][3]
