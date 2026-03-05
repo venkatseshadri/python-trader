@@ -51,3 +51,4 @@ build/
 dist/
 *.egg-info/
 *.egg
+ShoonyaApi-py/cred*.yml
