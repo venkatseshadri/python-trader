@@ -14,7 +14,8 @@
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
-          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 }
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
+          { "fact": "strategy.trend_score", "operator": "greater_than", "value": 0.25 }
         ]
       },
       "execution_logic": "TOP_N",
