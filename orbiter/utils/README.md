@@ -17,9 +17,17 @@ The `utils/` directory provides **Stateless Helpers & Infrastructure**. These mo
 
 ### 4. `logger.py`
 - Configures the custom logging format. Routes `INFO` logs to the console and `TRACE/DEBUG` to rotated files in `logs/system/`.
+- Adds custom `TRACE` level (below DEBUG) for granular logging.
 
 ### 5. `data_manager.py` / `schema_manager.py`
 - Standardizes JSON/YAML reads and writes. Centralizes schema lookups to decouple hardcoded keys from the application layer.
+
+### 6. `yf_adapter.py`
+- Fetches market regime data from Yahoo Finance (ADX for SENSEX, NIFTY, etc.)
+- Used for:
+  - **Dynamic strategy selection** at startup (trending vs sideways)
+  - **ADX fallback** in scoring when broker historical data is unavailable
+- Supports multiple intervals (1m, 5m, 15m) with automatic fallback
 
 ## 🛑 Strict Boundaries
 - No trading domain knowledge or broker API logic is permitted here. Utilities must remain completely stateless and reusable.

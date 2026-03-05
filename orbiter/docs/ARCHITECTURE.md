@@ -210,6 +210,32 @@
 | `market_supertrend_dir` | TechnicalAnalyzer | Direction: 1 (bull) or -1 (bear) |
 | `filters_scoring_combined_score_weight_*` | filters.json | Weights from config |
 
+### ADX Fallback
+
+When broker historical data is insufficient (less than 20 candles), the system falls back to Yahoo Finance for ADX:
+
+```
+Insufficient broker candles (< 20)
+         │
+         ▼
+FactCalculator.calculate_technical_facts()
+         │
+         ├─► Broker ADX = 0 (no data)
+         │
+         ▼
+YF Adapter.get_market_adx('SENSEX', '5m')
+         │
+         ▼
+Cache ADX for 5 minutes
+         │
+         ▼
+Use YF ADX in scoring
+```
+
+This ensures scoring works:
+- Outside market hours (no broker candles)
+- On fresh start before WebSocket populates data
+
 ---
 
 ## Order Execution Flow
