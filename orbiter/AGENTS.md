@@ -4,92 +4,112 @@
 > - [Architecture Docs](./docs/ARCHITECTURE.md)
 > - [Configuration Docs](./docs/CONFIGURATION.md)
 
-## CLI Flags
+## Quick Reference
+
+| What you want... | Command |
+|-----------------|---------|
+| Test at home (after market) | `ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyCode=m1` |
+| Paper trade live | `python -m orbiter.main --paper_trade=true --strategyCode=m1` |
+| Live trade | `python -m orbiter.main --paper_trade=false --strategyCode=m1` |
+
+## CLI Flags (Command Line Arguments)
 
 ### Trading Modes
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--paper_trade=true` | Paper trading - no real orders placed | `--paper_trade=true` |
-| `--paper_trade=false` | Real trading - place actual orders with broker | `--paper_trade=false` |
+| `--paper_trade=true` | Paper trading - no real orders placed (SAFE) | `--paper_trade=true` |
+| `--paper_trade=false` | Real trading - place actual orders | `--paper_trade=false` |
 
-**Default:** `paper_trade=true` (safe default - always paper trade unless explicitly set to false)
-
-### Market Hours
-
-| Flag | Environment Variable | Description |
-|------|---------------------|-------------|
-| | `ORBITER_SIMULATE_MARKET_HOURS=true` | Run outside market hours (e.g., 7 PM) |
-
-**When to use:**
-- `ORBITER_SIMULATE_MARKET_HOURS=true` - Testing at home after market closes
-- Without this flag - Only runs during market hours (9:15 AM - 3:30 PM IST)
+**Default:** `paper_trade=true` (always safe unless you explicitly set false)
 
 ### Strategy Selection
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--strategyCode=s1` | Use specific strategy code | `--strategyCode=s1` |
-| `--strategyCode=n1` | Use NIFTY strategy | `--strategyCode=n1` |
-| `--strategyExecution=dynamic` | Auto-select strategy based on market regime | `--strategyExecution=dynamic` |
-
-**Strategy Codes:**
-- `m1` - MCX Trend Follower
-- `n1` - Nifty FnO TopN Trend  
-- `n2` - Nifty 50 Expiry Day Short Straddle
-- `s1` - BSE SENSEX F&O TopN Trend
-- `s2` - BSE SENSEX Expiry Day Short Straddle
+| `--strategyCode=m1` | MCX Trend Follower | Commodities |
+| `--strategyCode=n1` | Nifty FnO TopN Trend | Nifty F&O |
+| `--strategyCode=n2` | Nifty Expiry Day Short Straddle | Nifty Options |
+| `--strategyCode=s1` | BSE SENSEX F&O TopN Trend | Sensex F&O |
+| `--strategyCode=s2` | BSE SENSEX Expiry Day Short Straddle | Sensex Options |
+| `--strategyExecution=dynamic` | Auto-select strategy based on ADX | |
 
 ### Office Mode
 
 | Flag | Description |
 |------|-------------|
-| `--office_mode=true` | MBP taking over from RPI - sends freeze command to RPI via Telegram |
+| `--office_mode=true` | Live data but no trades (for RPI takeover) |
+
+### Alternative Syntax
+
+| Flag | Also works as |
+|------|---------------|
+| `--strategyCode=s1` | `--strategy_code=s1`, `--strategyId=bsensex_bfo_topn_trend` |
+| `--paper_trade=false` | `--paper_trade=false` |
+| `--office_mode=true` | `--office_mode=true` (no =value needed) |
 
 ## Environment Variables
 
 | Variable | Values | Description |
 |----------|--------|-------------|
-| `ORBITER_SIMULATE_MARKET_HOURS` | `true`/`false` | Run even when markets are closed |
-| `ORBITER_LOG_LEVEL` | `INFO`/`DEBUG`/`TRACE` | Logging verbosity |
-| `ORBITER_2FA` | TOTP code | Override 2FA token |
+| `ORBITER_SIMULATE_MARKET_HOURS` | `true` or `false` | Run outside market hours (9:15 AM - 3:30 PM IST) |
+| `ORBITER_LOG_LEVEL` | `TRACE`, `DEBUG`, `INFO`, `WARNING`, `ERROR` | Logging verbosity |
+| `ORBITER_2FA` | TOTP code | Override 2FA (normally auto-generated) |
+
+## Data Priming (Historical Data)
+
+On startup, Orbiter loads historical candles to calculate technical indicators:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `priming_lookback_mins` | 120 | How many minutes of history to load |
+| `priming_interval` | 5 | Candle interval in minutes |
+
+This gives ~24 bars of 5-minute data, which is enough for most indicators (ADX needs 14+ periods).
+
+**Note:** Historical data only works when market is OPEN. Outside market hours, you'll see "Bars: 0" or "Bars: 1" because the API doesn't return historical data. The system will still work once market opens and WebSocket data starts streaming.
 
 ## Usage Examples
 
 ### Test at home (outside market hours)
 ```bash
-ORBITER_SIMULATE_MARKET_HOURS=true python main.py --paper_trade=true --strategyCode=s1
+ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyCode=s1
 ```
 
 ### Paper trade during market hours
 ```bash
-python main.py --paper_trade=true --strategyCode=s1
+python -m orbiter.main --paper_trade=true --strategyCode=s1
 ```
 
 ### Live trading during market hours
 ```bash
-python main.py --paper_trade=false --strategyCode=s1
+python -m orbiter.main --paper_trade=false --strategyCode=s1
+```
+
+### Debug mode (verbose logging)
+```bash
+ORBITER_LOG_LEVEL=TRACE python -m orbiter.main --paper_trade=true --strategyCode=m1
 ```
 
 ### Dynamic strategy selection (auto-select based on ADX)
 ```bash
-ORBITER_SIMULATE_MARKET_HOURS=true python main.py --paper_trade=true --strategyExecution=dynamic
+ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyExecution=dynamic
 ```
 
 ### Office mode (MBP takes over from RPI)
 ```bash
-python main.py --office_mode=true --paper_trade=false
+python -m orbiter.main --office_mode=true --paper_trade=false
 ```
 
 ## Mode Matrix
 
 | Scenario | Paper Trade | Simulate Market Hours | Result |
 |----------|-------------|----------------------|--------|
-| Testing at home after hours | true | true | ✅ Run, no trades |
-| Paper trade during hours | true | false | ✅ Run, no trades |
-| Live trade during hours | false | false | ✅ Run, real trades |
-| Test live at home | false | true | ⚠️ Run, real trades |
-| Office mode takeover | false | false | ✅ Run, live + freeze RPI |
+| Testing at home after hours | true | true | Run, no trades |
+| Paper trade during hours | true | false | Run, no trades |
+| Live trade during hours | false | false | Run, real trades |
+| Test live at home | false | true | Run, real trades |
+| Office mode takeover | false | false | Run, live + freeze RPI |
 
 ## Dynamic Strategy Selection
 

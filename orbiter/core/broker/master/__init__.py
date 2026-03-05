@@ -43,8 +43,9 @@ class ScripMaster:
     def load_mappings(self, segment_name: str):
         """Loads mappings for a specific segment (NFO or MCX)."""
         logger.debug(f"[{self.__class__.__name__}.load_mappings] - Loading mappings for segment: {segment_name}")
-        data_structure_key = self.project_manifest_schema.get('structure_key', 'structure')
-        data_path = DataManager.get_manifest_path(self.project_root, data_structure_key, 'data')
+        
+        # Build data path directly instead of relying on manifest
+        data_path = os.path.join(self.project_root, 'orbiter', 'data')
 
         derivatives_file = None
         if segment_name == 'nfo':

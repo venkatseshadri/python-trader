@@ -49,12 +49,40 @@ class ConnectionManager:
         self.api = ShoonyaApiPy()
         self.socket_opened = False
         
-        # Load credentials
-        orbiter_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        if os.path.isabs(config_path):
-            self.config_file = config_path
-        else:
-            self.config_file = os.path.abspath(os.path.join(orbiter_root, config_path))
+        # Load credentials - search multiple locations
+        possible_creds = []
+        
+        if config_path:
+            if os.path.isabs(config_path):
+                possible_creds.append(config_path)
+            else:
+                # From orbiter root
+                orbiter_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                possible_creds.append(os.path.abspath(os.path.join(orbiter_root, config_path)))
+                # From project root
+                project_root = os.path.dirname(orbiter_root)
+                possible_creds.append(os.path.join(project_root, config_path.lstrip('../')))
+                possible_creds.append(os.path.join(project_root, 'ShoonyaApi-py', config_path.lstrip('../')))
+        
+        # Add common credential file names
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        possible_creds.extend([
+            os.path.join(project_root, 'ShoonyaApi-py', 'cred.shoonya.yml'),
+            os.path.join(project_root, 'ShoonyaApi-py', 'cred.yml'),
+            os.path.join(project_root, 'cred.shoonya.yml'),
+            os.path.join(project_root, 'cred.yml'),
+        ])
+        
+        # Find first existing cred file
+        self.config_file = None
+        for cred_file in possible_creds:
+            if cred_file and os.path.exists(cred_file):
+                self.config_file = cred_file
+                break
+        
+        if not self.config_file:
+            raise FileNotFoundError(f"Credentials file not found. Tried: {possible_creds}")
+        
         with open(self.config_file) as f:
             self.cred = yaml.load(f, Loader=yaml.FullLoader)
             
