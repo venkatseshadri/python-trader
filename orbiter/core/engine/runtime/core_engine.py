@@ -63,17 +63,8 @@ class Engine:
             token = instrument.get('token') if isinstance(instrument, dict) else instrument
             exch = instrument.get('exchange', 'NSE') if isinstance(instrument, dict) else 'NSE'
             
-            # 🔄 Dynamic token resolution for FUTURES only (MCX, BFO indices)
-            # Skip for OPTIONS (NFO) - we use spot tokens for scoring
-            if isinstance(instrument, dict) and instrument.get('derivative') == 'future':
-                symbol_for_resolution = instrument.get('symbol') or instrument.get('underlying', token)
-                try:
-                    future_info = self.state.client.get_near_future(symbol_for_resolution, exch)
-                    if future_info and future_info.get('ok'):
-                        token = future_info.get('token')
-                        logger.info(f"🔄 Resolved {symbol_for_resolution} -> token {token} (expiry: {future_info.get('expiry')})")
-                except Exception as e:
-                    logger.warning(f"Failed to resolve future for {symbol_for_resolution}: {e}")
+            # Skip dynamic resolution - tokens in instruments.json are correct
+            # get_near_future is broken for MCX (returns symbol name instead of numeric token)
             
             lookup_key = f"{exch}|{token}"
             
