@@ -409,6 +409,8 @@ Manages strategy selection and session context.
 | `config/session.json` | Session defaults |
 | `data/mcx_futures_map.json` | MCX token mappings with expiry dates |
 
+> **Token Verification:** Run `python -m orbiter.utils.mcx.update_mcx_config --full` to fetch latest tokens from Shoonya API. Verify instruments.json tokens match MCX_symbols.txt.
+
 ---
 
 ## Testing Guidelines

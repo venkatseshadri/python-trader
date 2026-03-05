@@ -223,10 +223,14 @@ Trading universe - list of symbols to trade.
 
 ```json
 [
-  { "symbol": "CRUDEOIL", "token": "472790" },
-  { "symbol": "NATURALGAS", "token": "475111" }
+  { "symbol": "CRUDEOIL", "token": "472789", "exchange": "MCX" },
+  { "symbol": "CRUDEOILM", "token": "472790", "exchange": "MCX" },
+  { "symbol": "NATURALGAS", "token": "475111", "exchange": "MCX" },
+  { "symbol": "GOLD", "token": "454818", "exchange": "MCX" }
 ]
 ```
+
+> **Token Source:** Use `python -m orbiter.utils.mcx.update_mcx_config --full` to fetch latest tokens from Shoonya API.
 
 ---
 
@@ -234,12 +238,18 @@ Trading universe - list of symbols to trade.
 
 ### data/mcx_futures_map.json
 
-MCX futures token mappings with expiry dates.
+MCX futures token mappings with expiry dates. Symbol keys (not numeric tokens).
 
 ```json
 {
-  "472790": [
+  "CRUDEOIL": [
     "CRUDEOIL",
+    "CRUDEOIL19MAR26",
+    100,
+    "19Mar26"
+  ],
+  "CRUDEOILM": [
+    "CRUDEOILM",
     "CRUDEOILM19MAR26",
     10,
     "19Mar26"

@@ -157,16 +157,18 @@ The `ScripMaster.check_and_update_mcx_expiry()` method checks for expired contra
 
 ```json
 {
-  "472790": [
+  "CRUDEOIL": [
     "CRUDEOIL",
-    "CRUDEOILM19MAR26",
-    10,
+    "CRUDEOIL19MAR26",
+    100,
     "19Mar26"
   ]
 }
 ```
 
 Format: `[symbol, trading_symbol, lot_size, expiry_date]`
+
+> **Note:** Token keys are symbol names (e.g., "CRUDEOIL"), not numeric tokens. Token resolution happens via ScripMaster.
 
 ## Scoring Flow
 
