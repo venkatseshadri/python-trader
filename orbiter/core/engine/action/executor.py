@@ -1,6 +1,7 @@
 # orbiter/core/engine/action/executor.py
 
 import logging
+import time
 from typing import Dict, Any
 from orbiter.utils.constants_manager import ConstantsManager
 from orbiter.utils.schema_manager import SchemaManager
@@ -30,6 +31,10 @@ class ActionExecutor:
         self._future_live = FutureActionExecutor(state)
         self._future_sim  = FutureSimulationExecutor(state)
 
+        # Deduplication: track recently placed orders (symbol + side -> timestamp)
+        self._recent_orders: Dict[str, float] = {}
+        self._order_ttl_seconds = 60  # Orders valid for 60 seconds
+
     @classmethod
     def set_frozen(cls, frozen: bool):
         """Set frozen state - blocks all real trades"""
@@ -50,7 +55,19 @@ class ActionExecutor:
             logger.warning("⛔ TRADE BLOCKED: System is frozen. Use /unfreeze to enable trading.")
             return {"stat": "Ok", "blocked": True, "reason": "frozen"}
         
-        # 1. Determine Mode
+        # 1. Deduplication: Check if order already placed recently
+        symbol = params.get('symbol', '')
+        side = params.get('side', 'B')
+        order_key = f"{symbol}:{side}".upper()
+        
+        current_time = time.time()
+        if order_key in self._recent_orders:
+            last_time = self._recent_orders[order_key]
+            if current_time - last_time < self._order_ttl_seconds:
+                logger.debug(f"⏭️ Order deduplicated: {order_key} (last {current_time - last_time:.1f}s ago)")
+                return {"stat": "Ok", "deduplicated": True, "reason": "recent_order_exists"}
+        
+        # 2. Determine Mode
         is_live = params.get('execute', True)
         
         # 2. Determine Category (Explicit 'derivative' priority)
@@ -74,7 +91,17 @@ class ActionExecutor:
             else:
                 worker = self._equity_live if is_live else self._equity_sim
                 
-            return worker.execute(**params)
+            result = worker.execute(**params)
+            
+            # Track successful order for deduplication
+            if result and result.get('ok') or result and result.get('stat') == 'Ok':
+                self._recent_orders[order_key] = current_time
+                # Cleanup old entries periodically
+                if len(self._recent_orders) > 100:
+                    self._recent_orders = {k: v for k, v in self._recent_orders.items() 
+                                         if current_time - v < self._order_ttl_seconds}
+            
+            return result
             
         except Exception as e:
             logger.error(f"❌ Execution Routing Failed: {e}")
