@@ -69,6 +69,16 @@ This gives ~24 bars of 5-minute data, which is enough for most indicators (ADX n
 
 **Note:** Historical data only works when market is OPEN. Outside market hours, you'll see "Bars: 0" or "Bars: 1" because the API doesn't return historical data. The system will still work once market opens and WebSocket data starts streaming.
 
+### ADX Fallback
+
+When broker historical data is insufficient (less than 20 candles), Orbiter automatically falls back to Yahoo Finance for ADX calculation:
+
+- Fetches SENSEX ADX from Yahoo Finance
+- Caches the value for 5 minutes to avoid excessive API calls
+- This ensures scoring works even outside market hours
+
+The YF ADX is used for scoring only. For dynamic strategy selection, the system already uses Yahoo Finance directly at startup.
+
 ## Usage Examples
 
 ### Test at home (outside market hours)
@@ -189,6 +199,14 @@ Check:
 1. Rules file is loaded (use TRACE logging)
 2. Filter weights match scoring expression variables
 3. Technical indicators are calculated
+4. If ADX is showing 0, check if broker candles are available (outside market hours, YF fallback is used)
+
+### ADX Shows 0 in Scoring
+
+If ADX shows 0 despite having data:
+1. Check broker candles: `ORBITER_LOG_LEVEL=TRACE` - look for "Bars: X" in logs
+2. If Bars < 20, system uses YF fallback - verify internet connectivity
+3. YF fallback is cached for 5 minutes - restart or wait for cache expiry
 
 ### Lock File Error
 

@@ -35,9 +35,11 @@ class TestTechnicalAnalyzerRealData(unittest.TestCase):
         self.assertIn('ema5', indicators)
         self.assertIn('rsi', indicators)
         self.assertIn('atr', indicators)
+        self.assertIn('market_adx', indicators)  # ADX is critical for scoring
         self.assertGreater(indicators['ema5'], 0.0)
         self.assertGreaterEqual(indicators['rsi'], 0.0)
         self.assertGreater(indicators['atr'], 0.0)
+        self.assertGreaterEqual(indicators['market_adx'], 0.0)  # ADX can be 0 if insufficient data
 
 
 if __name__ == '__main__':
