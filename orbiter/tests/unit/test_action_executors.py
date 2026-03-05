@@ -1,6 +1,8 @@
 import unittest
 from types import SimpleNamespace
+import time
 
+from orbiter.core.engine.action.executor import ActionExecutor
 from orbiter.core.engine.action.executors.equity import EquityActionExecutor, EquitySimulationExecutor
 from orbiter.core.engine.action.executors.futures import FutureActionExecutor, FutureSimulationExecutor
 from orbiter.core.engine.action.executors.options import OptionActionExecutor, OptionSimulationExecutor
@@ -88,6 +90,55 @@ class TestActionExecutors(unittest.TestCase):
         sim = OptionSimulationExecutor(state)
         res_sim = sim.execute(symbol='NIFTY', option='CE', strike='ATM')
         self.assertTrue(res_sim['simulated'])
+
+
+class TestOrderDeduplication(unittest.TestCase):
+    def setUp(self):
+        api = SimpleNamespace(
+            place_order=lambda **kwargs: {'stat': 'Ok', 'orderid': '1'},
+            get_quotes=lambda exchange, token: {'lp': 100.0}
+        )
+        client = SimpleNamespace(
+            api=api,
+            project_root='/Users/vseshadri/python',
+            exchange_config={}
+        )
+        self.state = SimpleNamespace(
+            client=client,
+            config={'paper_trade': False}
+        )
+        self.executor = ActionExecutor(self.state)
+        self.executor._order_ttl_seconds = 2  # 2 second TTL for testing
+
+    def test_first_order_allowed(self):
+        """First order should go through"""
+        result = self.executor.place_order(symbol='RECLTD', side='B', execute=True)
+        self.assertEqual(result['stat'], 'Ok')
+
+    def test_duplicate_order_blocked(self):
+        """Duplicate order within TTL should be blocked"""
+        # First order
+        self.executor.place_order(symbol='RECLTD', side='B', execute=True)
+        
+        # Second order same symbol+side - should be deduplicated
+        result = self.executor.place_order(symbol='RECLTD', side='B', execute=True)
+        self.assertTrue(result.get('deduplicated'))
+        
+        # Different side should be allowed
+        result2 = self.executor.place_order(symbol='RECLTD', side='S', execute=True)
+        self.assertEqual(result2['stat'], 'Ok')
+
+    def test_order_after_ttl_allowed(self):
+        """Order after TTL should go through"""
+        # First order
+        self.executor.place_order(symbol='RECLTD', side='B', execute=True)
+        
+        # Wait for TTL to expire
+        time.sleep(2.5)
+        
+        # Should be allowed now
+        result = self.executor.place_order(symbol='RECLTD', side='B', execute=True)
+        self.assertEqual(result['stat'], 'Ok')
 
 
 if __name__ == '__main__':
