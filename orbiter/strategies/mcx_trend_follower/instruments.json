@@ -1,10 +1,13 @@
 [
-  {"symbol": "CRUDEOIL", "token": "472790", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "CRUDEOIL", "token": "472789", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "CRUDEOILM", "token": "472790", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
   {"symbol": "NATURALGAS", "token": "475111", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "GOLD", "token": "472788", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "SILVER", "token": "458305", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "COPPER", "token": "477167", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "ZINC", "token": "477172", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "LEAD", "token": "477169", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
-  {"symbol": "ALUMINIUM", "token": "477166", "exchange": "MCX", "instrument_type": "future", "derivative": "future"}
+  {"symbol": "NATGASMINI", "token": "475112", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "GOLD", "token": "454818", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "SILVER", "token": "451666", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "COPPER", "token": "487657", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "ZINC", "token": "487662", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "LEAD", "token": "487658", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "NICKEL", "token": "487660", "exchange": "MCX", "instrument_type": "future", "derivative": "future"},
+  {"symbol": "ALUMINIUM", "token": "487656", "exchange": "MCX", "instrument_type": "future", "derivative": "future"}
 ]
