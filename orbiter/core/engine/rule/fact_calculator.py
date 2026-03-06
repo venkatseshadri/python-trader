@@ -33,7 +33,7 @@ class FactCalculator:
         
         logger.info(f"🧮 Calculating Tech Facts for {token} | Bars: {data_len}")
 
-        if close_data is None or len(close_data) < 20:
+        if close_data is None or len(close_data) < 14:
             # 🔄 Fallback: Use Yahoo Finance ADX when broker candles are insufficient (e.g., outside market hours)
             global _yf_adx_cache
             current_time = time.time()
