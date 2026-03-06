@@ -198,8 +198,8 @@ class RuleManager:
         # Add filter scoring weights to facts (BOTH dot and underscore formats)
         scoring_config = self.session_manager.filters.get('scoring', {}).get('combined_score', {}) if self.session_manager.filters else {}
         for k, v in scoring_config.items():
-            facts[f'filters_scoring_combined_{k}'] = v
-            facts[f'filters.scoring.combined.{k}'] = v
+            facts[f'filters_scoring_combined_score_{k}'] = v
+            facts[f'filters.scoring.combined_score.{k}'] = v
 
         max_score = 0.0
         for score_rule in self.scoring_rules:
