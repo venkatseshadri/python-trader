@@ -22,7 +22,7 @@ class TechnicalAnalyzer:
         high = standardized_data.get('high')
         low = standardized_data.get('low')
         
-        if close is None or len(close) < 20:
+        if close is None or len(close) < 14:
             return indicators
 
         try:
