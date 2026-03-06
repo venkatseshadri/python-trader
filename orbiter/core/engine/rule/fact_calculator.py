@@ -54,6 +54,7 @@ class FactCalculator:
             facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
             facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
             facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
+            facts['market.supertrend'] = facts['market_supertrend'] = 0
             
             return facts
 
