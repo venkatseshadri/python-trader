@@ -25,8 +25,7 @@ class LoggerWriter:
     def write(self, message):
         if message and message.strip():
             self.level(message.strip())
-            if self.raw:
-                sys.__stdout__.write(message)
+            # Removed raw=True duplication - handlers already write to stdout
     def flush(self):
         pass
 
