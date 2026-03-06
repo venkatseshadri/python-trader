@@ -24,6 +24,7 @@
   },
   "settings": {
     "session_state_file": "orbiter/data/session_state.json",
-    "span_cache_file": "orbiter/data/span_cache.json"
+    "span_cache_file": "orbiter/data/span_cache.json",
+    "paper_positions_file": "orbiter/data/paper_positions.json"
   }
 }
