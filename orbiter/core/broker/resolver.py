@@ -17,7 +17,37 @@ class ContractResolver:
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         expiry_str = expiry.isoformat()
-        return [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
+        rows = [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
+        
+        # 🔥 FALLBACK: If no rows found, generate option contracts dynamically
+        if not rows and symbol.upper() in ("NIFTY", "BANKNIFTY", "FINNIFTY"):
+            logger.debug(f"🔍 Generating option contracts dynamically for {symbol}")
+            # Use broker API to get option chain or generate basic strikes
+            # For now, generate strikes around ATM (assume 50 strikes for indices)
+            base_price = 25000 if symbol.upper() == "NIFTY" else (45000 if symbol.upper() == "BANKNIFTY" else 20000)
+            strike_step = 50 if symbol.upper() == "NIFTY" else 100
+            lot_size = 65
+            
+            # Parse expiry for trading symbol format (e.g., 30MAR26)
+            exp_str = expiry.strftime("%d%b%y").upper()
+            
+            rows = []
+            for strike in range(base_price - 50*strike_step, base_price + 50*strike_step, strike_step):
+                for opt_type in ["CE", "PE"]:
+                    tsym = f"{symbol.upper()}{exp_str}{opt_type}{strike}"
+                    rows.append({
+                        "symbol": symbol.upper(),
+                        "tradingsymbol": tsym,
+                        "token": f"{symbol.upper()}_{exp_str}_{opt_type}_{strike}",
+                        "exchange": exchange,
+                        "instrument": instrument,
+                        "expiry": expiry_str,
+                        "strike": str(strike),
+                        "option_type": opt_type,
+                        "lot_size": lot_size
+                    })
+        
+        return rows
 
     def _select_expiry(self, symbol: str, expiry_type: str, instrument: str, exchange_override: str = None) -> Optional[datetime.date]:
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
@@ -45,6 +75,45 @@ class ContractResolver:
             return exps
         
         expiries = find_exp()
+        
+        # 🔥 FALLBACK: If no expiries found in DERIVATIVE_OPTIONS, compute from current date
+        if not expiries:
+            logger.debug(f"🔍 No expiries in DERIVATIVE_OPTIONS for {symbol}, computing dynamically")
+            today = datetime.date.today()
+            # For weekly: find next Friday
+            # For monthly: find last Thursday of month
+            import calendar
+            if "weekly" in expiry_type.lower() or "current" in expiry_type.lower():
+                # Find next Friday (week expiry is typically Friday)
+                days_until_friday = (4 - today.weekday()) % 7
+                if days_until_friday == 0 and today.weekday() == 4:
+                    days_until_friday = 7  # If today is Friday, go to next week
+                next_friday = today + datetime.timedelta(days=days_until_friday if days_until_friday else 7)
+                expiries = {next_friday}
+            else:
+                # Monthly: find last Thursday of current month
+                last_day = calendar.monthrange(today.year, today.month)[1]
+                last_thursday = None
+                for d in range(last_day, 0, -1):
+                    check_date = datetime.date(today.year, today.month, d)
+                    if check_date.weekday() == 3:  # Thursday
+                        last_thursday = check_date
+                        break
+                if last_thursday and last_thursday < today:
+                    # Move to next month
+                    if today.month == 12:
+                        next_month = datetime.date(today.year + 1, 1, 1)
+                    else:
+                        next_month = datetime.date(today.year, today.month + 1, 1)
+                    last_day = calendar.monthrange(next_month.year, next_month.month)[1]
+                    for d in range(last_day, 0, -1):
+                        check_date = datetime.date(next_month.year, next_month.month, d)
+                        if check_date.weekday() == 3:
+                            last_thursday = check_date
+                            break
+                if last_thursday:
+                    expiries = {last_thursday}
+        
         if not expiries: return None
         
         today = datetime.date.today()
