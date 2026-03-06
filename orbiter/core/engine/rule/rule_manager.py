@@ -185,7 +185,7 @@ class RuleManager:
 
                 tech_facts_flat["instrument.symbol"] = raw_data.get('symbol', 'UNKNOWN')
                 
-                defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0}
+                defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0, 'market_supertrend': 0}
                 facts.update(defaults)
                 logger.trace(f"[evaluate_score] Added defaults, now adding tech_facts_flat: {list(tech_facts_flat.keys())}")
                 # Flatten tech facts properly
