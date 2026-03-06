@@ -64,10 +64,20 @@ class ActionExecutor:
         if order_key in self._recent_orders:
             last_time = self._recent_orders[order_key]
             if current_time - last_time < self._order_ttl_seconds:
-                logger.debug(f"⏭️ Order deduplicated: {order_key} (last {current_time - last_time:.1f}s ago)")
+                logger.info(f"⏭️ Order deduplicated: {order_key} (last {current_time - last_time:.1f}s ago)")
                 return {"stat": "Ok", "deduplicated": True, "reason": "recent_order_exists"}
         
-        # 2. Determine Mode
+        logger.debug(f"🔔 Order NOT deduplicated: {order_key} (first time or TTL expired)")
+        
+        # 2. Check if symbol already in active positions
+        tsym = params.get('tsym', params.get('symbol', ''))
+        for pos_key, pos_data in self.state.active_positions.items():
+            pos_tsym = pos_data.get('tsym', '')
+            if tsym and pos_tsym and tsym.upper() in pos_tsym.upper():
+                logger.info(f"⏭️ Order blocked: {tsym} already in active positions")
+                return {"stat": "Ok", "blocked": True, "reason": "already_in_positions"}
+        
+        # 3. Determine Mode
         is_live = params.get('execute', True)
         
         # 2. Determine Category (Explicit 'derivative' priority)

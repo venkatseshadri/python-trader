@@ -261,6 +261,13 @@ class Engine:
 
             actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **extra_facts)
             
+            # 🔥 SCORE THRESHOLD CHECK - Prevent trades with low/zero scores
+            score_threshold = self.state.config.get('trend_score_threshold', 0.25)
+            if score and abs(score) < score_threshold:
+                if actions:
+                    logger.debug(f"⏭️ Skipping {len(actions)} actions for {symbol_name}: score {score:.2f} < threshold {score_threshold}")
+                actions = None
+            
             if actions:
                 if self.office_mode:
                     logger.info(f"Office mode enabled: suppressed {len(actions)} instrument actions for {token}.")
