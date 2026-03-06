@@ -2,6 +2,7 @@
 
 from .base import BaseActionExecutor
 from typing import Dict, Any
+from datetime import datetime
 import logging
 
 class OptionActionExecutor(BaseActionExecutor):
@@ -38,6 +39,19 @@ class OptionActionExecutor(BaseActionExecutor):
         paper_trade = self.state.config.get('paper_trade', True)
         if paper_trade:
             logging.getLogger("ORBITER").info(f"🔬 SIM-OPTION: {side} {tsym} | QTY: {qty}")
+            # Add to active_positions for paper trading
+            token_key = f"{exch}|{token}"
+            self.state.active_positions[token_key] = {
+                'symbol': tsym,
+                'side': side,
+                'qty': qty,
+                'entry_price': ltp,
+                'entry_time': datetime.now(),
+                'paper': True
+            }
+            # Save paper positions to disk
+            if hasattr(self.state, 'save_paper_positions'):
+                self.state.save_paper_positions()
             return {"stat": "Ok", "simulated": True, "tsym": tsym}
         
         return self._fire(side, tsym, exch, qty, params)

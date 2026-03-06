@@ -2,6 +2,7 @@
 
 from .base import BaseActionExecutor
 from typing import Dict, Any
+from datetime import datetime
 import logging
 
 def _get_exchange_value(client, exch: str, key: str, default=None):
@@ -55,6 +56,20 @@ class FutureActionExecutor(BaseActionExecutor):
         
         # If simulation mode, return simulated response
         if not execute:
+            logging.getLogger("ORBITER").info(f"🔬 SIM-FUTURE: {side} {tsym} | QTY: {qty}")
+            # Add to active_positions for paper trading
+            token = res.get('token', symbol)
+            token_key = f"{exch}|{token}"
+            self.state.active_positions[token_key] = {
+                'symbol': tsym,
+                'side': side,
+                'qty': qty,
+                'entry_price': 0,
+                'entry_time': datetime.now(),
+                'paper': True
+            }
+            if hasattr(self.state, 'save_paper_positions'):
+                self.state.save_paper_positions()
             return {"stat": "Ok", "simulated": True, "tsym": tsym, "side": side, "qty": qty}
         
         return self._fire(side, tsym, exch, qty, params, product_type, price_type)

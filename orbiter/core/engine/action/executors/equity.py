@@ -2,6 +2,7 @@
 
 from .base import BaseActionExecutor
 from typing import Dict, Any
+from datetime import datetime
 
 class EquityActionExecutor(BaseActionExecutor):
     def execute(self, **params: Dict) -> Any:
@@ -20,6 +21,19 @@ class EquityActionExecutor(BaseActionExecutor):
     def _simulate(self, side: str, tsym: str, exch: str, qty: int, params: Dict) -> Any:
         import logging
         logging.getLogger("ORBITER").info(f"🔬 SIM-EQUITY: {side} {tsym} | QTY: {qty}")
+        # Add to active_positions for paper trading
+        token = params.get('token', tsym)
+        token_key = f"{exch}|{token}"
+        self.state.active_positions[token_key] = {
+            'symbol': tsym,
+            'side': side,
+            'qty': qty,
+            'entry_price': 0,
+            'entry_time': datetime.now(),
+            'paper': True
+        }
+        if hasattr(self.state, 'save_paper_positions'):
+            self.state.save_paper_positions()
         return {"stat": "Ok", "simulated": True, "tsym": tsym}
 
     def _fire(self, side: str, tsym: str, exch: str, qty: int, params: Dict) -> Any:

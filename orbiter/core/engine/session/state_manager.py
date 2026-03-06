@@ -48,6 +48,44 @@ class StateManager:
         
         self.state_file = DataManager.get_manifest_path(project_root, 'settings', 'session_state_file')
         self.client.set_span_cache_path(DataManager.get_manifest_path(project_root, 'settings', 'span_cache_file'))
+        
+        # Paper trading: separate file for paper positions (not synced to broker)
+        self.paper_positions_file = DataManager.get_manifest_path(project_root, 'settings', 'paper_positions_file')
+        
+        # Load paper positions if exists
+        self._load_paper_positions()
+
+
+    def _load_paper_positions(self):
+        """Load paper positions from file (for paper trading persistence)"""
+        if os.path.exists(self.paper_positions_file):
+            try:
+                with open(self.paper_positions_file, 'r') as f:
+                    data = json.load(f)
+                    self.active_positions = data.get('positions', {})
+                    if self.active_positions:
+                        logger.info(f"📄 Loaded {len(self.active_positions)} paper positions from disk")
+            except Exception as e:
+                logger.warning(f"Failed to load paper positions: {e}")
+
+    def save_paper_positions(self):
+        """Save paper positions to file"""
+        if not self.active_positions:
+            return
+        try:
+            os.makedirs(os.path.dirname(self.paper_positions_file), exist_ok=True)
+            with open(self.paper_positions_file, 'w') as f:
+                json.dump({'positions': self.active_positions, 'updated': datetime.now().isoformat()}, f, indent=4, cls=JSONEncoder)
+            logger.debug(f"📄 Saved {len(self.active_positions)} paper positions")
+        except Exception as e:
+            logger.warning(f"Failed to save paper positions: {e}")
+
+    def clear_paper_positions(self):
+        """Clear all paper positions (call at EOD)"""
+        self.active_positions = {}
+        if os.path.exists(self.paper_positions_file):
+            os.remove(self.paper_positions_file)
+        logger.info("🧹 Paper positions cleared (EOD reset)")
         self.client.load_span_cache()
         logger.debug(f"[{self.__class__.__name__}.__init__] - State file: {self.state_file}, Span cache: {self.client.span_cache_path}")
 
