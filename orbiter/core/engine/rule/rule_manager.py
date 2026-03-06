@@ -126,7 +126,7 @@ class RuleManager:
                 )
                 tech_facts_flat["instrument.symbol"] = raw_data.get('symbol', 'UNKNOWN')
                 
-                defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0}
+                defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0, 'market_supertrend': 0}
                 facts.update(defaults)
                 for k, v in tech_facts_flat.items():
                     facts[k.replace('.', '_')] = v
