@@ -187,6 +187,7 @@ class RuleManager:
                 
                 defaults = {'market_adx': 0.0, 'market_ema_fast': 0.0, 'market_ema_slow': 0.0, 'market_rsi': 50.0, 'market_supertrend_dir': 0}
                 facts.update(defaults)
+                logger.trace(f"[evaluate_score] Added defaults, now adding tech_facts_flat: {list(tech_facts_flat.keys())}")
                 # Flatten tech facts properly
                 for k, v in tech_facts_flat.items():
                     facts[k.replace('.', '_')] = v
@@ -200,6 +201,8 @@ class RuleManager:
         for k, v in scoring_config.items():
             facts[f'filters_scoring_combined_score_{k}'] = v
             facts[f'filters.scoring.combined_score.{k}'] = v
+
+        logger.trace(f"[evaluate_score] Facts keys before scoring: {list(facts.keys())}")
 
         max_score = 0.0
         for score_rule in self.scoring_rules:
