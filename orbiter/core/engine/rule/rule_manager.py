@@ -137,9 +137,13 @@ class RuleManager:
         triggered_ops = []
         op_key = self.rule_schema.get('actions_key', 'order_operations')
 
+        # DEBUG: Log rule evaluation
+        logger.debug(f"📋 Rule eval: {len(self.rule_sets)} rule_sets, facts keys: {list(facts.keys())[:10]}...")
         for rule_set in self.rule_sets:
             try:
-                if rule_set['engine'].matches(facts):
+                match_result = rule_set['engine'].matches(facts)
+                if match_result:
+                    logger.info(f"✅ Rule matched: {rule_set['name']}")
                     triggered_ops.extend(rule_set[op_key])
             except Exception as e:
                 logger.error(f"⚠️ Eval Error in [{rule_set['name']}]: {e}")
