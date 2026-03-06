@@ -54,6 +54,8 @@ class TechnicalAnalyzer:
             
         except Exception as e:
             logger.error(f"TechnicalAnalyzer Error: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             
         return indicators
 
