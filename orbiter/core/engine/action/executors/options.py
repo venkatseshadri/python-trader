@@ -15,14 +15,20 @@ class OptionActionExecutor(BaseActionExecutor):
         side = params.get('side', 'B').upper()
         
         # 1. Resolve Underlying Exchange & LTP
-        # Default: Use the segment's primary exchange (NSE for NFO, MCX for MCX)
-        primary_exch = 'MCX' if self.state.client.segment_name == 'mcx' else 'NSE'
+        # Default: Use the segment's primary exchange (NFO for F&O, MCX for MCX)
+        # Options trade on NFO (not NSE) for equity/index derivatives
+        if self.state.client.segment_name == 'mcx':
+            primary_exch = 'MCX'
+        elif self.state.client.segment_name == 'bfo':
+            primary_exch = 'BFO'
+        else:
+            primary_exch = 'NFO'  # NFO for Nifty F&O, not NSE!
         exch = params.get('exchange', primary_exch)
         token = self.state.client.get_token(symbol)
         
         ltp = self.state.client.get_ltp(f"{exch}|{token}")
         if not ltp:
-            # Fallback if specific exch|token not in live feed (e.g. index ltp might be on NSE)
+            # Fallback: Index LTP might be on NSE even for NFO options
             ltp = self.state.client.get_ltp(f"NSE|{token}") or 25000.0
             
         # 2. Resolve Strike
