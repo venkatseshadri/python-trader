@@ -88,8 +88,8 @@ class ActionExecutor:
         elif derivative_type == 'future':
             is_option, is_future = False, True
         else:
-            # Fallback to implicit checks
-            is_option = params.get('option') is not None
+            # Fallback to implicit checks - support both 'option' and 'option_type' keys
+            is_option = params.get('option') is not None or params.get('option_type') is not None
             is_future = params.get('future') is not None or 'FUT' in params.get('symbol', '').upper()
         
         # 3. Route

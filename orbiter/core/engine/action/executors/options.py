@@ -8,8 +8,10 @@ import logging
 class OptionActionExecutor(BaseActionExecutor):
     def execute(self, **params: Dict) -> Any:
         symbol = params.get('symbol', 'NIFTY')
-        option_type = params.get('option') # CE or PE
-        strike_logic = params.get('strike') # ATM, ATM+2, etc
+        # Support both 'option' and 'option_type' keys from rules.json
+        option_type = params.get('option') or params.get('option_type') # CE or PE
+        # Support both 'strike' and 'strike_logic' keys from rules.json
+        strike_logic = params.get('strike') or params.get('strike_logic') # ATM, ATM+2, etc
         side = params.get('side', 'B').upper()
         
         # 1. Resolve Underlying Exchange & LTP
@@ -24,7 +26,8 @@ class OptionActionExecutor(BaseActionExecutor):
             ltp = self.state.client.get_ltp(f"NSE|{token}") or 25000.0
             
         # 2. Resolve Strike
-        expiry_type = params.get('expiry', 'current')
+        # Support both 'expiry' and 'expiry_type' keys from rules.json
+        expiry_type = params.get('expiry') or params.get('expiry_type') or 'current'
         res = self.state.client.resolver.resolve_option_symbol(symbol, ltp, option_type, strike_logic, expiry_type=expiry_type, exchange=exch)
         
         if not res.get('ok'):
