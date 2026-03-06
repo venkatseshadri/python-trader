@@ -102,7 +102,7 @@ class ContractResolver:
             "strike": res["strike"],
             "token": res["token"],
             "exchange": res["exchange"],
-            "lot_size": int(res.get("lotsize", 0))
+            "lot_size": int(res.get("lot_size", 0))
         }
 
     def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int = 4, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Dict[str, Any]:
