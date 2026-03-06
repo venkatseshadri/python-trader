@@ -12,7 +12,6 @@ from orbiter.core.engine.action.registration_manager import RegistrationManager
 from orbiter.utils.data_manager import DataManager
 from orbiter.utils.constants_manager import ConstantsManager
 from orbiter.utils.schema_manager import SchemaManager # Import SchemaManager
-from orbiter.utils.logger import setup_logging
 
 logger = logging.getLogger("ORBITER")
 
@@ -38,8 +37,8 @@ class OrbiterApp:
         if env_log_level:
             configured_log_level = env_log_level
 
-        # 3. Setup logging
-        setup_logging(project_root, log_level=configured_log_level)
+        # 3. Logging already initialized in main.py - skip duplicate init
+        # setup_logging(project_root, log_level=configured_log_level)
         logger.info(self.constants.get('magic_strings', 'app_started_msg', "🚀 Generic Machine Started")) # Moved here after logging is setup
 
         # 4. Infrastructure
