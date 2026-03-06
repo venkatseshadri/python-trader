@@ -24,7 +24,8 @@ if project_root not in sys.path:
 
 # 🎯 Print version at startup
 from orbiter.utils.version import load_version
-print(f"✨ ORBITER v{load_version(project_root)}")
+import os
+print(f"✨ ORBITER v{load_version(project_root)} | PID: {os.getpid()}")
 
 from orbiter.utils.system import bootstrap
 from orbiter.utils.logger import setup_logging
