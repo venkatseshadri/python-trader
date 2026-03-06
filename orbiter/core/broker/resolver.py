@@ -21,6 +21,12 @@ class ContractResolver:
 
     def _select_expiry(self, symbol: str, expiry_type: str, instrument: str, exchange_override: str = None) -> Optional[datetime.date]:
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
+        
+        # DEBUG: Log DERIVATIVE_OPTIONS status
+        deriv_count = len(getattr(self.master, 'DERIVATIVE_OPTIONS', []))
+        sample_symbols = list(set(r.get('symbol') for r in getattr(self.master, 'DERIVATIVE_OPTIONS', [])[:100]))
+        logger.debug(f"🔍 _select_expiry: symbol={symbol}, instrument={instrument}, exchange={exchange}, deriv_count={deriv_count}, sample_symbols={sample_symbols[:5]}")
+        
         try:
             last_refresh = getattr(self.master, "_last_refresh_time", 0) or 0
             if (not self.master.DERIVATIVE_LOADED) or (not self.master.DERIVATIVE_OPTIONS):
