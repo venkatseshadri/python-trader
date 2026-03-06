@@ -50,6 +50,11 @@ class FactCalculator:
             if _yf_adx_cache['value'] and _yf_adx_cache['value'] > 0:
                 facts['market.adx'] = facts['market_adx'] = _yf_adx_cache['value']
             
+            # Add defaults for other indicators when insufficient bars
+            facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
+            facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
+            facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
+            
             return facts
 
         # ⚡️ Optimize: Calculate indicators ONCE per tick
