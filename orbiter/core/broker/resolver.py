@@ -17,7 +17,23 @@ class ContractResolver:
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         expiry_str = expiry.isoformat()
+        
+        # 🔭 TRACE: Log lookup details
+        logger.trace(f"🔭 [_get_option_rows] symbol={symbol}, instrument={instrument}, expiry={expiry_str}, exchange={exchange}")
+        
+        # First try exact symbol match
         rows = [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
+        
+        # If no rows, try with "-EQ" suffix removed (broker may store as RELIANCE-EQ)
+        if not rows and symbol.endswith("-EQ"):
+            rows = [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol[:-3] and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
+            if rows:
+                logger.trace(f"🔭 [_get_option_rows] Found {len(rows)} rows after removing -EQ suffix")
+        
+        # Check what symbols are available in master for this instrument
+        if not rows:
+            available_symbols = set(row.get("symbol") for row in self.master.DERIVATIVE_OPTIONS if row.get("instrument") == instrument)
+            logger.trace(f"🔭 [_get_option_rows] Available symbols for {instrument}: {list(available_symbols)[:10]}...")
         
         # 🔥 FALLBACK: If no rows found, generate option contracts dynamically
         if not rows and symbol.upper() in ("NIFTY", "BANKNIFTY", "FINNIFTY"):
@@ -156,11 +172,22 @@ class ContractResolver:
             symbol = bfo_symbol_map[symbol.upper()]
         
         instrument = "OPTIDX" if is_index else "OPTSTK"
+        logger.debug(f"🔍 [resolve_option_symbol] symbol={symbol}, is_index={is_index}, instrument={instrument}, expiry_type={expiry_type}, exchange={exchange}")
+        
         expiry = self._select_expiry(symbol, expiry_type, instrument, exchange_override=exchange)
-        if not expiry: return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
+        if not expiry: 
+            logger.error(f"❌ no_expiry_found_for_{symbol} (instrument={instrument}, expiry_type={expiry_type})")
+            return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
+        
         rows = self._get_option_rows(symbol, expiry, instrument, exchange_override=exchange)
+        logger.debug(f"🔍 [resolve_option_symbol] rows_count={len(rows)} for {symbol} expiry={expiry}")
+        
         strikes = sorted({float(row.get("strike")) for row in rows if row.get("strike")})
-        if not strikes: return {"ok": False, "reason": "no_strikes"}
+        logger.debug(f"🔍 [resolve_option_symbol] strikes_count={len(strikes)} for {symbol}")
+        
+        if not strikes: 
+            logger.error(f"❌ no_strikes for {symbol}: rows={len(rows)}, instrument={instrument}, expiry={expiry}")
+            return {"ok": False, "reason": "no_strikes"}
         atm_strike = min(strikes, key=lambda s: abs(s - ltp))
         atm_idx = strikes.index(atm_strike)
         target_idx = atm_idx
@@ -181,12 +208,14 @@ class ContractResolver:
         }
 
     def get_credit_spread_contracts(self, symbol: str, ltp: float, side: str, hedge_steps: int = 4, expiry_type: str = "monthly", instrument: str = "OPTSTK") -> Dict[str, Any]:
+        logger.trace(f"🔭 [Resolver.get_credit_spread_contracts] symbol={symbol}, ltp={ltp}, side={side}")
         is_put = (side.upper() == "PUT")
         atm_res = self.resolve_option_symbol(symbol, ltp, "PE" if is_put else "CE", "ATM", expiry_type)
         if not atm_res["ok"]: return atm_res
         hedge_logic = f"ATM-{hedge_steps}" if is_put else f"ATM+{hedge_steps}"
         hedge_res = self.resolve_option_symbol(symbol, ltp, "PE" if is_put else "CE", hedge_logic, expiry_type)
         if not hedge_res["ok"]: return hedge_res
+        logger.trace(f"🔭 [Resolver.get_credit_spread_contracts] RETURNING: atm={atm_res['tradingsymbol']}, hedge={hedge_res['tradingsymbol']}")
         return {
             "ok": True,
             "side": side.upper(),

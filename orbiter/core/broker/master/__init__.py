@@ -65,32 +65,35 @@ class ScripMaster:
                 try:
                     with open(map_file, 'r') as f:
                         mcx_map = json.load(f)
-                        for tok, info in mcx_map.items():
-                            if isinstance(info, list) and len(info) >= 2:
-                                # Create a mock derivative option dictionary
+                        for key, info in mcx_map.items():
+                            # New format: key is symbol name, info has [symbol, tsym, lot, expiry, token]
+                            if isinstance(info, list) and len(info) >= 5:
+                                # info[0] = symbol name, info[1] = trading symbol, info[4] = numeric token
+                                symbol = str(info[0])
                                 trading_symbol = str(info[1])
+                                numeric_token = str(info[4])
                                 contract = {
-                                    'symbol': str(info[0]),
+                                    'symbol': symbol,
                                     'tradingsymbol': trading_symbol,
-                                    'token': str(tok),
+                                    'token': numeric_token,  # Use numeric token!
                                     'exchange': 'MCX',
                                     'lotsize': int(info[2]) if len(info) > 2 else 1,
                                     'instrument': 'FUTCOM',
-                                    'expiry': info[3] if len(info) > 3 else trading_symbol.replace(str(info[0]), '')
+                                    'expiry': info[3] if len(info) > 3 else trading_symbol.replace(symbol, '')
                                 }
                                 # Use a safer check for duplicates
                                 exists = False
                                 for d in self.DERIVATIVE_OPTIONS:
-                                    if isinstance(d, dict) and d.get('token') == str(tok):
+                                    if isinstance(d, dict) and d.get('token') == numeric_token:
                                         exists = True
                                         break
                                 
                                 if not exists:
                                     self.DERIVATIVE_OPTIONS.append(contract)
-                                    self.TOKEN_TO_SYMBOL[str(tok)] = contract['tradingsymbol']
-                                    self.SYMBOL_TO_TOKEN[contract['tradingsymbol']] = str(tok)
-                                    self.TOKEN_TO_LOTSIZE[str(tok)] = contract['lotsize']
-                                    logger.trace(f"Mapped MCX Future: {tok} -> {contract['tradingsymbol']} (Lot: {contract['lotsize']})")
+                                    self.TOKEN_TO_SYMBOL[numeric_token] = trading_symbol
+                                    self.SYMBOL_TO_TOKEN[trading_symbol] = numeric_token
+                                    self.TOKEN_TO_LOTSIZE[numeric_token] = contract['lotsize']
+                                    logger.trace(f"Mapped MCX Future: {numeric_token} -> {trading_symbol} (Lot: {contract['lotsize']})")
                         self.DERIVATIVE_LOADED = True
                         logger.info(f"Loaded {len(mcx_map)} MCX future mappings.")
                         return # Exit after loading MCX

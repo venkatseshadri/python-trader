@@ -166,7 +166,8 @@ class ConnectionManager:
         return True
 
     def start_live_feed(self, symbols: List[Any], on_tick_callback, verbose=False):
-        print(f"🚀 Starting WS for {len(symbols)} symbols...")
+        logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Starting live feed for {len(symbols)} symbols.")
+        logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")  # TRACE: show first 3
         
         token_to_exch = {}
         for s in symbols:
@@ -174,6 +175,7 @@ class ConnectionManager:
                 tk = str(s.get('token'))
                 ex = s.get('exchange', 'NSE')
                 token_to_exch[tk] = ex
+                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Dict symbol: token={tk}, exchange={ex}")
             elif '|' in str(s):
                 ex, tk = str(s).split('|')
                 token_to_exch[tk] = ex
@@ -197,12 +199,16 @@ class ConnectionManager:
                     tk = s.get('token')
                     ex = s.get('exchange', 'NSE')
                     formatted_symbols.append(f"{ex}|{tk}")
+                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing dict: {ex}|{tk} (token={tk}, type={type(tk)})")
                 elif '|' in str(s):
                     formatted_symbols.append(str(s))
+                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing pipe: {str(s)}")
                 else:
                     formatted_symbols.append(f"NSE|{s}")
+                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing default: NSE|{s}")
             
             logger.debug(f"Subscribing to: {formatted_symbols}")
+            logger.trace(f"[{self.__class__.__name__}.on_open] - Total subscriptions: {len(formatted_symbols)}")
             self.api.subscribe(formatted_symbols, feed_type='d')
             # 🔥 NEW: Subscribe to live order status updates (v3.15.9)
             self.api.subscribe_orders()

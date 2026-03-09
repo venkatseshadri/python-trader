@@ -107,6 +107,42 @@ class BrokerClient:
 
     def start_live_feed(self, symbols):
         logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Starting live feed for {len(symbols)} symbols.")
+        logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")
+        
+        # Resolve symbols to tokens if needed (for MCX, symbols may be names like "GOLDTEN" not numeric tokens)
+        def resolve_to_token(token_or_symbol, exchange):
+            """Resolve symbol name to numeric token if needed."""
+            # If already numeric, return as-is
+            if token_or_symbol.isdigit():
+                return token_or_symbol
+            # Try to resolve using broker's symbol-to-token mapping
+            resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper())
+            if resolved:
+                logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} -> {resolved}")
+                return resolved
+            # Try with trading symbol prefix (e.g., "GOLDTEN31MAR26" -> "GOLDTEN")
+            for tok, tsym in self.master.TOKEN_TO_SYMBOL.items():
+                if tsym.upper().startswith(token_or_symbol.upper()):
+                    logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} via prefix -> {tok}")
+                    return tok
+            logger.warning(f"[{self.__class__.__name__}.resolve_to_token] - Could not resolve {token_or_symbol}, using as-is")
+            return token_or_symbol
+        
+        # Pre-process symbols to resolve token names to numeric tokens
+        resolved_symbols = []
+        for s in symbols:
+            if isinstance(s, dict):
+                tk = str(s.get('token'))
+                ex = s.get('exchange', 'NSE')
+                # Resolve token if not numeric
+                resolved_tk = resolve_to_token(tk, ex)
+                if resolved_tk != tk:
+                    logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Token resolved: {tk} -> {resolved_tk}")
+                resolved_symbols.append({**s, 'token': resolved_tk})
+            else:
+                # Plain symbol - keep as-is, connection manager will handle
+                resolved_symbols.append(s)
+        
         def _tick_handler(msg, tk, ex):
             key = f"{ex}|{tk}"
             sym = self.get_symbol(tk, exchange=ex)
@@ -130,14 +166,29 @@ class BrokerClient:
                 if float(msg.get('h', 0)) > float(existing_candles[-1]['inth']): existing_candles[-1]['inth'] = msg['h']
                 if float(msg.get('l', 0)) < float(existing_candles[-1]['intl']) and float(msg.get('l', 0)) > 0: existing_candles[-1]['intl'] = msg['l']
 
-            self.SYMBOLDICT[key] = {
+            tick_data = {
                 **msg, 'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
                 'token': tk, 'exchange': ex, 'ltp': float(msg['lp']),
                 'high': float(msg.get('h', 0)), 'low': float(msg.get('l', 0)), 'volume': int(msg.get('v', 0)),
                 'candles': existing_candles
             }
+            # Store at token key (e.g., MCX|477176)
+            self.SYMBOLDICT[key] = tick_data
+            
+            # Store at full trading symbol key (e.g., MCX|GOLDTEN31MAR26)
+            full_symbol = sym.split('|')[-1] if '|' in sym else sym
+            if f"{ex}|{full_symbol}" != key:
+                self.SYMBOLDICT[f"{ex}|{full_symbol}"] = tick_data
+            
+            # Also store at short symbol key (e.g., MCX|GOLDTEN) for instrument lookup
+            # Extract short symbol by removing expiry suffix like 31MAR26, 26MAR26, etc.
+            import re
+            short_symbol = re.sub(r'\d{2}[A-Z]{3}\d{2}(FC|F)?$', '', full_symbol)
+            if short_symbol != full_symbol and f"{ex}|{short_symbol}" != key:
+                self.SYMBOLDICT[f"{ex}|{short_symbol}"] = tick_data
+                logger.trace(f"[{self.__class__.__name__}._tick_handler] - Stored tick at keys: {key}, {ex}|{full_symbol}, {ex}|{short_symbol}")
             logger.trace(f"[{self.__class__.__name__}._tick_handler] - Received tick for {sym}: {msg}")
-        self.conn.start_live_feed(symbols, _tick_handler)
+        self.conn.start_live_feed(resolved_symbols, _tick_handler)
         logger.info(f"[{self.__class__.__name__}.start_live_feed] - Live feed started for {len(symbols)} symbols.")
 
     def prime_candles(self, symbols: List[Any], lookback_mins: int = 120):
@@ -156,10 +207,68 @@ class BrokerClient:
         for item in symbols:
             logger.trace(f"[{self.__class__.__name__}.prime_candles] - Priming item: {item}")
             try:
+                token = ''
+                exch = 'NSE'  # Default exchange
+                
                 if isinstance(item, dict):
                     # Use token directly if available, else get it from symbol
-                    token = item.get('token')
+                    token = item.get('token', '')
                     exch = item.get('exchange', 'NSE')
+                else:
+                    # item is a string (symbol name)
+                    token = item
+                
+                # CRITICAL: If token is a symbol name (not numeric), resolve it
+                if token and not token.isdigit():
+                    logger.trace(f"[{self.__class__.__name__}.prime_candles] - Token '{token}' is symbol name, resolving to numeric...")
+                    
+                    # FIX: Check if symbol exists in mcx_futures_map.json
+                    # Use direct lookup first (avoids prefix matching bugs)
+                    import json
+                    import os
+                    numeric_token = None
+                    futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'mcx_futures_map.json')
+                    
+                    if os.path.exists(futures_map_path):
+                        try:
+                            with open(futures_map_path, 'r') as f:
+                                mcx_map = json.load(f)
+                            # Check if symbol exists in futures_map (key is symbol name like 'ZINC')
+                            if token.upper() in mcx_map:
+                                mcx_entry = mcx_map[token.upper()]
+                                # mcx_entry format: [symbol, tsym, lot, expiry, token]
+                                numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
+                                trading_symbol = mcx_entry[1] if len(mcx_entry) > 1 else None
+                                exch = 'MCX'  # It's an MCX instrument
+                                logger.trace(f"[{self.__class__.__name__}.prime_candles] - MCX: {token} -> {trading_symbol} (token: {numeric_token}) from futures_map")
+                        except Exception as e:
+                            logger.warning(f"[{self.__class__.__name__}.prime_candles] - Failed to load MCX futures_map: {e}")
+                    
+                    # Fallback to old prefix matching logic if mcx_futures_map lookup failed
+                    if not numeric_token:
+                        # Step 1: Use TOKEN_TO_SYMBOL for prefix matching to find trading symbol
+                        for tok, tsym in self.master.TOKEN_TO_SYMBOL.items():
+                            if tsym.upper().startswith(token.upper()):
+                                logger.trace(f"[{self.__class__.__name__}.prime_candles] - Found trading symbol: {tsym}")
+                                trading_symbol = tsym
+                                break
+                        
+                        # Step 2: Use SYMBOL_TO_TOKEN to get numeric token from trading symbol
+                        if trading_symbol:
+                            numeric_token = self.master.SYMBOL_TO_TOKEN.get(trading_symbol)
+                            if numeric_token:
+                                logger.trace(f"[{self.__class__.__name__}.prime_candles] - Resolved {token} -> numeric token {numeric_token}")
+                            else:
+                                # Fallback: use the token as-is if SYMBOL_TO_TOKEN lookup fails
+                                logger.warning(f"[{self.__class__.__name__}.prime_candles] - No numeric token found for {trading_symbol}, using as-is")
+                                numeric_token = token
+                    
+                    if numeric_token:
+                        token = numeric_token
+                    else:
+                        # Ultimate fallback to get_token
+                        token = self.get_token(token)
+                    
                     key = f"{exch}|{token}"
                 elif '|' in str(item):
                     key = item
@@ -191,17 +300,30 @@ class BrokerClient:
                     
                     self.SYMBOLDICT[key]['candles'] = res
                     success_count += 1
-                    logger.trace(f"[{self.__class__.__name__}.prime_candles] - Successfully primed {key}. Last candle: {res[-1]}")
+                    logger.debug(f"[{self.__class__.__name__}.prime_candles] - Primed {key} with {len(res)} candles. Last: {res[-1].get('intc', '?')}")
                 else:
-                    logger.trace(f"[{self.__class__.__name__}.prime_candles] - No history returned for {key}. Live feed will populate data.")
+                    logger.warning(f"[{self.__class__.__name__}.prime_candles] - No history returned for {key}. Live feed will populate data.")
                 
                 # Add a small delay to avoid rate limiting
                 import time
                 time.sleep(0.1)
             except Exception as e:
-                logger.trace(f"[{self.__class__.__name__}.prime_candles] - Failed to prime {item}: {e}. Skipping.")
+                logger.warning(f"[{self.__class__.__name__}.prime_candles] - Failed to prime {item}: {e}")
         
-        print(f"✅ Primed {success_count}/{len(symbols)} symbols successfully.") # Use constants for this
+        print(f"✅ Primed {success_count}/{len(symbols)} symbols successfully.")
+        
+        # Summary: log bar counts for all symbols
+        for item in symbols:
+            try:
+                token = item.get('token') if isinstance(item, dict) else item
+                exch = item.get('exchange', 'MCX') if isinstance(item, dict) else 'MCX'
+                key = f"{exch}|{token}" if '|' not in str(token) else token
+                sym_data = self.SYMBOLDICT.get(key, {})
+                candles = sym_data.get('candles', [])
+                if len(candles) < 10:
+                    logger.warning(f"[{self.__class__.__name__}.prime_candles] - {key} has only {len(candles)} candles (need 12+ for indicators)")
+            except:
+                pass
 
     def close(self): 
         logger.debug(f"[{self.__class__.__name__}.close] - Closing broker connection.")
@@ -258,7 +380,9 @@ class BrokerClient:
         return self.master.TOKEN_TO_COMPANY.get(token, self.get_symbol(token, exchange))
     def get_token(self, symbol): 
         logger.trace(f"[{self.__class__.__name__}.get_token] - Getting token for symbol: {symbol}")
-        return self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
+        result = self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
+        logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
+        return result
     def get_ltp(self, key): 
         logger.trace(f"[{self.__class__.__name__}.get_ltp] - Getting LTP for key: {key}")
         return self.SYMBOLDICT.get(key, {}).get('ltp')
@@ -300,6 +424,7 @@ class BrokerClient:
 
     def place_put_credit_spread(self, **kwargs):
         logger.debug(f"[{self.__class__.__name__}.place_put_credit_spread] - Placing PUT credit spread with kwargs: {kwargs}")
+        logger.trace(f"🔭 [Broker.place_put_credit_spread] symbol={kwargs.get('symbol')}, ltp={kwargs.get('ltp')}")
         res = self.resolver.get_credit_spread_contracts(kwargs['symbol'], kwargs['ltp'], 'PUT', kwargs['hedge_steps'], kwargs['expiry_type'], kwargs['instrument'])
         if not res.get('ok'): 
             logger.error(f"[{self.__class__.__name__}.place_put_credit_spread] - Failed to get credit spread contracts: {res.get('reason')}")
@@ -308,6 +433,7 @@ class BrokerClient:
 
     def place_call_credit_spread(self, **kwargs):
         logger.debug(f"[{self.__class__.__name__}.place_call_credit_spread] - Placing CALL credit spread with kwargs: {kwargs}")
+        logger.trace(f"🔭 [Broker.place_call_credit_spread] symbol={kwargs.get('symbol')}, ltp={kwargs.get('ltp')}")
         res = self.resolver.get_credit_spread_contracts(kwargs['symbol'], kwargs['ltp'], 'CALL', kwargs['hedge_steps'], kwargs['expiry_type'], kwargs['instrument'])
         if not res.get('ok'): 
             logger.error(f"[{self.__class__.__name__}.place_call_credit_spread] - Failed to get credit spread contracts: {res.get('reason')}")
