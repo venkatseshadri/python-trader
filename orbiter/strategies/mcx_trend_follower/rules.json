@@ -1,26 +1,33 @@
 {
   "scoring_rules": [
     {
-      "name": "Calculate Commodity Trend Score",
+      "name": "Calculate Bidirectional Score",
       "priority": 10,
-      "scoring_expression": "market_adx * filters_scoring_combined_score_weight_adx + (market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_combined_score_weight_ema_slope + market_supertrend_dir * filters_scoring_combined_score_weight_supertrend",
-      "description": "Combines ADX strength, EMA slope momentum, and SuperTrend direction for commodity trend scoring."
+      "scoring_expression": "(market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_bidirectional_weight_ema_slope + market_supertrend_dir * filters_scoring_bidirectional_weight_supertrend",
+      "description": "Sum of bidirectional filters: EMA slope + SuperTrend direction"
+    },
+    {
+      "name": "Calculate Unidirectional Score",
+      "priority": 11,
+      "scoring_expression": "market_adx * filters_scoring_unidirectional_weight_adx",
+      "description": "Sum of unidirectional filters: ADX"
     }
   ],
   "strategies": [
     {
-      "name": "MCX_TopN_Trend_Execution",
+      "name": "MCX_TopN_Trend_Long",
       "priority": 100,
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
-          { "fact": "strategy.trend_score", "operator": "greater_than", "value": 0.25 }
+          { "fact": "strategy_sum_bi", "operator": "greater_than", "value": 0.1 },
+          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
         ]
       },
       "execution_logic": "TOP_N",
       "top_n": "strategy.top_n",
-      "scoring_fact": "strategy.trend_score",
+      "scoring_fact": "strategy_sum_bi",
       "order_operations": [
         { 
           "type": "trade.place_future_order", 
@@ -29,7 +36,88 @@
             "side": "BUY", 
             "qty": 1,
             "exchange": "MCX",
-            "remark": "MCX_TOPN"
+            "remark": "MCX_TOPN_LONG"
+          } 
+        }
+      ]
+    },
+    {
+      "name": "MCX_TopN_Trend_Short",
+      "priority": 101,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
+          { "fact": "strategy_sum_bi", "operator": "less_than", "value": -0.1 },
+          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy_sum_bi",
+      "order_operations": [
+        { 
+          "type": "trade.place_future_order", 
+          "params": { 
+            "derivative": "future",
+            "side": "SELL", 
+            "qty": 1,
+            "exchange": "MCX",
+            "remark": "MCX_TOPN_SHORT"
+          } 
+        }
+      ]
+    },
+    {
+      "name": "MCX_Uni_Long",
+      "priority": 90,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
+          { "fact": "strategy_sum_uni", "operator": "greater_than", "value": 10 },
+          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy_sum_uni",
+      "order_operations": [
+        { 
+          "type": "trade.place_future_order", 
+          "params": { 
+            "derivative": "future",
+            "side": "BUY", 
+            "qty": 1,
+            "exchange": "MCX",
+            "remark": "MCX_UNI_LONG"
+          } 
+        }
+      ]
+    },
+    {
+      "name": "MCX_Uni_Short",
+      "priority": 89,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
+          { "fact": "strategy_sum_uni", "operator": "greater_than", "value": 10 },
+          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy_sum_uni",
+      "order_operations": [
+        { 
+          "type": "trade.place_future_order", 
+          "params": { 
+            "derivative": "future",
+            "side": "SELL", 
+            "qty": 1,
+            "exchange": "MCX",
+            "remark": "MCX_UNI_SHORT"
           } 
         }
       ]

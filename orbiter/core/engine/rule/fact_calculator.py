@@ -12,7 +12,7 @@ from .technical_analyzer import TechnicalAnalyzer
 
 logger = logging.getLogger("ORBITER")
 
-_yf_adx_cache = {'value': None, 'timestamp': 0}
+_yf_indicators_cache = {'value': None, 'timestamp': 0}
 
 class FactCalculator:
     def __init__(self, project_root: str, fact_definitions: Dict[str, Any]):
@@ -34,27 +34,40 @@ class FactCalculator:
         logger.info(f"🧮 Calculating Tech Facts for {token} | Bars: {data_len}")
 
         if close_data is None or len(close_data) < 12:
-            # 🔄 Fallback: Use Yahoo Finance ADX when broker candles are insufficient (e.g., outside market hours)
-            global _yf_adx_cache
+            logger.warning(f"[{self.__class__.__name__}] - Insufficient candle data for {token}: {data_len} bars (need >= 12). Using YF fallback.")
+            # 🔄 Fallback: Use Yahoo Finance for ALL indicators when broker candles are insufficient
+            global _yf_indicators_cache
             current_time = time.time()
-            if _yf_adx_cache['value'] is None or (current_time - _yf_adx_cache['timestamp']) > 300:
+            
+            # Cache YF data for 5 minutes
+            if _yf_indicators_cache['value'] is None or (current_time - _yf_indicators_cache['timestamp']) > 300:
                 try:
-                    from orbiter.utils.yf_adapter import get_market_adx
-                    yf_adx = get_market_adx('SENSEX', '5m')
-                    if yf_adx > 0:
-                        _yf_adx_cache = {'value': yf_adx, 'timestamp': current_time}
-                        logger.info(f"🔄 Using YF ADX fallback: {yf_adx}")
+                    from orbiter.utils.yf_adapter import get_all_indicators
+                    yf_data = get_all_indicators('SENSEX', '5m')
+                    if yf_data:
+                        _yf_indicators_cache = {'value': yf_data, 'timestamp': current_time}
+                        logger.info(f"🔄 Using YF indicators fallback: {yf_data}")
+                    else:
+                        logger.warning("YF fallback returned no data")
                 except Exception as e:
-                    logger.warning(f"YF ADX fallback failed: {e}")
+                    logger.warning(f"YF indicators fallback failed: {e}")
             
-            if _yf_adx_cache['value'] and _yf_adx_cache['value'] > 0:
-                facts['market.adx'] = facts['market_adx'] = _yf_adx_cache['value']
-            
-            # Add defaults for other indicators when insufficient bars
-            facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
-            facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
-            facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
-            facts['market.supertrend'] = facts['market_supertrend'] = 0
+            # Apply YF fallback values
+            if _yf_indicators_cache.get('value'):
+                yf = _yf_indicators_cache['value']
+                facts['market.adx'] = facts['market_adx'] = yf.get('adx', 0)
+                facts['market.ema_fast'] = facts['market_ema_fast'] = yf.get('ema_fast', 0)
+                facts['market.ema_slow'] = facts['market_ema_slow'] = yf.get('ema_slow', 0)
+                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = yf.get('supertrend_dir', 0)
+                facts['market.supertrend'] = facts['market_supertrend'] = yf.get('supertrend', 0)
+                logger.info(f"🔄 Applied YF fallback: ADX={yf.get('adx')}, EMA_fast={yf.get('ema_fast')}, ST_dir={yf.get('supertrend_dir')}")
+            else:
+                # No YF data - use zeros
+                facts['market.adx'] = facts['market_adx'] = 0
+                facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
+                facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
+                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
+                facts['market.supertrend'] = facts['market_supertrend'] = 0
             
             return facts
 

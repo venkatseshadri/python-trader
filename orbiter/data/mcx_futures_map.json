@@ -3,174 +3,126 @@
         "GOLDTEN",
         "GOLDTEN31MAR26",
         10,
-        "31Mar26"
-    ],
-    "COTTONOIL": [
-        "COTTONOIL",
-        "COTTONOIL31MAR26",
-        5,
-        "31Mar26"
+        "31Mar26",
+        "477176"
     ],
     "ELECDMBL": [
         "ELECDMBL",
         "ELECDMBL30MAR26",
         50,
-        "30Mar26"
+        "30Mar26",
+        "488803"
     ],
     "CARDAMOM": [
         "CARDAMOM",
         "CARDAMOM31MAR26",
         100,
-        "31Mar26"
+        "31Mar26",
+        "487667"
     ],
     "NATGASMINI": [
         "NATGASMINI",
         "NATGASMINI26MAR26",
         250,
-        "26Mar26"
-    ],
-    "STEELREBAR": [
-        "STEELREBAR",
-        "STEELREBAR31MAR26",
-        5,
-        "31Mar26"
+        "26Mar26",
+        "475112"
     ],
     "LEADMINI": [
         "LEADMINI",
         "LEADMINI31MAR26",
         1,
-        "31Mar26"
+        "31Mar26",
+        "487659"
     ],
     "CRUDEOILM": [
         "CRUDEOILM",
         "CRUDEOILM19MAR26",
         10,
-        "19Mar26"
+        "19Mar26",
+        "472790"
     ],
     "ZINCMINI": [
         "ZINCMINI",
         "ZINCMINI31MAR26",
         1,
-        "31Mar26"
+        "31Mar26",
+        "487663"
     ],
     "ALUMINI": [
         "ALUMINI",
         "ALUMINI31MAR26",
         1,
-        "31Mar26"
-    ],
-    "MCXMETLDEX": [
-        "MCXMETLDEX",
-        "MCXMETLDEX24MAR26",
-        40,
-        "24Mar26"
+        "31Mar26",
+        "487655"
     ],
     "MCXBULLDEX": [
         "MCXBULLDEX",
         "MCXBULLDEX24MAR26",
         30,
-        "24Mar26"
+        "24Mar26",
+        "499305"
     ],
     "NATURALGAS": [
         "NATURALGAS",
         "NATURALGAS26MAR26",
         1250,
-        "26Mar26"
-    ],
-    "LEAD": [
-        "LEAD",
-        "LEAD31MAR26",
-        5,
-        "31Mar26"
-    ],
-    "ZINC": [
-        "ZINC",
-        "ZINC31MAR26",
-        5,
-        "31Mar26"
+        "26Mar26",
+        "475111"
     ],
     "ALUMINIUM": [
         "ALUMINIUM",
         "ALUMINIUM31MAR26",
         5,
-        "31Mar26"
+        "31Mar26",
+        "487656"
     ],
     "MENTHAOIL": [
         "MENTHAOIL",
         "MENTHAOIL31MAR26",
         360,
-        "31Mar26"
-    ],
-    "CRUDEOIL": [
-        "CRUDEOIL",
-        "CRUDEOIL19MAR26",
-        100,
-        "19Mar26"
-    ],
-    "COTTON": [
-        "COTTON",
-        "COTTON31MAR26",
-        25,
-        "31Mar26"
+        "31Mar26",
+        "477184"
     ],
     "NICKEL": [
         "NICKEL",
         "NICKEL18MAR26",
         250,
-        "18Mar26"
+        "18Mar26",
+        "487660"
     ],
     "COPPER": [
         "COPPER",
         "COPPER31MAR26",
         2500,
-        "31Mar26"
-    ],
-    "KAPAS": [
-        "KAPAS",
-        "KAPAS30APR26",
-        4,
-        "30Apr26"
+        "31Mar26",
+        "487657"
     ],
     "SILVERMIC": [
         "SILVERMIC",
         "SILVERMIC30APR26",
         1,
-        "30Apr26"
-    ],
-    "SILVERM": [
-        "SILVERM",
-        "SILVERM30APR26",
-        5,
-        "30Apr26"
-    ],
-    "SILVER": [
-        "SILVER",
-        "SILVER05MAR26",
-        30,
-        "05Mar26"
+        "30Apr26",
+        "466029"
     ],
     "GOLDPETAL": [
         "GOLDPETAL",
         "GOLDPETAL31MAR26",
         1,
-        "31Mar26"
+        "31Mar26",
+        "477175"
     ],
     "GOLDM": [
         "GOLDM",
-        "GOLDM05MAR26",
+        "GOLDM03APR26",
         100,
-        "05Mar26"
+        "03Apr26",
+        "477904"
     ],
     "GOLDGUINEA": [
         "GOLDGUINEA",
         "GOLDGUINEA31MAR26",
         8,
-        "31Mar26"
-    ],
-    "GOLD": [
-        "GOLD",
-        "GOLD02APR26",
-        1,
-        "02Apr26"
+        "31Mar26",
+        "477174"
     ]
 }
