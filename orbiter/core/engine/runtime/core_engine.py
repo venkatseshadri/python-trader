@@ -66,6 +66,26 @@ class Engine:
             # Skip dynamic resolution - tokens in instruments.json are correct
             # get_near_future is broken for MCX (returns symbol name instead of numeric token)
             
+            # FIX: Resolve symbol name to numeric token for MCX before creating lookup key
+            # This ensures we look up the correct key in SYMBOLDICT (where data is stored by numeric token)
+            if exch.upper() == 'MCX' and token and not token.isdigit():
+                # Try to resolve using mcx_futures_map
+                import json
+                import os
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                futures_map_path = os.path.join(project_root, 'orbiter', 'data', 'mcx_futures_map.json')
+                if os.path.exists(futures_map_path):
+                    try:
+                        with open(futures_map_path, 'r') as f:
+                            mcx_map = json.load(f)
+                        if token.upper() in mcx_map:
+                            resolved_token = str(mcx_map[token.upper()][4]) if len(mcx_map[token.upper()]) > 4 else token
+                            if resolved_token != token:
+                                logger.trace(f"[tick] Resolved {token} -> {resolved_token} for lookup")
+                                token = resolved_token
+                    except Exception as e:
+                        logger.trace(f"[tick] Failed to resolve MCX token: {e}")
+            
             lookup_key = f"{exch}|{token}"
             
             logger.trace(f"[{self.__class__.__name__}.tick] - Processing token: {token} | Lookup: {lookup_key}")
@@ -104,7 +124,7 @@ class Engine:
                 raw_data = self.state.client.SYMBOLDICT.get(token, {})
             
             if not raw_data:
-                logger.trace(f"[{self.__class__.__name__}.tick] - Data lookup failed for {token}. SYMBOLDICT keys: {list(self.state.client.SYMBOLDICT.keys())[:5]}...")
+                logger.warning(f"[{self.__class__.__name__}.tick] - No data found for token={token}, lookup_key={lookup_key}. SYMBOLDICT sample keys: {list(self.state.client.SYMBOLDICT.keys())[:10]}")
 
             # Symbol resolution: prioritize instrument.json symbol
             symbol_name = instrument.get('symbol') if isinstance(instrument, dict) else None
@@ -170,10 +190,20 @@ class Engine:
             
             # 🔥 Scoring for visibility
             score = 0.0
+            score_details = {'sum_bi': 0.0, 'sum_uni': 0.0}
             if tech_facts:
-                score = self.rule_manager.evaluate_score(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **{**extra_facts, 'raw_data_for_filter': raw_data_for_filter})
+                result = self.rule_manager.evaluate_score(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **{**extra_facts, 'raw_data_for_filter': raw_data_for_filter})
+                # Handle both old (float) and new (tuple) return formats
+                if isinstance(result, tuple):
+                    score, score_details = result
+                else:
+                    score = result
+                
                 if self.state.verbose_logs:
-                    logger.info(f"📊 {symbol_name}: Score {score:.2f}")
+                    logger.info(f"📊 {symbol_name}: Score {score:.2f} (sum_bi={score_details.get('sum_bi')}, sum_uni={score_details.get('sum_uni')})")
+
+            # Pass score details to evaluate for strategy rules
+            extra_facts_with_scores = {**extra_facts, 'strategy_sum_bi': score_details.get('sum_bi', 0), 'strategy_sum_uni': score_details.get('sum_uni', 0)}
 
             # MARGIN CALCULATION (PE/CE or Future)
             span_pe, span_ce = {'ok': False}, {'ok': False}
@@ -259,7 +289,8 @@ class Engine:
             logger.trace(f"[{self.__class__.__name__}.tick] - Metric Entry for {symbol_name}: {metric_entry}")
             self.state.last_scan_metrics.append(metric_entry)
 
-            actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **extra_facts)
+            # Use extra_facts_with_scores which includes sum_bi and sum_uni
+            actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **extra_facts_with_scores)
             
             # 🔥 SCORE THRESHOLD CHECK - Prevent trades with low/zero scores
             score_threshold = self.state.config.get('trend_score_threshold', 0.25)
@@ -270,15 +301,17 @@ class Engine:
             
             if actions:
                 if self.office_mode:
-                    logger.info(f"Office mode enabled: suppressed {len(actions)} instrument actions for {token}.")
+                    logger.info(f"Office mode enabled: suppressed {len(global_actions)} global actions.")
                 else:
                     # Inject symbol into each action's params so the executor knows which instrument triggered it
+                    logger.trace(f"🔭 [Engine.tick] BEFORE INJECT: symbol_name={symbol_name}, actions[0].get('params')={actions[0].get('params', {}) if actions else {}}")
                     for action in actions:
                         if 'params' not in action: action['params'] = {}
                         if 'symbol' not in action['params']:
                             action['params']['symbol'] = symbol_name
+                        logger.trace(f"🔭 [Engine.tick] Action params for {symbol_name}: {action.get('params', {})}")
 
-                    logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(actions)} instrument actions for {token}.")
+                    logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(actions)} instrument actions for {token} ({symbol_name}).")
                     self.action_manager.execute_batch(actions)
         logger.debug(f"[{self.__class__.__name__}.tick] - Engine tick cycle complete.")
 

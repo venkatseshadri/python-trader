@@ -74,7 +74,16 @@ class RuleManager:
     def evaluate(self, source: Any, context: str = "global", **extra_facts) -> List[dict]:
         logger.trace(f"📋 Rule Manager evaluate called with context: {context}")
         logger.trace(f"📋 Rule sets loaded: {len(self.rule_sets)}")
+        # Log the symbol from extra_facts
+        logger.trace(f"🔭 [RuleManager.evaluate] extra_facts symbol: {extra_facts.get('symbol')}")
         facts = self._get_common_facts(source)
+        
+        # Always add score-related facts from extra_facts (needed for strategy rules in any context)
+        if 'strategy_sum_bi' in extra_facts:
+            facts['strategy_sum_bi'] = extra_facts.get('strategy_sum_bi', 0)
+            facts['strategy_sum_uni'] = extra_facts.get('strategy_sum_uni', 0)
+            logger.trace(f"[RuleManager.evaluate] Added score facts: sum_bi={extra_facts.get('strategy_sum_bi')}, sum_uni={extra_facts.get('strategy_sum_uni')}")
+        
         ins_ctx = self.constants.get('fact_contexts', 'instrument_context')
 
         if context == ins_ctx:
@@ -107,6 +116,9 @@ class RuleManager:
                     raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
                     if not raw_data:
                         raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                    
+                    if not raw_data:
+                        logger.warning(f"[{self.__class__.__name__}.evaluate] - No data found for lookup_key={lookup_key}, token={token}, exch={exch}. SYMBOLDICT sample keys: {list(source.state.client.SYMBOLDICT.keys())[:5]}")
                 
                 candles = raw_data.get('candles', [])
                 standardized = self.fact_converter.convert_candle_data(candles)
@@ -137,14 +149,29 @@ class RuleManager:
         triggered_ops = []
         op_key = self.rule_schema.get('actions_key', 'order_operations')
 
-        # DEBUG: Log rule evaluation
+        # DEBUG: Log rule evaluation with key facts
         logger.debug(f"📋 Rule eval: {len(self.rule_sets)} rule_sets, facts keys: {list(facts.keys())[:10]}...")
+        
+        # TRACE: Log key strategy facts for debugging
+        logger.trace(f"🔍 KEY FACTS: is_trade_window={facts.get('session_is_trade_window')}, active_positions={facts.get('portfolio_active_positions')}, sum_bi={facts.get('strategy_sum_bi')}, sum_uni={facts.get('strategy_sum_uni')}, market_adx={facts.get('market_adx')}")
+        logger.trace(f"🔍 ALL FACTS: {facts}")
+        
         for rule_set in self.rule_sets:
             try:
+                # DEBUG: Log the full facts dict for strategy rules
+                if 'MCX' in rule_set.get('name', ''):
+                    logger.trace(f"🔍 Rule '{rule_set.get('name')}' evaluation - facts keys: {list(facts.keys())}")
+                    logger.trace(f"🔍 Rule '{rule_set.get('name')}' - strategy_sum_bi={facts.get('strategy_sum_bi')}, market_adx={facts.get('market_adx')}")
                 match_result = rule_set['engine'].matches(facts)
                 if match_result:
                     logger.info(f"✅ Rule matched: {rule_set['name']}")
-                    triggered_ops.extend(rule_set[op_key])
+                    # IMPORTANT: Deep copy actions to avoid mutating the original rule_set objects
+                    import copy
+                    for op in rule_set[op_key]:
+                        triggered_ops.append(copy.deepcopy(op))  # Deep copy to handle nested dicts
+                else:
+                    # TRACE: Log why each rule didn't match
+                    logger.trace(f"❌ Rule NOT matched: {rule_set['name']} | Facts: is_trade_window={facts.get('session_is_trade_window')}, active_positions={facts.get('portfolio_active_positions')}")
             except Exception as e:
                 logger.error(f"⚠️ Eval Error in [{rule_set['name']}]: {e}")
         return triggered_ops
@@ -200,18 +227,60 @@ class RuleManager:
         for k, v in extra_facts.items():
             facts[k.replace('.', '_')] = v
 
-        # Add filter scoring weights to facts (BOTH dot and underscore formats)
-        scoring_config = self.session_manager.filters.get('scoring', {}).get('combined_score', {}) if self.session_manager.filters else {}
-        for k, v in scoring_config.items():
+        # Add filter scoring weights to facts - support both old (combined_score) and new (bidirectional/unidirectional) formats
+        scoring_config = self.session_manager.filters.get('scoring', {}) if self.session_manager.filters else {}
+        
+        # Handle new bidirectional/unidirectional format
+        if 'bidirectional' in scoring_config:
+            bi_config = scoring_config.get('bidirectional', {})
+            for k, v in bi_config.items():
+                if isinstance(v, dict):
+                    # Handle nested thresholds
+                    for k2, v2 in v.items():
+                        facts[f'filters_scoring_bidirectional_{k}_{k2}'] = v2
+                        facts[f'filters.scoring.bidirectional.{k}.{k2}'] = v2
+                else:
+                    facts[f'filters_scoring_bidirectional_{k}'] = v
+                    facts[f'filters.scoring.bidirectional.{k}'] = v
+        
+        if 'unidirectional' in scoring_config:
+            uni_config = scoring_config.get('unidirectional', {})
+            for k, v in uni_config.items():
+                if isinstance(v, dict):
+                    for k2, v2 in v.items():
+                        facts[f'filters_scoring_unidirectional_{k}_{k2}'] = v2
+                        facts[f'filters.scoring.unidirectional.{k}.{k2}'] = v2
+                else:
+                    facts[f'filters_scoring_unidirectional_{k}'] = v
+                    facts[f'filters.scoring.unidirectional.{k}'] = v
+        
+        # Legacy combined_score support (backward compatibility)
+        combined_config = scoring_config.get('combined_score', {})
+        for k, v in combined_config.items():
             facts[f'filters_scoring_combined_score_{k}'] = v
             facts[f'filters.scoring.combined_score.{k}'] = v
 
         logger.trace(f"[evaluate_score] Facts keys before scoring: {list(facts.keys())}")
+        logger.trace(f"[evaluate_score] Bi facts: market_ema_fast={facts.get('market_ema_fast')}, market_ema_slow={facts.get('market_ema_slow')}, market_supertrend_dir={facts.get('market_supertrend_dir')}, market_adx={facts.get('market_adx')}")
+        logger.trace(f"[evaluate_score] Bi weights: weight_ema_slope={facts.get('filters_scoring_bidirectional_weight_ema_slope')}, weight_supertrend={facts.get('filters_scoring_bidirectional_weight_supertrend')}")
+        logger.trace(f"[evaluate_score] Uni weights: weight_adx={facts.get('filters_scoring_unidirectional_weight_adx')}")
 
-        max_score = 0.0
+        # Guard against division by zero in EMA slope calculation
+        # When EMA values are 0 (no data), set them equal so slope = 0 (not false signal)
+        ema_fast = facts.get('market_ema_fast', 0.0)
+        ema_slow = facts.get('market_ema_slow', 0.0)
+        if ema_slow == 0:
+            # No EMA data - set both to same value to get 0 slope
+            facts['market_ema_fast'] = ema_fast if ema_fast > 0 else 1.0
+            facts['market_ema_slow'] = facts['market_ema_fast']
+
+        scores = {'sum_bi': 0.0, 'sum_uni': 0.0}
         for score_rule in self.scoring_rules:
+            logger.trace(f"[evaluate_score] Evaluating rule: {score_rule.get('name')}")
             try:
-                if score_rule['engine'].matches(facts):
+                matches = score_rule['engine'].matches(facts)
+                logger.trace(f"[evaluate_score] Rule '{score_rule.get('name')}' matches: {matches}")
+                if matches:
                     expr_str = score_rule.get('scoring_expression')
                     if expr_str:
                         if expr_str not in self._score_evaluators:
@@ -223,13 +292,38 @@ class RuleManager:
                         
                         try:
                             result = self._score_evaluators[expr_str].evaluate(facts)
+                            logger.trace(f"[evaluate_score] Rule '{score_rule.get('name')}' result: {result}")
                         except Exception as eval_e:
                             logger.error(f"Scoring Eval Error: {eval_e} | Expression: {expr_str}")
                             raise eval_e
-                        max_score = max(max_score, float(result) if result is not None else 0.0)
+                        
+                        score_value = float(result) if result is not None else 0.0
+                        rule_name = score_rule.get('name', '')
+                        
+                        # Map rule name to score type
+                        if 'Bidirectional' in rule_name:
+                            scores['sum_bi'] = score_value
+                            logger.trace(f"[evaluate_score] Set sum_bi = {score_value}")
+                        elif 'Unidirectional' in rule_name:
+                            scores['sum_uni'] = score_value
+                            logger.trace(f"[evaluate_score] Set sum_uni = {score_value}")
+                        else:
+                            # Legacy fallback
+                            scores['sum_bi'] = max(scores['sum_bi'], score_value)
             except Exception as e:
-                logger.error(f"⚠️ Scoring Error [{score_rule['name']}]: {e}")
-        return max_score
+                logger.error(f"⚠️ Scoring Error [{score_rule.get('name')}]: {e}")
+        
+        logger.trace(f"[evaluate_score] Final scores: sum_bi={scores['sum_bi']}, sum_uni={scores['sum_uni']}")
+        
+        # Return combined score for backward compatibility (sum_bi + sum_uni)
+        # Also set facts for strategy rules to access
+        facts['strategy_sum_bi'] = scores['sum_bi']
+        facts['strategy_sum_uni'] = scores['sum_uni']
+        facts['strategy_trend_score'] = scores['sum_bi']  # Legacy compatibility
+        logger.trace(f"[evaluate_score] Set facts: strategy_sum_bi={scores['sum_bi']}, strategy_sum_uni={scores['sum_uni']}")
+        
+        # Return both total score and the individual scores dict
+        return scores['sum_bi'] + scores['sum_uni'], scores
 
     def _load_and_compile_rules(self) -> List[Dict]:
         logger.debug(f"📋 Loading rules from: {self.rules_file_path}")
@@ -267,7 +361,14 @@ class RuleManager:
             return []
 
     def _convert_to_expression(self, node: dict) -> str:
-        operators = {"equal": "==", "notEqual": "!=", "greaterThan": ">", "lessThan": "<", "greaterThanOrEqual": ">=", "lessThanOrEqual": "<=", "in": "in"}
+        operators = {
+            "equal": "==", "notEqual": "!=", 
+            "greaterThan": ">", "lessThan": "<", 
+            "greaterThanOrEqual": ">=", "lessThanOrEqual": "<=",
+            "greater_than": ">", "less_than": "<", 
+            "greater_or_equal": ">=", "less_or_equal": "<=",
+            "in": "in"
+        }
         if 'allOf' in node: return "(" + " and ".join([self._convert_to_expression(c) for c in node['allOf']]) + ")"
         if 'anyOf' in node: return "(" + " or ".join([self._convert_to_expression(c) for c in node['anyOf']]) + ")"
         f_key, o_key, v_key = self.rule_schema.get('fact_key', 'fact'), self.rule_schema.get('operator_key', 'operator'), self.rule_schema.get('value_key', 'value')
