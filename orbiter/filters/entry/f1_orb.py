@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import json
+import logging
 import os
 from datetime import datetime, timedelta
 import math
 from orbiter.utils.utils import safe_float
 
 VERBOSE_LOGS = False
+logger = logging.getLogger("ORBITER")
 
 # 📂 Load Research Master for dynamic weighting
 _base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,6 +24,7 @@ def calculate_orb_range(ret, start_time_str='09:15', end_time_str='09:30', **kwa
         print(f'🔍 API Response={len(ret) if ret else 0} candles')
     
     if not ret or len(ret) == 0:
+        logger.warning(f"[calculate_orb_range] - No candle data returned for token={token}, start_time={start_time_str}, end_time={end_time_str}")
         return None, None, None
     
     ok = [c for c in ret if c.get('stat') == 'Ok']

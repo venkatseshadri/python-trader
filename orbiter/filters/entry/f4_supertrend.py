@@ -1,6 +1,9 @@
+import logging
 import numpy as np
 import talib
 from orbiter.utils.utils import safe_float
+
+logger = logging.getLogger("ORBITER")
 
 def calculate_st_values(highs, lows, closes, period, multiplier):
     """Internal helper to calculate SuperTrend array."""
@@ -67,7 +70,11 @@ def supertrend_filter(data, candle_data, **kwargs):
     multiplier = kwargs.get('multiplier', 3)
     
     ltp = safe_float(data.get('lp', 0))
-    if ltp == 0 or not candle_data or len(candle_data) < 15:
+    if ltp == 0:
+        logger.debug(f"[f4_supertrend] - Skipping {token}: LTP=0")
+        return {'score': 0.00, 'supertrend': 0.0, 'direction': "⚪ WAIT", 'direction_numeric': 0}
+    if not candle_data or len(candle_data) < 15:
+        logger.warning(f"[f4_supertrend] - Skipping {token}: insufficient candles ({len(candle_data) if candle_data else 0}, need 15)")
         return {'score': 0.00, 'supertrend': 0.0, 'direction': "⚪ WAIT", 'direction_numeric': 0}
 
     # 1. Prepare Data

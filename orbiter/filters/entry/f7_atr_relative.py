@@ -1,6 +1,9 @@
+import logging
 import numpy as np
 import talib
 from orbiter.utils.utils import safe_float
+
+logger = logging.getLogger("ORBITER")
 
 def atr_momentum_filter(data, candle_data, **kwargs):
     """
@@ -13,6 +16,7 @@ def atr_momentum_filter(data, candle_data, **kwargs):
     VERBOSE_LOGS = kwargs.get('VERBOSE_LOGS', False)
     
     if not candle_data or len(candle_data) < 30:
+        logger.warning(f"[f7_atr_relative] - Skipping {token}: insufficient candles ({len(candle_data) if candle_data else 0}, need 30)")
         return {'score': 0.00}
 
     highs = np.array([safe_float(c['inth']) for c in candle_data if c.get('stat')=='Ok'], dtype=float)
