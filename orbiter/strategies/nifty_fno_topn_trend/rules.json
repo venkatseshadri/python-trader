@@ -5,7 +5,6 @@
       "priority": 10,
       "market_signals": {
         "allOf": [
-          { "fact": "instrument.expiry_cycle", "operator": "equal", "value": "weekly" },
           { "fact": "instrument.instrument_type", "operator": "equal", "value": "index" }
         ]
       },
@@ -28,17 +27,19 @@
   ],
   "strategies": [
     {
-      "name": "Nifty_FNO_TopN_Trend_Execution",
+      "name": "Nifty_FNO_TopN_Trend_Nifty_Execution",
       "priority": 100,
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
-          { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 }
+          { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
+          { "fact": "instrument.symbol", "operator": "equal", "value": "NIFTY" }
         ]
       },
       "execution_logic": "TOP_N",
       "top_n": "strategy.top_n",
       "scoring_fact": "strategy.trend_score",
+      "score_threshold": 3.0,
       "order_operations": [
         { 
           "type": "trade.place_spread", 
@@ -56,6 +57,77 @@
             "strike_logic": "ATM-1",
             "option_type": "PE",
             "expiry_type": "weekly+0"
+          } 
+        }
+      ]
+    },
+    {
+      "name": "Nifty_FNO_TopN_Trend_Index_Execution",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
+          { "fact": "instrument.instrument_type", "operator": "equal", "value": "index" },
+          { "fact": "instrument.symbol", "operator": "notEqual", "value": "NIFTY" }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy.trend_score",
+      "score_threshold": 3.0,
+      "order_operations": [
+        { 
+          "type": "trade.place_spread", 
+          "params": { 
+            "side": "BUY",
+            "strike_logic": "ATM+1",
+            "option_type": "CE",
+            "expiry_type": "monthly+0"
+          } 
+        },
+        { 
+          "type": "trade.place_spread", 
+          "params": { 
+            "side": "SELL", 
+            "strike_logic": "ATM-1",
+            "option_type": "PE",
+            "expiry_type": "monthly+0"
+          } 
+        }
+      ]
+    },
+    {
+      "name": "Nifty_FNO_TopN_Trend_Stock_Execution",
+      "priority": 100,
+      "market_signals": {
+        "allOf": [
+          { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
+          { "fact": "instrument.instrument_type", "operator": "equal", "value": "stock" }
+        ]
+      },
+      "execution_logic": "TOP_N",
+      "top_n": "strategy.top_n",
+      "scoring_fact": "strategy.trend_score",
+      "score_threshold": 3.0,
+      "order_operations": [
+        { 
+          "type": "trade.place_spread", 
+          "params": { 
+            "side": "BUY",
+            "strike_logic": "ATM+1",
+            "option_type": "CE",
+            "expiry_type": "monthly+0"
+          } 
+        },
+        { 
+          "type": "trade.place_spread", 
+          "params": { 
+            "side": "SELL", 
+            "strike_logic": "ATM-1",
+            "option_type": "PE",
+            "expiry_type": "monthly+0"
           } 
         }
       ]

@@ -1,90 +1,205 @@
 [
   {
-    "symbol": "CRUDEOIL",
-    "token": "472789",
+    "symbol": "ALUMINI",
+    "token": "ALUMINI",
     "exchange": "MCX",
     "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "CRUDEOILM",
-    "token": "472790",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "NATURALGAS",
-    "token": "475111",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "NATGASMINI",
-    "token": "475112",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "GOLD",
-    "token": "454818",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "SILVER",
-    "token": "451666",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "COPPER",
-    "token": "487657",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "ZINC",
-    "token": "487662",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "LEAD",
-    "token": "487658",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
-  },
-  {
-    "symbol": "NICKEL",
-    "token": "487660",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
+    "derivative": "future"
   },
   {
     "symbol": "ALUMINIUM",
-    "token": "487656",
+    "token": "ALUMINIUM",
     "exchange": "MCX",
     "instrument_type": "future",
-    "derivative": "future",
-    "expiry_type": "monthly"
+    "derivative": "future"
+  },
+  {
+    "symbol": "CARDAMOM",
+    "token": "CARDAMOM",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "COPPER",
+    "token": "COPPER",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "COTTON",
+    "token": "COTTON",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "COTTONOIL",
+    "token": "COTTONOIL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "CRUDEOIL",
+    "token": "CRUDEOIL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "CRUDEOILM",
+    "token": "CRUDEOILM",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "ELECDMBL",
+    "token": "ELECDMBL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLD",
+    "token": "GOLD",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDGUINEA",
+    "token": "GOLDGUINEA",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDM",
+    "token": "GOLDM",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDPETAL",
+    "token": "GOLDPETAL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDTEN",
+    "token": "GOLDTEN",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "KAPAS",
+    "token": "KAPAS",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "LEAD",
+    "token": "LEAD",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "LEADMINI",
+    "token": "LEADMINI",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "MCXBULLDEX",
+    "token": "MCXBULLDEX",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "MCXMETLDEX",
+    "token": "MCXMETLDEX",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "MENTHAOIL",
+    "token": "MENTHAOIL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "NATGASMINI",
+    "token": "NATGASMINI",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "NATURALGAS",
+    "token": "NATURALGAS",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "NICKEL",
+    "token": "NICKEL",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "SILVER",
+    "token": "SILVER",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "SILVERM",
+    "token": "SILVERM",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "SILVERMIC",
+    "token": "SILVERMIC",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "STEELREBAR",
+    "token": "STEELREBAR",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "ZINC",
+    "token": "ZINC",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "ZINCMINI",
+    "token": "ZINCMINI",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
   }
 ]

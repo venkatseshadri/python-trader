@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 🛠️ Utility: Update MCX Config
-Scans common MCX commodities for current month Futures and updates mcx_futures_map.json
+Scans common MCX commodities for current month Futures and updates:
+1. mcx_futures_map.json - Token mappings for futures
+2. instruments.json - Strategy instruments list
 
 Usage:
     python -m orbiter.utils.mcx.update_mcx_config
@@ -33,8 +35,10 @@ SYMBOLS = [
     'COPPER', 
     'ZINC', 'ZINCMINI', 
     'LEAD', 'LEADMINI', 
-    'ALUMINIUM',
-    'NICKEL'
+    'ALUMINIUM', 'ALUMINI',
+    'NICKEL',
+    'COTTONOIL', 'ELECDMBL', 'CARDAMOM', 'NATGASMINI', 'STEELREBAR',
+    'MCXMETLDEX', 'MCXBULLDEX', 'MENTHAOIL', 'COTTON', 'KAPAS'
 ]
 
 MCX_ROOT_URL = 'https://api.shoonya.com/'
@@ -129,7 +133,8 @@ def main():
             exp_str = exp_date.strftime("%d%b%y")
             print(f"✅ {symbol:<15} -> {tok} ({tsym}) [Lot: {ls}] [Expiry: {exp_str}]")
             
-        futures_map[tok] = [symbol, tsym, int(ls) if ls else 1, exp_str]
+        # FIX: Use symbol as key (not token), include token in the list
+        futures_map[symbol] = [symbol, tsym, int(ls) if ls else 1, exp_str, tok]
         time.sleep(0.2)
 
     if not futures_map:
@@ -144,6 +149,9 @@ def main():
     
     print(f"💾 Saved MCX Futures mapping to {map_path}")
     print(f"✅ Added {len(futures_map)} MCX future tokens.")
+
+    # Also update instruments.json
+    update_instruments_json(futures_map, project_root)
 
 
 def download_full_mcx_symbols():
@@ -210,19 +218,20 @@ def download_full_mcx_symbols():
             except:
                 continue
             
-            # Key: Use symbol as-is (CRUDEOIL, CRUDEOILM, etc. are different!)
-            # But only keep the nearest expiry for each
+            # Keep only the nearest expiry for each base symbol
             if symbol in futures_map:
+                # Compare expiries, keep the nearer one
                 existing_exp = futures_map[symbol][3]
                 try:
                     existing_date = datetime.strptime(existing_exp, "%d%b%y").date()
-                    if exp_date > existing_date:
-                        continue  # Keep the nearer one
+                    if exp_date >= existing_date:
+                        continue  # Skip - we already have a nearer expiry
                 except:
                     pass
             
             exp_str = exp_date.strftime("%d%b%y")
-            futures_map[symbol] = [symbol, tsym, int(lotsize) if lotsize else 1, exp_str]
+            # Use token (numeric) as key for proper mapping
+            futures_map[symbol] = [symbol, tsym, int(lotsize) if lotsize else 1, exp_str, token]
         
         if not futures_map:
             print("❌ No valid MCX futures found in the download.")
@@ -245,10 +254,49 @@ def download_full_mcx_symbols():
         print(f"💾 Saved {len(futures_map)} MCX futures to {map_path}")
         print(f"✅ Symbols: {list(futures_map.keys())}")
         
+        # Also update instruments.json
+        update_instruments_json(futures_map, project_root)
+        
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
         traceback.print_exc()
+
+
+def update_instruments_json(futures_map, project_root):
+    """Update instruments.json with only valid MCX futures from futures_map."""
+    print(f"\n📝 Updating instruments.json...")
+    
+    # Build instruments list from futures_map
+    # futures_map format: {symbol: [symbol, tsym, lot_size, expiry, token]}
+    instruments = []
+    for symbol, info in futures_map.items():
+        # Handle both old format (4 values) and new format (5 values with token)
+        if len(info) >= 5:
+            symbol, tsym, lot_size, expiry, token = info[0], info[1], info[2], info[3], info[4]
+        else:
+            symbol, tsym, lot_size, expiry = info[0], info[1], info[2], info[3]
+            token = symbol  # Fallback
+        
+        instruments.append({
+            "symbol": symbol,
+            "token": symbol,  # Use symbol name for resolution
+            "exchange": "MCX",
+            "instrument_type": "future",
+            "derivative": "future"
+        })
+    
+    # Sort by symbol name for consistency
+    instruments.sort(key=lambda x: x['symbol'])
+    
+    # Save to instruments.json
+    instruments_path = os.path.join(project_root, 'orbiter', 'strategies', 'mcx_trend_follower', 'instruments.json')
+    
+    with open(instruments_path, 'w') as f:
+        json.dump(instruments, f, indent=2)
+    
+    print(f"💾 Saved {len(instruments)} instruments to {instruments_path}")
+    print(f"✅ Instruments: {[i['symbol'] for i in instruments]}")
 
 
 if __name__ == "__main__":
