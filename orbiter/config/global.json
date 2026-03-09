@@ -8,5 +8,5 @@
   "hedge_steps": 4,
   "update_interval": 5,
   "verbose_logs": true,
-  "log_level": "TRACE"
+  "log_level": "INFO"
 }
