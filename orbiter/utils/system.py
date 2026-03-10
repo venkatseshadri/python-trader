@@ -5,50 +5,58 @@ import sys
 import json
 import subprocess
 from datetime import datetime
-from .data_manager import DataManager
+from .data_manager import ConfigLoader
 from .argument_parser import ArgumentParser
-from .constants_manager import ConstantsManager # Import ConstantsManager
+from .constants_manager import ConstantsManager
 
-# Constants (these will eventually come from ConstantsManager)
 LOCK_ACQUIRE = "acquire"
 LOCK_RELEASE = "release"
 
-def resolve_project_root() -> str:
-    """Calculates the project root relative to this file."""
-    # This file is at: project_root/[APP_NAME]/utils/system.py
-    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT: str | None = None
+MANIFEST: dict = {}
+CONSTANTS: dict = {}
+GLOBAL_CONFIG: dict = {}
 
-def load_project_manifest(project_root: str) -> dict:
-    """Loads the master project manifest (project.json) from the root."""
-    return DataManager.load_manifest(project_root)
+def get_project_root() -> str:
+    """Get project root, initializing path if needed."""
+    global PROJECT_ROOT
+    if PROJECT_ROOT is None:
+        PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if PROJECT_ROOT not in sys.path:
+            sys.path.insert(0, PROJECT_ROOT)
+    return PROJECT_ROOT
 
-def bootstrap() -> str:
-    """Resolves root and parses CLI facts in one step."""
-    root = resolve_project_root()
-    manifest = load_project_manifest(root)
+def get_manifest() -> dict:
+    """Get loaded manifest."""
+    return MANIFEST
 
-    if not manifest:
-        print(f"❌ BOOT ERROR: project.json missing at {root}")
-        return root
+def get_constants() -> dict:
+    """Get loaded constants."""
+    return CONSTANTS
 
-    # Initialize ConstantsManager early
-    ConstantsManager(root)
+def get_global_config() -> dict:
+    """Get loaded global config."""
+    return GLOBAL_CONFIG
 
-    # Parse CLI facts (with project_root for proper config loading)
-    ArgumentParser.parse_cli_to_facts(sys.argv[1:], project_root=root)
-
-    return root
-
-def load_system_config(project_root: str) -> dict:
-    """Utility to load system-level configuration from the manifest-defined path."""
-    manifest = load_project_manifest(project_root)
-    rel_path = manifest.get('mandatory_files', {}).get('system_config')
+def bootstrap() -> tuple[str, dict]:
+    """
+    Early initialization: resolve root, load manifest, init constants, parse CLI.
+    Runs before logging is set up.
     
-    if rel_path:
-        path = os.path.join(project_root, rel_path)
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    return json.load(f)
-            except Exception: pass
-    return {}
+    Returns:
+        tuple: (project_root, context_dict)
+    """
+    global MANIFEST, CONSTANTS, GLOBAL_CONFIG
+    project_root = get_project_root()
+    
+    MANIFEST = ConfigLoader.load_manifest(project_root)
+
+    if not MANIFEST:
+        print(f"❌ BOOT ERROR: manifest.json missing at {project_root}")
+        return project_root, {}
+
+    CONSTANTS = ConfigLoader.load_config(project_root, 'mandatory_files', 'constants')
+    GLOBAL_CONFIG = ConfigLoader.load_config(project_root, 'mandatory_files', 'global_config')
+    context = ArgumentParser.parse_cli_to_facts(sys.argv[1:], project_root=project_root)
+
+    return project_root, context

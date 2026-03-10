@@ -38,7 +38,9 @@ class StateManager:
 
         self.last_scan_metrics = []
         self.last_scan_log_ts = 0
-        self.filter_results_cache = {}
+        self.filter_results_cache = []
+        
+        self.primed = False
         
         self.evaluator = None
         self.executor = None

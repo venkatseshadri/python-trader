@@ -33,7 +33,7 @@ class RegistrationManager:
             logger.debug("No app instance; skipping app action registration.")
             return
         self.action_manager.action_registry[self.constants.get('action_types', 'app_setup')] = self.app.setup
-        self.action_manager.action_registry['app.prime_data'] = self.app.prime_data
+        self.action_manager.action_registry['app.prime_data'] = self.engine.prime_data if self.engine else None
         self.action_manager.action_registry[self.constants.get('action_types', 'app_stop')] = self.app.stop
         logger.debug(self.constants.get('magic_strings', 'app_actions_registered_msg'))
 

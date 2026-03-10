@@ -4,12 +4,19 @@ import os
 import sys
 import logging
 from datetime import datetime
-from orbiter.utils.data_manager import DataManager
-from orbiter.utils.constants_manager import ConstantsManager
+from orbiter.utils.system import get_manifest, get_constants
 
 # Define custom TRACE level
 TRACE_LEVEL_NUM = 5  # Below DEBUG (10)
 logging.addLevelName(TRACE_LEVEL_NUM, 'TRACE')
+
+LOG_LEVELS = {
+    "TRACE": TRACE_LEVEL_NUM,
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+}
 
 def trace(self, message, *args, **kws):
     if self.isEnabledFor(TRACE_LEVEL_NUM):
@@ -25,32 +32,32 @@ class LoggerWriter:
     def write(self, message):
         if message and message.strip():
             self.level(message.strip())
-            # Removed raw=True duplication - handlers already write to stdout
     def flush(self):
         pass
 
+def _get(d: dict, category: str, key: str, default=None):
+    """Helper to get nested dict value."""
+    return d.get(category, {}).get(key, default)
+
 def setup_logging(project_root: str, log_level: str = "INFO") -> logging.Logger:
-    """Setup dual logging with paths from project.json and configurable level."""
-    constants = ConstantsManager.get_instance()
-    manifest = DataManager.load_manifest(project_root) # Make sure manifest is loaded
-    log_rel_path = manifest.get('structure', {}).get('logs', 'logs/system') # Default to a string literal fallback for robustness
+    """Setup dual logging with paths from manifest.json and configurable level."""
+    manifest = get_manifest()
+    constants = get_constants()
     
+    log_rel_path = manifest.get('structure', {}).get('logs', 'logs/system')
     log_dir = os.path.join(project_root, log_rel_path)
     os.makedirs(log_dir, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join(log_dir, f"{constants.get('magic_strings', 'log_name', 'ORBITER').lower()}_{timestamp}.log")
-    
-    logger_name = constants.get('magic_strings', 'log_name', 'ORBITER')
+    log_name = _get(constants, 'magic_strings', 'log_name', 'ORBITER')
+    log_file = os.path.join(log_dir, f"{log_name.lower()}_{timestamp}.log")
 
     # Convert string log level to logging module constant
-    numeric_level = getattr(logging, log_level.upper(), None)
-    if not isinstance(numeric_level, int):
-        # Fallback for custom TRACE level
-        if log_level.upper() == 'TRACE':
-            numeric_level = TRACE_LEVEL_NUM
-        else:
-            numeric_level = logging.INFO # Default to INFO if invalid
+    numeric_level = LOG_LEVELS.get(log_level.upper(), logging.INFO)
+
+    # Set external API loggers to same level
+    for logger_name in ("NorenRestApiPy", "urllib3", "websocket", "websockets"):
+        logging.getLogger(logger_name).setLevel(numeric_level)
 
     logging.basicConfig(
         level=numeric_level,
@@ -61,7 +68,7 @@ def setup_logging(project_root: str, log_level: str = "INFO") -> logging.Logger:
         ]
     )
     
-    l = logging.getLogger(logger_name)
+    l = logging.getLogger(log_name)
     sys.stdout = LoggerWriter(l.info, raw=True)
     sys.stderr = LoggerWriter(l.error)
     l.info(f"Logging initialized to level: {log_level.upper()}")

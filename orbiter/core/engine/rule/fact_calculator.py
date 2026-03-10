@@ -223,9 +223,11 @@ class FactCalculator:
         if not logged_in and app.engine and hasattr(app.engine.state, 'client'):
             api = app.engine.state.client.api
             logged_in = getattr(api, '_NorenApi__susertoken', None) is not None
-            
+        
+        primed = app.engine.state.primed if app.engine else False
+        
         return { 
             "app.initialized": app.initialized,
             "app.logged_in": logged_in,
-            "app.primed": app.primed
+            "app.primed": primed
         }

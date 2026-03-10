@@ -27,6 +27,9 @@ class ActionManager:
         
         logger.debug(f"[{self.__class__.__name__}.execute_batch] - Processing {len(actions)} actions.")
         
+        for action in actions:
+            logger.info(f"⚡ SYSTEM ACTION: {action.get('type')} | Params: {action.get('params')}")
+        
         # 📏 1. SORT BY SEQUENCE
         # If 'sequence' is missing, it defaults to 999 (execute last)
         seq_key = self.schema_manager.get_key('rule_schema', 'sequence_key', 'sequence')

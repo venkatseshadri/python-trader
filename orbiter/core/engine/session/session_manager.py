@@ -1,6 +1,7 @@
 # orbiter/core/engine/session/session_manager.py
 
 import os
+import json
 import pytz
 from datetime import datetime, time as dt_time
 import logging
@@ -10,34 +11,63 @@ from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
 
+
+def _evaluate_dynamic_strategy(project_root: str, context: dict) -> tuple:
+    """Evaluate dynamic strategy selection. Returns (code, strategy_id)."""
+    dynamic_config_path = os.path.join(project_root, "orbiter", "config", "dynamic_strategy_rules.json")
+    if not os.path.exists(dynamic_config_path):
+        return None, None
+    
+    try:
+        with open(dynamic_config_path, 'r') as f:
+            config = json.load(f)
+    except Exception:
+        return None, None
+    
+    if not config.get('enabled'):
+        return None, None
+    
+    from orbiter.core.strategy_selector import StrategySelector
+    return StrategySelector.evaluate(context, project_root)
+
+
 class SessionManager:
-    def __init__(self, project_root: str, paper_trade: bool = False, strategy_id: str = None):
+    def __init__(self, project_root: str, paper_trade: bool = False, strategy_id: str = None, context: dict = None):
         self.project_root = project_root
         self.constants = ConstantsManager.get_instance(project_root)
         self.schema_manager = SchemaManager.get_instance(project_root)
         
-        # 1. Load Root Configs
-        self.session_config = DataManager.load_config(project_root, 'mandatory_files', 'session_config')
-        self.exchange_config = DataManager.load_config(project_root, 'mandatory_files', 'exchange_config')
-        
-        # 2. Load Strategy (The 'strategy.json')
+        self._load_base_configs()
+        self._load_strategy(strategy_id, context)
+            
+    def _load_base_configs(self):
+        """Load root configs (exchange, session)."""
+        self.session_config = DataManager.load_config(self.project_root, 'mandatory_files', 'session_config')
+        self.exchange_config = DataManager.load_config(self.project_root, 'mandatory_files', 'exchange_config')
+
+    def _load_strategy(self, strategy_id: str = None, context: dict = None):
+        """Load strategy bundle, handling dynamic strategy selection if enabled."""
         s_schema = self.schema_manager.get_key('session_schema') or {}
         
-        # 🚀 Runtime Strategy Override: CLI Arg -> Env Var -> Config default
         rel_path = strategy_id
         if not rel_path or rel_path == 'default':
             rel_path = os.environ.get("ORBITER_STRATEGY")
         if not rel_path:
             rel_path = self.session_config.get(s_schema.get('active_strategy_path_key', 'active_strategy_path'))
         
-        # Ensure it points to strategy.json if only a folder was given
         if rel_path and not rel_path.endswith('.json'):
             rel_path = os.path.join(rel_path, 'strategy.json')
+
+        # Check for dynamic strategy selection
+        if context:
+            code, strategy_id = _evaluate_dynamic_strategy(self.project_root, context)
+            if code:
+                rel_path = strategy_id
+                logger.info(f"🔄 Dynamic strategy selected: {strategy_id}")
 
         manifest = DataManager.load_manifest(self.project_root)
         structure = manifest.get('structure', {})
 
-        # Fallbacks if schema entries are missing
         strat_base = self.schema_manager.get_key('project_manifest_schema', 'structure_key') or 'structure'
         strat_path_val = self.schema_manager.get_key(strat_base, 'strategies') or structure.get('strategies')
         if strat_path_val is None:
@@ -47,13 +77,11 @@ class SessionManager:
         self.strategy_dir = os.path.dirname(full_strategy_path)
         self.strategy_bundle = DataManager.load_json(full_strategy_path)
         
-        # 3. 🧪 Load Filters from separate file
         f_key = self.schema_manager.get_key('strategy_schema', 'files_key')
         filter_file_key = self.schema_manager.get_key('strategy_schema', 'filters_file_key', 'filters_file')
         filter_rel = self.strategy_bundle.get(f_key, {}).get(filter_file_key)
         self.filters = DataManager.load_json(os.path.join(self.project_root, filter_rel)) if filter_rel else {}
         
-        # 4. Resolve Operational Environment
         exch_id = self.strategy_bundle.get(self.schema_manager.get_key('strategy_schema', 'exchange_id_key'))
         self.op_config = self.exchange_config.get(exch_id, {}).copy()
         

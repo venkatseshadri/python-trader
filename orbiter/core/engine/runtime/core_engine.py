@@ -324,3 +324,14 @@ class Engine:
         logger.debug(f"[{self.__class__.__name__}.shutdown] - Shutdown requested. Reason: {reason}")
         self.shutdown_triggered = True
         logger.info(self.constants.get('magic_strings', 'engine_shutdown_triggered_msg').format(reason=reason))
+
+    def prime_data(self):
+        """Start market data feed - historical priming + live WebSocket."""
+        from orbiter.core.market_data import MarketData
+        if not self.state.client:
+            return False
+        self.state.primed = MarketData.prime_and_subscribe(
+            self.state.client,
+            self.state.symbols
+        )
+        return self.state.primed

@@ -3,15 +3,15 @@
 import os
 import json
 
-class DataManager:
+class ConfigLoader:
     """
-    Centralized utility for loading and managing external data and configurations.
-    This class handles all JSON interactions and path resolution via the manifest.
+    Loads JSON configuration files using the project manifest as a registry.
+    Handles path resolution and file loading for the trading system.
     """
     
     @staticmethod
-    def load_json(file_path: str) -> dict:
-        """Generic JSON loader with error handling."""
+    def load_json_file(file_path: str) -> dict:
+        """Load a JSON file with error handling."""
         if os.path.exists(file_path):
             try:
                 with open(file_path, 'r') as f:
@@ -22,16 +22,16 @@ class DataManager:
 
     @staticmethod
     def load_manifest(project_root: str) -> dict:
-        """Loads the master project.json manifest."""
-        return DataManager.load_json(os.path.join(project_root, 'project.json'))
+        """Load the master manifest.json registry."""
+        return ConfigLoader.load_json_file(os.path.join(project_root, 'manifest.json'))
 
     @staticmethod
-    def get_manifest_path(project_root: str, category: str, item: str) -> str | None:
+    def get_path(project_root: str, category: str, item: str) -> str | None:
         """
-        Resolves an absolute path for a specific item defined in the project manifest.
-        Example: get_manifest_path(root, 'mandatory_files', 'system_config')
+        Resolve an absolute path for a manifest entry.
+        Example: get_path(root, 'mandatory_files', 'system_config')
         """
-        manifest = DataManager.load_manifest(project_root)
+        manifest = ConfigLoader.load_manifest(project_root)
         rel_path = manifest.get(category, {}).get(item)
         if rel_path:
             return os.path.join(project_root, rel_path)
@@ -39,8 +39,22 @@ class DataManager:
 
     @staticmethod
     def load_config(project_root: str, category: str, item: str) -> dict:
-        """Loads a JSON configuration file defined in the manifest."""
-        path = DataManager.get_manifest_path(project_root, category, item)
+        """Load a JSON config file from the manifest."""
+        path = ConfigLoader.get_path(project_root, category, item)
         if path:
-            return DataManager.load_json(path)
+            return ConfigLoader.load_json_file(path)
         return {}
+
+    @staticmethod
+    def load_json(file_path: str) -> dict:
+        """Load a JSON file. Alias for load_json_file."""
+        return ConfigLoader.load_json_file(file_path)
+
+    @staticmethod
+    def get_manifest_path(project_root: str, category: str, item: str) -> str | None:
+        """Resolve an absolute path for a manifest entry. Alias for get_path."""
+        return ConfigLoader.get_path(project_root, category, item)
+
+
+class DataManager(ConfigLoader):
+    """Backward compatibility - inherits all methods from ConfigLoader."""

@@ -13,15 +13,15 @@ class ArgumentParser:
     
     @staticmethod
     def _load_strategy_codes(project_root: str = None) -> dict:
-        """Load strategy code mappings from system.json"""
+        """Load strategy code mappings from config.json"""
         if not project_root:
             return {}
-        system_json_path = os.path.join(project_root, "orbiter", "config", "system.json")
-        if os.path.exists(system_json_path):
+        config_json_path = os.path.join(project_root, "orbiter", "config", "config.json")
+        if os.path.exists(config_json_path):
             try:
-                with open(system_json_path, 'r') as f:
-                    system_config = json.load(f)
-                    return system_config.get('strategy_codes', {})
+                with open(config_json_path, 'r') as f:
+                    config = json.load(f)
+                    return config.get('strategy_codes', {})
             except Exception:
                 pass
         return {}
@@ -179,14 +179,14 @@ class ArgumentParser:
             system_default_strategy = None
             
             if project_root:
-                system_json_path = os.path.join(project_root, "orbiter", "config", "system.json")
-                if os.path.exists(system_json_path):
+                config_json_path = os.path.join(project_root, "orbiter", "config", "config.json")
+                if os.path.exists(config_json_path):
                     try:
-                        with open(system_json_path, 'r') as f:
-                            system_config = json.load(f)
-                            system_default_strategy = system_config.get('strategyId')
+                        with open(config_json_path, 'r') as f:
+                            config = json.load(f)
+                            system_default_strategy = config.get('default_strategy')
                     except Exception as e:
-                        logger.error(f"Failed to read {system_json_path}: {e}")
+                        logger.error(f"Failed to read {config_json_path}: {e}")
 
             if resolved_strategy_input and project_root:
                 strat_dir = os.path.join(project_root, "orbiter", "strategies", resolved_strategy_input)
@@ -203,7 +203,7 @@ class ArgumentParser:
                 else:
                      final_strategy_id = system_default_strategy
             else:
-                logger.warning("No valid strategyId provided or found in system.json. Falling back to 'default'.")
+                logger.warning("No valid strategyId provided or found in config.json. Falling back to 'default'.")
 
             facts['strategyid'] = final_strategy_id
             facts['strategy_input'] = parsed_strategy_input
