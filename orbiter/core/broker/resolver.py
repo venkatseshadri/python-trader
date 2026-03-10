@@ -13,13 +13,13 @@ class ContractResolver:
     def __init__(self, scrip_master: ScripMaster):
         self.master = scrip_master
 
-    def _get_option_rows(self, symbol: str, ltp: float, expiry: datetime.date, instrument: str, exchange_override: str = None):
+    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str, exchange_override: str = None):
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         expiry_str = expiry.isoformat()
         
         # 🔭 TRACE: Log lookup details
-        logger.debug(f"🔭 [_get_option_rows] symbol={symbol}, ltp={ltp}, instrument={instrument}, expiry={expiry_str}, exchange={exchange}")
+        logger.debug(f"🔭 [_get_option_rows] symbol={symbol}, instrument={instrument}, expiry={expiry_str}, exchange={exchange}")
         
         # First try exact symbol match
         rows = [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
@@ -153,7 +153,7 @@ class ContractResolver:
             logger.error(f"❌ no_expiry_found_for_{symbol} (instrument={instrument}, expiry_type={expiry_type})")
             return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
         
-        rows = self._get_option_rows(symbol, ltp, expiry, instrument, exchange_override=exchange)
+        rows = self._get_option_rows(symbol, expiry, instrument, exchange_override=exchange)
         logger.debug(f"🔍 [resolve_option_symbol] rows_count={len(rows)} for {symbol} expiry={expiry}")
         
         strikes = sorted({float(row.get("strike")) for row in rows if row.get("strike")})
