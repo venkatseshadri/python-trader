@@ -1,0 +1,34 @@
+flowchart TD
+    subgraph SCAN["Phase 1: Scanning (Futures)"]
+        A1["Start Strategy"] --> A2["Load instruments.json"]
+        A2 --> A3["For each stock"]
+        A3 --> A4{"futures_master.json<br/>exists?"}
+        A4 -->|Yes| A5["Load futures data"]
+        A4 -->|No| A6["Error: Skip stock"]
+        A5 --> A7["Calculate indicators<br/>(ADX, EMA, ST)"]
+        A7 --> A8["Score from rules.json"]
+        A8 --> A9{"Score >= Threshold?"}
+        A9 -->|No| A3
+        A9 -->|Yes| TRADE["TRADE: Execute Options"]
+    end
+
+    subgraph TRADE_EXEC["Phase 2: Trade Execution (Options)"]
+        TRADE --> B1["resolve_option_symbol()<br/>params: symbol, ltp,<br/>option_type, strike_logic, expiry_type"]
+        B1 --> B2["_select_expiry()<br/>Determine expiry date"]
+        B2 --> B3["_get_option_rows()<br/>symbol, ltp, expiry, instrument"]
+        B3 --> B4{"Local file has<br/>option data?"}
+        B4 -->|Yes| B5["Return from file"]
+        B4 -->|No| B6["Query broker API<br/>get_security_info()"]
+        B6 --> B7["Get lot_size from API"]
+        B7 --> B8["Generate strikes<br/>around ATM (ltp)"]
+        B5 --> B9["Apply strike_logic<br/>(ATM, ATM+1, ATM-4)"]
+        B8 --> B9
+        B9 --> B10["Return contract<br/>token, tradingsymbol,<br/>lot_size, exchange"]
+        B10 --> B11["place_spread()<br/>Execute via broker"]
+    end
+
+    B11 --> END["END"]
+
+    style SCAN fill:#e1f5fe
+    style TRADE_EXEC fill:#fff3e0
+    style TRADE fill:#ffcdd2
