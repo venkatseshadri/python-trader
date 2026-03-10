@@ -92,8 +92,18 @@ def get_all_indicators(index_name: str = 'SENSEX', interval: str = '5m') -> dict
         df = ticker.history(period='1d', interval=interval)
         
         if df.empty or len(df) < 14:
-            logger.warning(f"YF: No data for {symbol}")
-            return {}
+            # Try smaller interval if 5m doesn't have enough data
+            if interval == '5m':
+                logger.info(f"YF: Not enough 5m candles ({len(df)}), trying 1m interval")
+                ticker_1m = yf.Ticker(symbol)
+                df = ticker_1m.history(period='1d', interval='1m')
+                if df.empty or len(df) < 14:
+                    logger.warning(f"YF: No data for {symbol} (tried 1m, got {len(df)} rows)")
+                    return {}
+                interval = '1m'
+            else:
+                logger.warning(f"YF: No data for {symbol}")
+                return {}
         
         high = df['High'].values
         low = df['Low'].values
