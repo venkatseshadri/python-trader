@@ -33,7 +33,7 @@ class BrokerClient:
             logger.debug(f"[{self.__class__.__name__}.__init__] - Initialized ScripMaster for segment: {self.segment_name.upper()}")
         
         self.master = BrokerClient._MASTERS[self.segment_name]
-        self.resolver = ContractResolver(self.master)
+        self.resolver = ContractResolver(self.master, api=self.conn.api)
         self.margin = MarginCalculator(self.master)
         
         # 🛡️ Load Execution Policy for the segment

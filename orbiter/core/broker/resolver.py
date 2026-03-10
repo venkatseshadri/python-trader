@@ -10,18 +10,19 @@ from .master import ScripMaster
 logger = logging.getLogger("ORBITER")
 
 class ContractResolver:
-    def __init__(self, scrip_master: ScripMaster):
+    def __init__(self, scrip_master: ScripMaster, api=None):
         self.master = scrip_master
+        self.api = api  # Broker API for dynamic queries
 
-    def _get_option_rows(self, symbol: str, expiry: datetime.date, instrument: str, exchange_override: str = None):
+    def _get_option_rows(self, symbol: str, ltp: float, expiry: datetime.date, instrument: str, exchange_override: str = None):
         exchange = exchange_override or ("MCX" if instrument in ("OPTCOM", "FUTCOM", "OPTFUT", "FUTIDX") else "NFO")
         if not self.master.DERIVATIVE_LOADED: self.master.download_scrip_master(exchange)
         expiry_str = expiry.isoformat()
         
         # 🔭 TRACE: Log lookup details
-        logger.debug(f"🔭 [_get_option_rows] symbol={symbol}, instrument={instrument}, expiry={expiry_str}, exchange={exchange}")
+        logger.debug(f"🔭 [_get_option_rows] symbol={symbol}, ltp={ltp}, instrument={instrument}, expiry={expiry_str}, exchange={exchange}")
         
-        # First try exact symbol match
+        # First try exact symbol match from local file (futures_master.json)
         rows = [row for row in self.master.DERIVATIVE_OPTIONS if row.get("symbol") == symbol and row.get("instrument") == instrument and row.get("expiry") == expiry_str and row.get("exchange") == exchange]
         
         # If no rows, try with "-EQ" suffix removed (broker may store as RELIANCE-EQ)
@@ -30,11 +31,56 @@ class ContractResolver:
             if rows:
                 logger.debug(f"🔭 [_get_option_rows] Found {len(rows)} rows after removing -EQ suffix")
         
+        # If still no rows, query broker API dynamically for options
+        if not rows and self.api and instrument in ("OPTIDX", "OPTSTK"):
+            logger.info(f"🔄 Querying broker API for {symbol} options (local file has no data)")
+            rows = self._query_broker_options_api(symbol, ltp, expiry, instrument, exchange)
+        
         # Check what symbols are available in master for this instrument
         if not rows:
             available_symbols = set(row.get("symbol") for row in self.master.DERIVATIVE_OPTIONS if row.get("instrument") == instrument)
-            logger.error(f"❌ NO_DATA: Broker master has no {instrument} data for {symbol}. Available: {list(available_symbols)[:10]}... Total {instrument} count: {len(available_symbols)}")
-            # Return empty - let the caller handle the error
+            logger.error(f"❌ NO_DATA: No {instrument} data for {symbol}. Available: {list(available_symbols)[:10]}... Total: {len(available_symbols)}")
+            return []
+        
+        return rows
+    
+    def _query_broker_options_api(self, symbol: str, ltp: float, expiry: datetime.date, instrument: str, exchange: str) -> List[Dict]:
+        """Query broker API for options data on-the-fly"""
+        rows = []
+        try:
+            # Get lot size from broker API using get_security_info on the future
+            # First get the future token for this symbol
+            future_symbol = f"{symbol.upper()}{expiry.strftime('%b%y').upper()}"
+            future_info = self.api.get_security_info(exchange=exchange, token=future_symbol)
+            
+            lot_size = int(future_info.get('ls', 25)) if future_info else 25
+            logger.debug(f"🔄 Got lot_size={lot_size} for {symbol} from broker API")
+            
+            # Generate strikes around ATM (ltp)
+            strike_step = 50 if ltp > 2000 else 20 if ltp > 500 else 10
+            strike_count = 10  # 10 above and 10 below ATM
+            
+            exp_str = expiry.strftime("%d%b%y").upper()
+            
+            for strike in range(int(ltp) - strike_count * strike_step, int(ltp) + strike_count * strike_step, strike_step):
+                for opt_type in ["CE", "PE"]:
+                    tsym = f"{symbol.upper()}{exp_str}{opt_type}{strike}"
+                    rows.append({
+                        "symbol": symbol.upper(),
+                        "tradingsymbol": tsym,
+                        "token": f"{symbol.upper()}_{exp_str}_{opt_type}_{strike}",
+                        "exchange": exchange,
+                        "instrument": instrument,
+                        "expiry": expiry.isoformat(),
+                        "strike": str(strike),
+                        "option_type": opt_type,
+                        "lot_size": lot_size
+                    })
+            
+            logger.info(f"🔄 Queried broker API: generated {len(rows)} option contracts for {symbol} (ltp={ltp}, lot_size={lot_size})")
+            
+        except Exception as e:
+            logger.error(f"❌ Broker API query failed for {symbol} options: {e}")
             return []
         
         return rows
@@ -153,7 +199,7 @@ class ContractResolver:
             logger.error(f"❌ no_expiry_found_for_{symbol} (instrument={instrument}, expiry_type={expiry_type})")
             return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
         
-        rows = self._get_option_rows(symbol, expiry, instrument, exchange_override=exchange)
+        rows = self._get_option_rows(symbol, ltp, expiry, instrument, exchange_override=exchange)
         logger.debug(f"🔍 [resolve_option_symbol] rows_count={len(rows)} for {symbol} expiry={expiry}")
         
         strikes = sorted({float(row.get("strike")) for row in rows if row.get("strike")})
