@@ -212,21 +212,31 @@
 
 ### ADX Fallback
 
-When broker historical data is insufficient (less than 20 candles), the system falls back to Yahoo Finance for ADX:
+When broker historical data is insufficient (less than 12 candles), the system falls back to Yahoo Finance for ADX based on exchange:
 
 ```
-Insufficient broker candles (< 20)
+Insufficient broker candles (< 12)
          │
          ▼
 FactCalculator.calculate_technical_facts()
          │
-         ├─► Broker ADX = 0 (no data)
+         ├─► MCX: Return zeros (no fallback - avoids false signals)
          │
-         ▼
-YF Adapter.get_market_adx('SENSEX', '5m')
+         ├─► NFO: YF Adapter.get_market_adx('NIFTY', '5m')
+         │
+         ├─► BFO: YF Adapter.get_market_adx('SENSEX', '5m')
          │
          ▼
 Cache ADX for 5 minutes
+```
+
+| Exchange | YF Index | Why |
+|----------|----------|-----|
+| NFO | NIFTY | NSE derivatives track NIFTY |
+| BFO | SENSEX | BSE derivatives track SENSEX |
+| MCX | None | Commodities don't track equity indices |
+
+The `data_source` fact is set to `'broker'`, `'yf_fallback'`, or `'none'` to track data origin.
          │
          ▼
 Use YF ADX in scoring

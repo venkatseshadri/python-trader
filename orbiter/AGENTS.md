@@ -71,11 +71,17 @@ This gives ~24 bars of 5-minute data, which is enough for most indicators (ADX n
 
 ### ADX Fallback
 
-When broker historical data is insufficient (less than 20 candles), Orbiter automatically falls back to Yahoo Finance for ADX calculation:
+When broker historical data is insufficient (less than 12 candles), Orbiter automatically falls back to Yahoo Finance for ADX calculation:
 
-- Fetches SENSEX ADX from Yahoo Finance
+| Exchange | Yahoo Finance Index | Symbol |
+|----------|-------------------|--------|
+| NFO | NIFTY | ^NSEI |
+| BFO | SENSEX | ^BSESN |
+| MCX | **No fallback** | Returns zeros |
+
 - Caches the value for 5 minutes to avoid excessive API calls
 - This ensures scoring works even outside market hours
+- MCX returns zeros (no fallback) to avoid false signals from equity indices
 
 The YF ADX is used for scoring only. For dynamic strategy selection, the system already uses Yahoo Finance directly at startup.
 

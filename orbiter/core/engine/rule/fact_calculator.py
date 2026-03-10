@@ -34,7 +34,28 @@ class FactCalculator:
         logger.info(f"🧮 Calculating Tech Facts for {token} | Bars: {data_len}")
 
         if close_data is None or len(close_data) < 12:
+            exchange = kwargs.get('instrument_exchange', kwargs.get('instrument.exchange', ''))
+            is_mcx = exchange.upper() == 'MCX'
+            
+            if is_mcx:
+                logger.warning(f"[{self.__class__.__name__}] - MCX instrument {token} has no data ({data_len} bars). NOT using SENSEX fallback - returning zeros to avoid false signals.")
+                facts['market.adx'] = facts['market_adx'] = 0
+                facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
+                facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
+                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
+                facts['market.supertrend'] = facts['market_supertrend'] = 0
+                facts['data_source'] = 'none'
+                return facts
+            
             logger.warning(f"[{self.__class__.__name__}] - Insufficient candle data for {token}: {data_len} bars (need >= 12). Using YF fallback.")
+            # Select correct index based on exchange: NFO->NIFTY, BFO->SENSEX
+            exchange = kwargs.get('instrument_exchange', kwargs.get('instrument.exchange', ''))
+            if exchange.upper() == 'BFO':
+                yf_index = 'SENSEX'
+            else:
+                yf_index = 'NIFTY'  # Default to NIFTY for NFO/NSE
+            
+            logger.info(f"🔄 Using YF {yf_index} for fallback (exchange={exchange})")
             # 🔄 Fallback: Use Yahoo Finance for ALL indicators when broker candles are insufficient
             global _yf_indicators_cache
             current_time = time.time()
@@ -43,7 +64,7 @@ class FactCalculator:
             if _yf_indicators_cache['value'] is None or (current_time - _yf_indicators_cache['timestamp']) > 300:
                 try:
                     from orbiter.utils.yf_adapter import get_all_indicators
-                    yf_data = get_all_indicators('SENSEX', '5m')
+                    yf_data = get_all_indicators(yf_index, '5m')
                     if yf_data:
                         _yf_indicators_cache = {'value': yf_data, 'timestamp': current_time}
                         logger.info(f"🔄 Using YF indicators fallback: {yf_data}")
@@ -60,6 +81,7 @@ class FactCalculator:
                 facts['market.ema_slow'] = facts['market_ema_slow'] = yf.get('ema_slow', 0)
                 facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = yf.get('supertrend_dir', 0)
                 facts['market.supertrend'] = facts['market_supertrend'] = yf.get('supertrend', 0)
+                facts['data_source'] = 'yf_fallback'
                 logger.info(f"🔄 Applied YF fallback: ADX={yf.get('adx')}, EMA_fast={yf.get('ema_fast')}, ST_dir={yf.get('supertrend_dir')}")
             else:
                 # No YF data - use zeros
@@ -68,6 +90,7 @@ class FactCalculator:
                 facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
                 facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
                 facts['market.supertrend'] = facts['market_supertrend'] = 0
+                facts['data_source'] = 'none'
             
             return facts
 
@@ -79,6 +102,8 @@ class FactCalculator:
         # Indicators from TechnicalAnalyzer already have full key names like 'market_supertrend_dir'
         for k, v in indicators.items():
             facts[k] = v  # Use key as-is
+        
+        facts['data_source'] = 'broker'
         
         input_map = {k: v for k, v in standardized_data.items() if isinstance(v, np.ndarray)}
         
