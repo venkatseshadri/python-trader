@@ -1,34 +1,57 @@
-flowchart TD
+flowchart TB
+    subgraph CLI["CLI: python orbiter/main.py"]
+        C1["--paper_trade=true"]
+        C2["--strategyCode=n1"]
+    end
+
+    subgraph STARTUP["Startup: orbiter/main.py"]
+        S1["ArgumentParser.parse_cli_to_facts()"]
+        S2["Read system.json<br/>→ strategy_codes"]
+        S3["Resolve n1 → nifty_fno_topn_trend"]
+        S4["OrbiterApp(context)"]
+        S5["EngineFactory.build()"]
+    end
+
+    subgraph JSON["JSON Configuration Files"]
+        J1["system.json<br/>strategy_codes"]
+        J2["strategies/nifty_fno_topn_trend/<br/>instruments.json<br/>(stock symbols)"]
+        J3["strategies/nifty_fno_topn_trend/<br/>rules.json<br/>(scoring, strike_logic)"]
+        J4["strategies/nifty_fno_topn_trend/<br/>filters.json<br/>(weights)"]
+        J5["futures_master.json<br/>(EXISTS ✅)"]
+    end
+
     subgraph SCAN["Phase 1: Scanning (Futures)"]
-        A1["Start Strategy"] --> A2["Load instruments.json"]
-        A2 --> A3["For each stock"]
-        A3 --> A4{"futures_master.json<br/>exists?"}
-        A4 -->|Yes| A5["Load futures data"]
-        A4 -->|No| A6["Error: Skip stock"]
-        A5 --> A7["Calculate indicators<br/>(ADX, EMA, ST)"]
-        A7 --> A8["Score from rules.json"]
-        A8 --> A9{"Score >= Threshold?"}
-        A9 -->|No| A3
-        A9 -->|Yes| TRADE["TRADE: Execute Options"]
+        A1["For each stock in instruments.json"]
+        A2["Get futures from SYMBOLDICT<br/>(from futures_master.json)"]
+        A3["FactCalculator.calculate_technical_facts()<br/>ADX, EMA, SuperTrend"]
+        A4["RuleManager.evaluate()<br/>Score from rules.json"]
+        A5{"Score >=<br/>Threshold?"}
+        A5 -->|No| A1
+        A5 -->|Yes| TRADE
     end
 
-    subgraph TRADE_EXEC["Phase 2: Trade Execution (Options)"]
-        TRADE --> B1["resolve_option_symbol()<br/>params: symbol, ltp,<br/>option_type, strike_logic, expiry_type"]
-        B1 --> B2["_select_expiry()<br/>Determine expiry date"]
-        B2 --> B3["_get_option_rows()<br/>symbol, ltp, expiry, instrument"]
-        B3 --> B4{"Local file has<br/>option data?"}
-        B4 -->|Yes| B5["Return from file"]
-        B4 -->|No| B6["Query broker API<br/>get_security_info()"]
-        B6 --> B7["Get lot_size from API"]
-        B7 --> B8["Generate strikes<br/>around ATM (ltp)"]
-        B5 --> B9["Apply strike_logic<br/>(ATM, ATM+1, ATM-4)"]
-        B8 --> B9
-        B9 --> B10["Return contract<br/>token, tradingsymbol,<br/>lot_size, exchange"]
-        B10 --> B11["place_spread()<br/>Execute via broker"]
+    subgraph TRADE["Phase 2: Trade Execution (Options)"]
+        T1["resolve_option_symbol(symbol, ltp, option_type, strike_logic, expiry_type)"]
+        T2["_select_expiry(symbol, expiry_type, instrument)<br/>→ expiry date"]
+        T3["_get_option_rows(symbol, ltp, expiry, instrument)"]
+        T4{"futures_master.json<br/>has option data?"}
+        T4 -->|Yes| T5["Return rows from file"]
+        T4 -->|No| T6["_query_broker_options_api()"]
+        T6 --> T7["get_security_info(exchange, token)<br/>→ lot_size"]
+        T7 --> T8["Generate strikes<br/>around ATM (ltp)"]
+        T8 --> T5
+        T5 --> T9["Apply strike_logic<br/>ATM → ATM+1"]
+        T9 --> T10["Return: token, tradingsymbol,<br/>lot_size, exchange"]
+        T10 --> T11["place_spread() → Broker API"]
     end
 
-    B11 --> END["END"]
+    CLI --> STARTUP
+    STARTUP --> JSON
+    JSON --> SCAN
+    SCAN --> TRADE
 
-    style SCAN fill:#e1f5fe
-    style TRADE_EXEC fill:#fff3e0
-    style TRADE fill:#ffcdd2
+    style CLI fill:#e3f2fd
+    style STARTUP fill:#e8f5e9
+    style JSON fill:#fff3e0
+    style SCAN fill:#fce4ec
+    style TRADE fill:#e1f5fe
