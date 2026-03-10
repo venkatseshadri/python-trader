@@ -33,50 +33,9 @@ class ContractResolver:
         # Check what symbols are available in master for this instrument
         if not rows:
             available_symbols = set(row.get("symbol") for row in self.master.DERIVATIVE_OPTIONS if row.get("instrument") == instrument)
-            logger.debug(f"🔭 [_get_option_rows] Available symbols for {instrument}: {list(available_symbols)[:10]}...")
-        
-        # 🔥 FALLBACK: If no rows found, generate option contracts dynamically using LTP
-        if not rows:
-            logger.warning(f"⚠️ No option data in broker master for {symbol} ({instrument}). Generating strikes around LTP={ltp}")
-            
-            # Determine strike step based on price level
-            if ltp >= 50000:
-                strike_step = 200
-            elif ltp >= 10000:
-                strike_step = 100
-            elif ltp >= 2000:
-                strike_step = 50
-            elif ltp >= 500:
-                strike_step = 20
-            else:
-                strike_step = 10
-            
-            # Determine lot size based on instrument type
-            lot_size = 65 if instrument == "OPTIDX" else 25
-            
-            # Generate strikes around LTP
-            strike_count = 20  # 20 strikes above and 20 below
-            
-            # Parse expiry for trading symbol format (e.g., 30MAR26)
-            exp_str = expiry.strftime("%d%b%y").upper()
-            
-            rows = []
-            for strike in range(int(ltp) - strike_count * strike_step, int(ltp) + strike_count * strike_step, strike_step):
-                for opt_type in ["CE", "PE"]:
-                    tsym = f"{symbol.upper()}{exp_str}{opt_type}{strike}"
-                    rows.append({
-                        "symbol": symbol.upper(),
-                        "tradingsymbol": tsym,
-                        "token": f"{symbol.upper()}_{exp_str}_{opt_type}_{strike}",
-                        "exchange": exchange,
-                        "instrument": instrument,
-                        "expiry": expiry_str,
-                        "strike": str(strike),
-                        "option_type": opt_type,
-                        "lot_size": lot_size
-                    })
-            
-            logger.info(f"🔧 Generated {len(rows)} option contracts for {symbol} (ltp={ltp}, strike_step={strike_step}, lot_size={lot_size})")
+            logger.error(f"❌ NO_DATA: Broker master has no {instrument} data for {symbol}. Available: {list(available_symbols)[:10]}... Total {instrument} count: {len(available_symbols)}")
+            # Return empty - let the caller handle the error
+            return []
         
         return rows
 
