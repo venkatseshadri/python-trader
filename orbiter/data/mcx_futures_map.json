@@ -1,10 +1,10 @@
 {
     "GOLD": [
         "GOLD",
-        "GOLDTEN31MAR26",
-        10,
-        "31Mar26",
-        "477176"
+        "GOLD02APR26",
+        1,
+        "02Apr26",
+        "454818"
     ],
     "GOLDTEN": [
         "GOLDTEN",
@@ -36,10 +36,10 @@
     ],
     "LEAD": [
         "LEAD",
-        "LEADMINI31MAR26",
-        1,
+        "LEAD31MAR26",
+        5,
         "31Mar26",
-        "487659"
+        "487658"
     ],
     "LEADMINI": [
         "LEADMINI",
@@ -64,10 +64,10 @@
     ],
     "ZINC": [
         "ZINC",
-        "ZINCMINI31MAR26",
-        1,
+        "ZINC31MAR26",
+        5,
         "31Mar26",
-        "487663"
+        "487662"
     ],
     "ZINCMINI": [
         "ZINCMINI",
@@ -134,10 +134,10 @@
     ],
     "SILVER": [
         "SILVER",
-        "SILVERMIC30APR26",
-        1,
-        "30Apr26",
-        "466029"
+        "SILVER05MAY26",
+        30,
+        "05May26",
+        "457532"
     ],
     "SILVERMIC": [
         "SILVERMIC",
@@ -166,5 +166,33 @@
         8,
         "31Mar26",
         "477174"
+    ],
+    "COTTON": [
+        "COTTON",
+        "COTTON31MAR26",
+        25,
+        "31Mar26",
+        "467748"
+    ],
+    "COTTONOIL": [
+        "COTTONOIL",
+        "COTTONOIL31MAR26",
+        5,
+        "31Mar26",
+        "488801"
+    ],
+    "KAPAS": [
+        "KAPAS",
+        "KAPAS30APR26",
+        4,
+        "30Apr26",
+        "452854"
+    ],
+    "STEELREBAR": [
+        "STEELREBAR",
+        "STEELREBAR31MAR26",
+        5,
+        "31Mar26",
+        "487661"
     ]
 }
