@@ -146,16 +146,19 @@ class RuleManager:
                 for k, v in tech_facts_flat.items():
                     facts[k.replace('.', '_')] = v
 
-        # Flatten extra_facts too - preserve instrument.* prefix
+        # Flatten extra_facts too - preserve instrument.* prefix AND add underscore version
         for k, v in extra_facts.items():
             if k.startswith('instrument.'):
                 facts[k] = v
+                facts[k.replace('.', '_')] = v  # Also add underscore version for rule matching
             else:
                 facts[k.replace('.', '_')] = v
         
         # Add instrument.has_position fact based on position data
         position_data = extra_facts.get('position', {})
-        facts['instrument.has_position'] = bool(position_data and position_data.get('netqty', 0) != 0)
+        has_pos = bool(position_data and position_data.get('netqty', 0) != 0)
+        facts['instrument.has_position'] = has_pos
+        facts['instrument_has_position'] = has_pos  # Also add underscore version for rule matching
         
         triggered_ops = []
         op_key = self.rule_schema.get('actions_key', 'order_operations')
@@ -234,16 +237,19 @@ class RuleManager:
                 for k, v in tech_facts_flat.items():
                     facts[k.replace('.', '_')] = v
         
-        # Flatten extra_facts too - preserve instrument.* prefix
+        # Flatten extra_facts too - preserve instrument.* prefix AND add underscore version
         for k, v in extra_facts.items():
             if k.startswith('instrument.'):
                 facts[k] = v
+                facts[k.replace('.', '_')] = v  # Also add underscore version for rule matching
             else:
                 facts[k.replace('.', '_')] = v
         
         # Add instrument.has_position fact based on position data
         position_data = extra_facts.get('position', {})
-        facts['instrument.has_position'] = bool(position_data and position_data.get('netqty', 0) != 0)
+        has_pos = bool(position_data and position_data.get('netqty', 0) != 0)
+        facts['instrument.has_position'] = has_pos
+        facts['instrument_has_position'] = has_pos  # Also add underscore version for rule matching
 
         # Add filter scoring weights to facts - support both old (combined_score) and new (bidirectional/unidirectional) formats
         scoring_config = self.session_manager.filters.get('scoring', {}) if self.session_manager.filters else {}
