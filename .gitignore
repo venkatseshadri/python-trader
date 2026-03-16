@@ -52,3 +52,7 @@ dist/
 *.egg-info/
 *.egg
 ShoonyaApi-py/cred*.yml
+
+# Test data
+orbiter/test_data/*.json
+!orbiter/test_data/README.md

@@ -69,6 +69,7 @@ class OrbiterApp:
                 self.ctx.action_manager,
                 paper_trade=paper_trade,
                 office_mode=office_mode,
+                context=self.ctx.context,
             )
             
             if office_mode:

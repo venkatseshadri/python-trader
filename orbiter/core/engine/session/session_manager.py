@@ -104,13 +104,18 @@ class SessionManager:
         force_open = os.environ.get("ORBITER_SIMULATE_MARKET_HOURS", "false").lower() == "true"
         
         is_open = force_open or (m_start <= now < m_end)
+        is_trade_window = force_open or (t_start <= now < t_end)
+        
+        # Only set is_eod to true if we're NOT forcing market open
+        # This prevents EOD shutdown when using mock data or simulating market hours
         eod_buffer_mins = self.op_config.get("eod_buffer_minutes", 15)
         eod_time = (datetime.combine(datetime.today(), m_end) - timedelta(minutes=eod_buffer_mins)).time()
+        is_eod = (not force_open) and is_open and now >= eod_time
         
         return {
             "session.is_open": is_open,
-            "session.is_trade_window": force_open or (t_start <= now < t_end),
-            "session.is_eod": is_open and now >= eod_time,
+            "session.is_trade_window": is_trade_window,
+            "session.is_eod": is_eod,
             "session.time": now.strftime("%H:%M:%S")
         }
 

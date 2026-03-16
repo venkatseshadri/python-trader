@@ -3,6 +3,7 @@
 import os
 import logging
 from orbiter.core.broker import BrokerClient
+from orbiter.core.broker.mock_client import MockBrokerClient
 from orbiter.core.engine.session.state_manager import StateManager
 from orbiter.core.engine.runtime.syncer import Syncer
 from orbiter.core.engine.runtime.core_engine import Engine
@@ -20,7 +21,7 @@ class EngineFactory:
     Builds the unified trading engine using the DataManager for any file lookups.
     """
     @staticmethod
-    def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, office_mode: bool = False):
+    def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, office_mode: bool = False, context: dict = None):
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Starting engine build process.")
         constants = ConstantsManager.get_instance()
         meta_config = MetaConfigManager.get_instance(session_manager.project_root)
@@ -55,9 +56,32 @@ class EngineFactory:
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Merged full configuration: {full_config}")
 
         # 3. Initialize Core Components
-        broker_creds_path = DataManager.get_manifest_path(session_manager.project_root, project_manifest_schema.get('mandatory_files_key', 'mandatory_files'), 'broker_credentials')
-        client = BrokerClient(session_manager.project_root, broker_creds_path, segment_name=seg_name)
-        logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized with credentials from {broker_creds_path}.")
+        use_mock = context.get('mock_data', False) if context else False
+        mock_data_file = context.get('mock_data_file') if context else None
+        
+        if use_mock:
+            logger.info(f"[{EngineFactory.__name__}.build_engine] - Using MOCK broker (mock_data=true)")
+            
+            # Set environment variable for mock broker to pick up custom file
+            if mock_data_file:
+                import os
+                os.environ['ORBITER_MOCK_DATA_FILE'] = mock_data_file
+                logger.info(f"[{EngineFactory.__name__}.build_engine] - Using mock data file: {mock_data_file}")
+            
+            client = MockBrokerClient(session_manager.project_root, segment_name=seg_name)
+            
+            # Prime with mock data
+            if universe:
+                client.prime_candles(universe, lookback_mins=120)
+        else:
+            broker_creds_path = DataManager.get_manifest_path(session_manager.project_root, project_manifest_schema.get('mandatory_files_key', 'mandatory_files'), 'broker_credentials')
+            client = BrokerClient(session_manager.project_root, broker_creds_path, segment_name=seg_name)
+            logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized with credentials from {broker_creds_path}.")
+            
+            # Hardcoded NIFTY token mappings only for real broker
+            client.master.TOKEN_TO_SYMBOL['51714'] = constants.get('magic_strings', 'token_to_symbol_nifty_51714')
+            client.master.TOKEN_TO_SYMBOL['NFO|51714'] = constants.get('magic_strings', 'token_to_symbol_nfo_51714')
+            logger.debug(f"[{EngineFactory.__name__}.build_engine] - Hardcoded NIFTY token mappings applied.")
         
         state = StateManager(client, universe, full_config, segment_name=seg_name)
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - StateManager initialized.")
@@ -67,12 +91,7 @@ class EngineFactory:
         syncer = Syncer(update_active_positions, update_engine_state, get_engine_state)
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - ActionExecutor and Syncer initialized.")
 
-        # 4. Finalize State and Linkages 
-        # TODO: These NIFTY mappings to be rule-driven or loaded from ScripMaster config.
-        # For now, keeping as is, but acknowledging the hardcoding.
-        client.master.TOKEN_TO_SYMBOL['51714'] = constants.get('magic_strings', 'token_to_symbol_nifty_51714')
-        client.master.TOKEN_TO_SYMBOL['NFO|51714'] = constants.get('magic_strings', 'token_to_symbol_nfo_51714')
-        logger.debug(f"[{EngineFactory.__name__}.build_engine] - Hardcoded NIFTY token mappings applied (TODO: make configurable).")
+        # 4. Finalize State and Linkages
         
         state.load_session()
         state.sync_with_broker()

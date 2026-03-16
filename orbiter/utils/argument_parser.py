@@ -84,7 +84,9 @@ class ArgumentParser:
         facts = {
             'paper_trade': True,  # Default to paper trade for safety
             'office_mode': False,
-            'strategy_execution': 'fixed'
+            'strategy_execution': 'fixed',
+            'mock_data': False,
+            'mock_data_file': None
         }
         
         parsed_strategy_input = None
@@ -95,7 +97,7 @@ class ArgumentParser:
         
         # Known arguments - process these, but still pass through unknown args
         # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution'}
+        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -127,6 +129,8 @@ class ArgumentParser:
                             paper_trade_set = True
                         elif k_clean == 'office_mode':
                             office_mode_set = True
+                        elif k_clean == 'mock_data_file':
+                            facts['mock_data_file'] = v
                 else:
                     k_clean = clean.lower().replace("-", "_")
                     facts[k_clean] = True
