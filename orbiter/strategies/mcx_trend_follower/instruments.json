@@ -35,13 +35,6 @@
     "derivative": "future"
   },
   {
-    "symbol": "COTTONOIL",
-    "token": "COTTONOIL",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
     "symbol": "CRUDEOIL",
     "token": "CRUDEOIL",
     "exchange": "MCX",
@@ -93,13 +86,6 @@
   {
     "symbol": "GOLDTEN",
     "token": "GOLDTEN",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "KAPAS",
-    "token": "KAPAS",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
@@ -177,13 +163,6 @@
   {
     "symbol": "SILVERMIC",
     "token": "SILVERMIC",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "STEELREBAR",
-    "token": "STEELREBAR",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
