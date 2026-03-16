@@ -1,4 +1,11 @@
 {
+    "GOLD": [
+        "GOLD",
+        "GOLDTEN31MAR26",
+        10,
+        "31Mar26",
+        "477176"
+    ],
     "GOLDTEN": [
         "GOLDTEN",
         "GOLDTEN31MAR26",
@@ -27,6 +34,13 @@
         "26Mar26",
         "475112"
     ],
+    "LEAD": [
+        "LEAD",
+        "LEADMINI31MAR26",
+        1,
+        "31Mar26",
+        "487659"
+    ],
     "LEADMINI": [
         "LEADMINI",
         "LEADMINI31MAR26",
@@ -34,12 +48,26 @@
         "31Mar26",
         "487659"
     ],
+    "CRUDEOIL": [
+        "CRUDEOIL",
+        "CRUDEOILM19MAR26",
+        10,
+        "19Mar26",
+        "472790"
+    ],
     "CRUDEOILM": [
         "CRUDEOILM",
         "CRUDEOILM19MAR26",
         10,
         "19Mar26",
         "472790"
+    ],
+    "ZINC": [
+        "ZINC",
+        "ZINCMINI31MAR26",
+        1,
+        "31Mar26",
+        "487663"
     ],
     "ZINCMINI": [
         "ZINCMINI",
@@ -96,6 +124,20 @@
         2500,
         "31Mar26",
         "487657"
+    ],
+    "SILVERM": [
+        "SILVERM",
+        "SILVERMIC30APR26",
+        1,
+        "30Apr26",
+        "466029"
+    ],
+    "SILVER": [
+        "SILVER",
+        "SILVERMIC30APR26",
+        1,
+        "30Apr26",
+        "466029"
     ],
     "SILVERMIC": [
         "SILVERMIC",
