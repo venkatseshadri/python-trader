@@ -342,5 +342,69 @@
     "derivative": "option",
     "instrument_type": "stock",
     "expiry_cycle": "monthly"
+  },
+  {
+    "symbol": "NIFTY",
+    "token": "26000",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "index"
+  },
+  {
+    "symbol": "BANKNIFTY",
+    "token": "26009",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "index"
+  },
+  {
+    "symbol": "FINNIFTY",
+    "token": "26037",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "index"
+  },
+  {
+    "symbol": "MIDCPNIFTY",
+    "token": "26004",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "index"
+  },
+  {
+    "symbol": "RELIANCE",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
+  },
+  {
+    "symbol": "TCS",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
+  },
+  {
+    "symbol": "HDFCBANK",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
+  },
+  {
+    "symbol": "INFY",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
+  },
+  {
+    "symbol": "ICICIBANK",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
+  },
+  {
+    "symbol": "SBIN",
+    "exchange": "NFO",
+    "derivative": "future",
+    "instrument_type": "stock"
   }
 ]

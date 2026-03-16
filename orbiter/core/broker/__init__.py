@@ -25,7 +25,7 @@ class BrokerClient:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         self.project_root = project_root
         self.segment_name = segment_name.lower()
-        self.constants = ConstantsManager.get_instance(project_root)
+        self.constants = ConstantsManager.get_instance()
         self.conn = ConnectionManager(config_path)
         
         if self.segment_name not in BrokerClient._MASTERS:
@@ -48,6 +48,12 @@ class BrokerClient:
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
         self.span_cache_path = None
         self._span_cache = None
+        self._tick_callbacks = []
+
+    def register_tick_callback(self, callback):
+        """Register a callback to be called on every tick."""
+        self._tick_callbacks.append(callback)
+        logger.debug(f"Registered tick callback: {callback.__name__}")
         self._priming_interval = 5  # Default 5-min candles
         
         # Download appropriate scrip master based on segment
@@ -110,11 +116,30 @@ class BrokerClient:
         logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")
         
         # Resolve symbols to tokens if needed (for MCX, symbols may be names like "GOLDTEN" not numeric tokens)
+        mcx_futures_map = None
+        futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'mcx_futures_map.json')
+        if os.path.exists(futures_map_path):
+            try:
+                with open(futures_map_path, 'r') as f:
+                    mcx_futures_map = json.load(f)
+                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Loaded {len(mcx_futures_map)} MCX futures mappings")
+            except Exception as e:
+                logger.warning(f"[{self.__class__.__name__}.start_live_feed] - Failed to load MCX futures_map: {e}")
+
         def resolve_to_token(token_or_symbol, exchange):
             """Resolve symbol name to numeric token if needed."""
             # If already numeric, return as-is
             if token_or_symbol.isdigit():
                 return token_or_symbol
+            
+            # FIX: Check MCX futures_map first for symbol names like GOLD, ALUMINI, etc.
+            if mcx_futures_map and token_or_symbol.upper() in mcx_futures_map:
+                mcx_entry = mcx_futures_map[token_or_symbol.upper()]
+                numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
+                if numeric_token:
+                    logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX {token_or_symbol} -> {numeric_token} via futures_map")
+                    return numeric_token
+            
             # Try to resolve using broker's symbol-to-token mapping
             resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper())
             if resolved:
@@ -188,6 +213,13 @@ class BrokerClient:
                 self.SYMBOLDICT[f"{ex}|{short_symbol}"] = tick_data
                 logger.trace(f"[{self.__class__.__name__}._tick_handler] - Stored tick at keys: {key}, {ex}|{full_symbol}, {ex}|{short_symbol}")
             logger.trace(f"[{self.__class__.__name__}._tick_handler] - Received tick for {sym}: {msg}")
+            
+            # Notify registered callbacks
+            for callback in self._tick_callbacks:
+                try:
+                    callback(sym, tick_data)
+                except Exception as e:
+                    logger.error(f"Tick callback error: {e}")
         self.conn.start_live_feed(resolved_symbols, _tick_handler)
         logger.info(f"[{self.__class__.__name__}.start_live_feed] - Live feed started for {len(symbols)} symbols.")
 

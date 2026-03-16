@@ -23,7 +23,7 @@ class ScripMaster:
     def __init__(self, project_root: str):
         logger.debug(f"[{self.__class__.__name__}.__init__] - Initializing ScripMaster with project_root: {project_root}")
         self.project_root = project_root
-        self.constants = ConstantsManager.get_instance(project_root)
+        self.constants = ConstantsManager.get_instance()
         self.meta_config = MetaConfigManager.get_instance(project_root)
         self.project_manifest_schema = self.meta_config.get_key('project_manifest_schema')
 

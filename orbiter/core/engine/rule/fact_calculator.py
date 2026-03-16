@@ -220,11 +220,11 @@ class FactCalculator:
 
     def calculate_app_facts(self, app: Any) -> Dict[str, Any]:
         logged_in = bool(getattr(app, 'logged_in', False))
-        if not logged_in and app.engine and hasattr(app.engine.state, 'client'):
-            api = app.engine.state.client.api
+        if not logged_in and app.ctx.engine and hasattr(app.ctx.engine.state, 'client'):
+            api = app.ctx.engine.state.client.api
             logged_in = getattr(api, '_NorenApi__susertoken', None) is not None
         
-        primed = app.engine.state.primed if app.engine else False
+        primed = app.ctx.engine.state.primed if app.ctx and app.ctx.engine and app.ctx.engine.state else False
         
         return { 
             "app.initialized": app.initialized,

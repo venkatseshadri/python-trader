@@ -10,14 +10,14 @@
   },
   "strategy_codes": {
     "m1": "mcx_trend_follower",
-    "n1": "nifty_fno_topn_trend",
+    "n1": "nifty_bsensex_combined",
     "n2": "nifty_50_nfo_expiry_day_short_straddle",
     "s1": "bsensex_bfo_topn_trend",
     "s2": "sensex_bfo_expiry_day_short_straddle"
   },
-  "default_strategy": "nifty_fno_topn_trend",
+  "default_strategy": "mcx_trend_follower",
   "defaults": {
-    "trade_score": 0.40,
+    "trade_score": 0.4,
     "top_n": 1,
     "option_execute": false,
     "option_product_type": "I",
@@ -26,6 +26,8 @@
     "hedge_steps": 4,
     "update_interval": 5,
     "verbose_logs": true,
-    "log_level": "INFO"
+    "log_level": "INFO",
+    "tick_processor_enabled": true,
+    "tick_process_interval_seconds": 60
   }
 }

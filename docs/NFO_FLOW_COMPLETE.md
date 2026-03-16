@@ -71,7 +71,7 @@ main.py (Entry Point)
         ├── SessionManager → Broker login
         ├── RuleManager → Load rules
         ├── ActionManager → Register actions
-        └── EngineFactory → Build trading engine
+        └── EngineBuilder → Build trading engine
 ```
 
 ---
@@ -87,10 +87,10 @@ main.py (Entry Point)
 | `orbiter/config/global.json` | Global settings | `OrbiterApp` |
 | `orbiter/config/constants.json` | Magic strings, keys | Multiple |
 | `orbiter/config/exchange_config.json` | Exchange-specific settings (lot_size, etc.) | `BrokerClient` |
-| `orbiter/strategies/{strategy}/instruments.json` | Stock symbols to trade | `EngineFactory` |
+| `orbiter/strategies/{strategy}/instruments.json` | Stock symbols to trade | `EngineBuilder` |
 | `orbiter/strategies/{strategy}/rules.json` | Trading rules, scoring, strike_logic | `RuleManager` |
 | `orbiter/strategies/{strategy}/filters.json` | Filter weights | `RuleManager` |
-| `orbiter/strategies/{strategy}/strategy.json` | Strategy metadata | `EngineFactory` |
+| `orbiter/strategies/{strategy}/strategy.json` | Strategy metadata | `EngineBuilder` |
 | `orbiter/data/futures_master.json` | Futures data (exists ✅) | `ScripMaster` |
 | `orbiter/data/mcx_futures_map.json` | MCX futures mapping | `ScripMaster` |
 | `orbiter/data/nfo_futures_map.json` | NFO futures mapping | `ScripMaster` |
@@ -260,7 +260,7 @@ ArgumentParser.parse_cli_to_facts()
 OrbiterApp(project_root, context)
     │
     ▼
-EngineFactory.build(strategy_id="nifty_fno_topn_trend")
+EngineBuilder.build(strategy_id="nifty_fno_topn_trend")
     ├── Load strategy/strategy.json
     ├── Load instruments.json → [RELIANCE, TCS, HDFCBANK, ...]
     ├── Load rules.json → scoring_rules, order_operations

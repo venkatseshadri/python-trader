@@ -20,7 +20,7 @@
 │                              ORBITER                                         │
 │                    (Root Orchestrator)                                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  main.py ──► OrbiterApp ──► EngineFactory ──► CoreEngine                   │
+│  main.py ──► OrbiterApp ──► EngineBuilder ──► CoreEngine                 │
 │      │            │              │                  │                       │
 │      │            │              │                  ├──► RuleManager        │
 │      │            │              │                  ├──► ActionManager      │
@@ -74,7 +74,7 @@
 │     └── Create ActionManager                                               │
 │                                                                             │
 │  3. OrbiterApp.run()                                                       │
-│     ├── EngineFactory.build_engine()                                        │
+│     ├── EngineBuilder.build()                                              │
 │     │   ├── Load universe (instruments)                                    │
 │     │   ├── Create BrokerClient                                            │
 │     │   │   └── Load ScripMaster (token maps)                             │
@@ -98,7 +98,7 @@
 | `main.py` | Entry point, lock management |
 | `core/app.py` | OrbiterApp - orchestrates initialization |
 | `core/engine/session/session_manager.py` | Loads strategy config |
-| `core/engine/builder/engine_factory.py` | Builds CoreEngine |
+| `core/engine_builder.py` | Builds CoreEngine |
 | `core/engine/runtime/core_engine.py` | The tick loop |
 
 ---

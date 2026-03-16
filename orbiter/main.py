@@ -33,7 +33,8 @@ def run_orchestrator():
 
         try:
             # 4. Execute
-            OrbiterApp(project_root, context).run()
+            app = OrbiterApp(project_root, context)
+            app.start()
         finally:
             # 5. Cleanup
             manage_lockfile(project_root, LOCK_RELEASE)

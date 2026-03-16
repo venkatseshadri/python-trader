@@ -7,6 +7,7 @@ import hmac
 import hashlib
 import struct
 import time
+import threading
 from typing import Dict, Optional, Any, List
 
 # Add ShoonyaApi-py to path
@@ -24,6 +25,10 @@ except ImportError:
 logger = logging.getLogger("ORBITER")
 
 class ConnectionManager:
+    MAX_RECONNECT_ATTEMPTS = 10
+    INITIAL_RECONNECT_DELAY = 1
+    MAX_RECONNECT_DELAY = 60
+    
     @staticmethod
     def _generate_totp(secret: str, interval: int = 30, digits: int = 6) -> Optional[str]:
         """
@@ -48,6 +53,12 @@ class ConnectionManager:
     def __init__(self, config_path: str = '../cred.yml'):
         self.api = ShoonyaApiPy()
         self.socket_opened = False
+        self._reconnect_attempts = 0
+        self._reconnect_thread = None
+        self._should_reconnect = True
+        self._symbols_to_subscribe = []
+        self._on_tick_callback = None
+        self._pending_reconnect = False
         
         # Load credentials - search multiple locations
         possible_creds = []
@@ -167,7 +178,10 @@ class ConnectionManager:
 
     def start_live_feed(self, symbols: List[Any], on_tick_callback, verbose=False):
         logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Starting live feed for {len(symbols)} symbols.")
-        logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")  # TRACE: show first 3
+        logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")
+        
+        self._symbols_to_subscribe = symbols
+        self._on_tick_callback = on_tick_callback
         
         token_to_exch = {}
         for s in symbols:
@@ -175,7 +189,7 @@ class ConnectionManager:
                 tk = str(s.get('token'))
                 ex = s.get('exchange', 'NSE')
                 token_to_exch[tk] = ex
-                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Dict symbol: token={tk}, exchange={ex}")
+                logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Dict symbol: token={tk}, exchange={ex}")
             elif '|' in str(s):
                 ex, tk = str(s).split('|')
                 token_to_exch[tk] = ex
@@ -191,35 +205,71 @@ class ConnectionManager:
         
         def on_open():
             self.socket_opened = True
+            self._reconnect_attempts = 0
             logger.info("🚀 WEBSOCKET LIVE!")
-            # Ensure symbols are correctly prefixed for subscription
             formatted_symbols = []
             for s in symbols:
                 if isinstance(s, dict):
                     tk = s.get('token')
                     ex = s.get('exchange', 'NSE')
                     formatted_symbols.append(f"{ex}|{tk}")
-                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing dict: {ex}|{tk} (token={tk}, type={type(tk)})")
+                    logger.debug(f"[{self.__class__.__name__}.on_open] - Subscribing dict: {ex}|{tk}")
                 elif '|' in str(s):
                     formatted_symbols.append(str(s))
-                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing pipe: {str(s)}")
+                    logger.debug(f"[{self.__class__.__name__}.on_open] - Subscribing pipe: {str(s)}")
                 else:
                     formatted_symbols.append(f"NSE|{s}")
-                    logger.trace(f"[{self.__class__.__name__}.on_open] - Subscribing default: NSE|{s}")
+                    logger.debug(f"[{self.__class__.__name__}.on_open] - Subscribing default: NSE|{s}")
             
             logger.debug(f"Subscribing to: {formatted_symbols}")
-            logger.trace(f"[{self.__class__.__name__}.on_open] - Total subscriptions: {len(formatted_symbols)}")
             self.api.subscribe(formatted_symbols, feed_type='d')
-            # 🔥 NEW: Subscribe to live order status updates (v3.15.9)
             self.api.subscribe_orders()
+        
+        def on_close():
+            logger.warning(f"🔌 WebSocket closed. Attempting reconnect...")
+            self.socket_opened = False
+            self._schedule_reconnect()
         
         self.api.start_websocket(
             subscribe_callback=on_tick,
             socket_open_callback=on_open,
+            socket_close_callback=on_close,
             order_update_callback=lambda x: print("📋 ORDER:", x)
         )
 
+    def _schedule_reconnect(self):
+        if not self._should_reconnect:
+            return
+        if self._reconnect_attempts >= self.MAX_RECONNECT_ATTEMPTS:
+            logger.error(f"❌ Max reconnection attempts ({self.MAX_RECONNECT_ATTEMPTS}) reached. Giving up.")
+            return
+        if self._pending_reconnect:
+            return
+            
+        self._pending_reconnect = True
+        delay = min(self.INITIAL_RECONNECT_DELAY * (2 ** self._reconnect_attempts), self.MAX_RECONNECT_DELAY)
+        self._reconnect_attempts += 1
+        logger.info(f"⏳ Reconnecting in {delay}s (attempt {self._reconnect_attempts}/{self.MAX_RECONNECT_ATTEMPTS})...")
+        
+        def delayed_reconnect():
+            self._pending_reconnect = False
+            if not self._should_reconnect:
+                return
+            try:
+                self.start_live_feed(self._symbols_to_subscribe, self._on_tick_callback)
+                logger.info(f"✅ Reconnected successfully after {self._reconnect_attempts} attempts")
+            except Exception as e:
+                logger.error(f"❌ Reconnection failed: {e}")
+                self._schedule_reconnect()
+        
+        self._reconnect_thread = threading.Timer(delay, delayed_reconnect)
+        self._reconnect_thread.daemon = True
+        self._reconnect_thread.start()
+
     def close(self):
+        self._should_reconnect = False
+        if self._reconnect_thread:
+            self._reconnect_thread.cancel()
         if self.socket_opened:
             self.api.close_websocket()
             print("🔌 Connection closed")

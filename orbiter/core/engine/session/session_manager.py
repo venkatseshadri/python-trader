@@ -2,8 +2,9 @@
 
 import os
 import json
+import time
 import pytz
-from datetime import datetime, time as dt_time
+from datetime import datetime, time as dt_time, timedelta
 import logging
 from orbiter.utils.data_manager import DataManager
 from orbiter.utils.schema_manager import SchemaManager
@@ -34,7 +35,7 @@ def _evaluate_dynamic_strategy(project_root: str, context: dict) -> tuple:
 class SessionManager:
     def __init__(self, project_root: str, paper_trade: bool = False, strategy_id: str = None, context: dict = None):
         self.project_root = project_root
-        self.constants = ConstantsManager.get_instance(project_root)
+        self.constants = ConstantsManager.get_instance()
         self.schema_manager = SchemaManager.get_instance(project_root)
         
         self._load_base_configs()
@@ -92,7 +93,6 @@ class SessionManager:
         logger.info(f"🚀 Loaded: {self.strategy_bundle.get('name')} with {len(self.filters)} filter groups.")
 
     def get_session_facts(self) -> dict:
-        import os
         ist = pytz.timezone('Asia/Kolkata')
         now = datetime.now(ist).time()
         m_start = dt_time.fromisoformat(self.op_config.get("market_start", "09:15:00"))
@@ -103,10 +103,14 @@ class SessionManager:
         # Override: Force market open if environment variable set
         force_open = os.environ.get("ORBITER_SIMULATE_MARKET_HOURS", "false").lower() == "true"
         
+        is_open = force_open or (m_start <= now < m_end)
+        eod_buffer_mins = self.op_config.get("eod_buffer_minutes", 15)
+        eod_time = (datetime.combine(datetime.today(), m_end) - timedelta(minutes=eod_buffer_mins)).time()
+        
         return {
-            "session.is_open": force_open or (m_start <= now < m_end),
+            "session.is_open": is_open,
             "session.is_trade_window": force_open or (t_start <= now < t_end),
-            "session.is_eod": False, # 🔥 HARDCODED FALSE FOR TESTING
+            "session.is_eod": is_open and now >= eod_time,
             "session.time": now.strftime("%H:%M:%S")
         }
 
@@ -134,6 +138,5 @@ class SessionManager:
 
     def hibernate(self, duration: int = 60):
         """Action: Pauses the application loop for a specified duration."""
-        import time
         logger.info(self.constants.get('magic_strings', 'hibernate_msg', "💤 Hibernating for {duration}s").format(duration=duration))
         time.sleep(duration)

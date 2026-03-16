@@ -22,7 +22,7 @@ class StateManager:
         project_root = getattr(self.client, 'project_root', None)
         if project_root is None:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        self.constants = ConstantsManager.get_instance(project_root)
+        self.constants = ConstantsManager.get_instance()
         self.meta_config = MetaConfigManager.get_instance(project_root)
         self.ghost_template_schema = self.meta_config.get_key('ghost_template_file_schema')
         self.rule_file_schema = self.meta_config.get_key('rule_file_schema')

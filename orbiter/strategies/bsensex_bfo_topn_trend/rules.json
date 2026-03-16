@@ -33,6 +33,7 @@
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.has_position", "operator": "equal", "value": false },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 }
         ]
       },

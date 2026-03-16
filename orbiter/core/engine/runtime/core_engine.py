@@ -36,9 +36,44 @@ class Engine:
         self.registration_manager = RegistrationManager(None, self, self.session_manager, self.action_manager, self.rule_manager)
         logger.debug(f"[{self.__class__.__name__}.__init__] - Engine initialization complete.")
 
-    def tick(self):
-        """Executes the trading cycle for all instruments."""
-        logger.info(f"🔄 ENGINE TICK START - Universe: {len(self.state.symbols)} symbols")
+    def _get_symbol_key(self, instrument) -> str:
+        """Get symbol key from instrument dict."""
+        if isinstance(instrument, dict):
+            token = instrument.get('token', '')
+            exch = instrument.get('exchange', 'NSE')
+            return f"{exch}|{token}"
+        return str(instrument)
+
+    def _get_lookup_key(self, instrument) -> str:
+        """Get lookup key (same as symbol key for now)."""
+        return self._get_symbol_key(instrument)
+
+    def tick(self, buffered_ticks: dict = None):
+        """
+        Executes the trading cycle for all instruments.
+        
+        Args:
+            buffered_ticks: Optional dict of {symbol: [tick_data, ...]} from TickProcessor.
+                           If provided, only processes symbols with new ticks.
+                           If None, processes all symbols (full scan).
+        """
+        symbols_to_process = self.state.symbols
+        
+        if buffered_ticks:
+            tick_symbols = list(buffered_ticks.keys())
+            logger.debug(f"🔄 ENGINE TICK (buffered) - Processing {len(tick_symbols)} symbols with new data")
+            
+            # Filter to only symbols with new ticks
+            symbols_to_process = [
+                s for s in self.state.symbols
+                if self._get_symbol_key(s) in tick_symbols or self._get_lookup_key(s) in tick_symbols
+            ]
+            
+            if not symbols_to_process:
+                logger.trace("No symbols with new ticks to process")
+                return
+        else:
+            logger.info(f"🔄 ENGINE TICK (full scan) - Universe: {len(self.state.symbols)} symbols")
         
         # Reset scan metrics for this tick
         self.state.last_scan_metrics = []
@@ -54,11 +89,11 @@ class Engine:
                 self.action_manager.execute_batch(global_actions)
 
         # Evaluate instrument-specific rules
-        if not self.state.symbols:
+        if not symbols_to_process:
             logger.debug(f"[{self.__class__.__name__}.tick] - No symbols to process in this tick.")
             return
 
-        for instrument in self.state.symbols:
+        for instrument in symbols_to_process:
             # Extract token string if it's a dictionary (Universe is often a list of dicts)
             token = instrument.get('token') if isinstance(instrument, dict) else instrument
             exch = instrument.get('exchange', 'NSE') if isinstance(instrument, dict) else 'NSE'
@@ -322,16 +357,49 @@ class Engine:
         The actual square-off logic is now defined in system_rules.json.
         """
         logger.debug(f"[{self.__class__.__name__}.shutdown] - Shutdown requested. Reason: {reason}")
+        
+        # Stop tick processor
+        if hasattr(self, '_tick_processor') and self._tick_processor:
+            self._tick_processor.stop()
+        
         self.shutdown_triggered = True
         logger.info(self.constants.get('magic_strings', 'engine_shutdown_triggered_msg').format(reason=reason))
 
     def prime_data(self):
-        """Start market data feed - historical priming + live WebSocket."""
+        """Start market data feed - historical priming + live WebSocket + TickProcessor."""
         from orbiter.core.market_data import MarketData
+        from orbiter.core.tick_processor import TickProcessor
+        
         if not self.state.client:
             return False
+        
+        # Start WebSocket feed
         self.state.primed = MarketData.prime_and_subscribe(
             self.state.client,
             self.state.symbols
         )
+        
+        if self.state.primed:
+            # Start tick processor with configurable interval
+            interval = self.state.config.get('tick_process_interval_seconds', 60)
+            enabled = self.state.config.get('tick_processor_enabled', True)
+            
+            self._tick_processor = TickProcessor(
+                engine=self,
+                tick_callback=self._on_buffered_ticks,
+                interval_seconds=interval,
+                enabled=enabled
+            )
+            
+            # Register tick callback with broker client
+            self.state.client.register_tick_callback(self._tick_processor.on_tick)
+            self._tick_processor.start()
+            
+            logger.info(f"✅ TickProcessor started (interval: {interval}s, enabled: {enabled})")
+        
         return self.state.primed
+
+    def _on_buffered_ticks(self, engine, ticks: dict):
+        """Callback to process buffered ticks."""
+        logger.debug(f"Processing {sum(len(v) for v in ticks.values())} buffered ticks")
+        self.tick(buffered_ticks=ticks)

@@ -136,7 +136,7 @@ The heart of the system - drives all decisions.
 ## 🔄 Execution Flow
 
 1. **Startup**: `main.py` → `OrbiterApp` → `SessionManager` loads strategy
-2. **Setup**: `app.setup` action → `EngineFactory` builds engine → `RegistrationManager` wires actions/facts
+2. **Setup**: `app.setup` action → `EngineBuilder` builds engine → `RegistrationManager` wires actions/facts
 3. **Prime**: `app.prime_data` → Start WebSocket, load historical candles
 4. **Main Loop** (every 5s):
    - `RuleManager.evaluate()` with context="global" → Global actions

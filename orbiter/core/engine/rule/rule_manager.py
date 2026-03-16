@@ -53,6 +53,9 @@ class RuleManager:
                 facts.update({k.replace('.', '_'): v for k, v in p_facts.items()})
             except Exception as e:
                 logger.error(f"Fact provider error: {e}")
+        
+        # Debug: log available facts
+        logger.trace(f"🔍 Available facts: {list(facts.keys())}")
 
         params = self.session_manager.get_all_strategy_parameters()
         for k, v in params.items(): facts[f"strategy_{k}"] = v

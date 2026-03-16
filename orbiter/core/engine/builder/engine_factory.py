@@ -22,7 +22,7 @@ class EngineFactory:
     @staticmethod
     def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, office_mode: bool = False):
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Starting engine build process.")
-        constants = ConstantsManager.get_instance(session_manager.project_root)
+        constants = ConstantsManager.get_instance()
         meta_config = MetaConfigManager.get_instance(session_manager.project_root)
         
         global_config_schema = meta_config.get_key('global_config_schema')

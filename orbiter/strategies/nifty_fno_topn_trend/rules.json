@@ -32,6 +32,7 @@
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.has_position", "operator": "equal", "value": false },
           { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
           { "fact": "instrument.symbol", "operator": "equal", "value": "NIFTY" }
         ]
@@ -67,6 +68,7 @@
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.has_position", "operator": "equal", "value": false },
           { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
           { "fact": "instrument.instrument_type", "operator": "equal", "value": "index" },
           { "fact": "instrument.symbol", "operator": "notEqual", "value": "NIFTY" }
@@ -103,6 +105,7 @@
       "market_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
+          { "fact": "instrument.has_position", "operator": "equal", "value": false },
           { "fact": "instrument.derivative", "operator": "equal", "value": "option" },
           { "fact": "instrument.instrument_type", "operator": "equal", "value": "stock" }
         ]
