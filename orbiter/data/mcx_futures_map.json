@@ -127,10 +127,10 @@
     ],
     "SILVERM": [
         "SILVERM",
-        "SILVERMIC30APR26",
-        1,
+        "SILVERM30APR26",
+        5,
         "30Apr26",
-        "466029"
+        "457533"
     ],
     "SILVER": [
         "SILVER",
@@ -194,5 +194,12 @@
         5,
         "31Mar26",
         "487661"
+    ],
+    "MCXMETLDEX": [
+        "MCXMETLDEX",
+        "MCXMETLDEX",
+        50,
+        "",
+        "569"
     ]
 }
