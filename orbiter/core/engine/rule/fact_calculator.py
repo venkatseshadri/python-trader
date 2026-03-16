@@ -14,6 +14,36 @@ logger = logging.getLogger("ORBITER")
 
 _yf_indicators_cache = {'value': None, 'timestamp': 0}
 
+# MCX to Yahoo Finance commodity futures mapping
+MCX_YF_SYMBOLS = {
+    'GOLD': 'GC=F',
+    'GOLDM': 'GC=F',
+    'GOLDPETAL': 'GC=F',
+    'GOLDGUINEA': 'GC=F',
+    'GOLDTEN': 'GC=F',
+    'SILVER': 'SI=F',
+    'SILVERM': 'SI=F',
+    'SILVERMIC': 'SI=F',
+    'CRUDEOIL': 'CL=F',
+    'CRUDEOILM': 'CL=F',
+    'NATURALGAS': 'NG=F',
+    'NATGASMINI': 'NG=F',
+    'COPPER': 'HG=F',
+    'ALUMINIUM': 'ALU=F',
+    'ALUMINI': 'ALU=F',
+    'LEAD': 'PB=F',
+    'LEADMINI': 'PB=F',
+    'ZINC': 'ZN=F',
+    'ZINCMINI': 'ZN=F',
+    'NICKEL': 'NI=F',
+    'COTTON': 'CT=F',
+    'CARDAMOM': ' cardamom',  # May not be available
+    'MENTHAOIL': 'MH2=F',  # Mentha Oil
+    'ELECDMBL': 'energy',   # Complex - may not work
+    'MCXBULLDEX': 'BGHL=F',  # Bullion Index
+    'MCXMETLDEX': 'metals',  # Metal Index
+}
+
 class FactCalculator:
     def __init__(self, project_root: str, fact_definitions: Dict[str, Any]):
         logger.trace(f"[FactCalculator.__init__] - Initializing with project_root: {project_root}")
@@ -38,7 +68,70 @@ class FactCalculator:
             is_mcx = exchange.upper() == 'MCX'
             
             if is_mcx:
-                logger.warning(f"[{self.__class__.__name__}] - MCX instrument {token} has no data ({data_len} bars). NOT using SENSEX fallback - returning zeros to avoid false signals.")
+                # 🔄 MCX: Try YF fallback using commodity futures
+                yf_symbol = MCX_YF_SYMBOLS.get(token.upper())
+                
+                if yf_symbol:
+                    logger.warning(f"[{self.__class__.__name__}] - MCX instrument {token} has insufficient data ({data_len} bars). Trying YF fallback: {yf_symbol}")
+                    global _yf_indicators_cache
+                    current_time = time.time()
+                    
+                    # Create cache key for this specific commodity
+                    cache_key = f'mcx_{token.upper()}'
+                    if cache_key not in _yf_indicators_cache or (current_time - _yf_indicators_cache.get(f'{cache_key}_ts', 0)) > 300:
+                        try:
+                            import yfinance as yf
+                            import talib as talib_lib
+                            
+                            ticker = yf.Ticker(yf_symbol)
+                            df = ticker.history(period='1d', interval='5m')
+                            
+                            if df is not None and len(df) >= 14:
+                                high = np.array(df['High'].values, dtype=float)
+                                low = np.array(df['Low'].values, dtype=float)
+                                close = np.array(df['Close'].values, dtype=float)
+                                
+                                adx = talib_lib.ADX(high, low, close, timeperiod=14)[-1]
+                                ema_fast = talib_lib.EMA(close, timeperiod=5)[-1]
+                                ema_slow = talib_lib.EMA(close, timeperiod=20)[-1]
+                                atr = talib_lib.ATR(high, low, close, timeperiod=10)[-1]
+                                
+                                # SuperTrend direction
+                                hl2 = (high + low) / 2
+                                upper = hl2 + (3 * atr)
+                                lower = hl2 - (3 * atr)
+                                st_dir = 1 if close[-1] > lower[-1] else -1
+                                
+                                yf_data = {
+                                    'adx': round(float(adx), 2) if not np.isnan(adx) else 0,
+                                    'ema_fast': round(float(ema_fast), 2),
+                                    'ema_slow': round(float(ema_slow), 2),
+                                    'supertrend_dir': st_dir,
+                                    'supertrend': round(float(atr * 3), 2),
+                                }
+                                
+                                _yf_indicators_cache[cache_key] = yf_data
+                                _yf_indicators_cache[f'{cache_key}_ts'] = current_time
+                                logger.info(f"🔄 MCX YF fallback for {token}: ADX={yf_data['adx']}, EMA_fast={yf_data['ema_fast']}, ST_dir={yf_data['supertrend_dir']}")
+                            else:
+                                logger.warning(f"MCX YF fallback: No data for {yf_symbol}")
+                        except Exception as e:
+                            logger.warning(f"MCX YF fallback failed for {token}: {e}")
+                    
+                    # Apply cached YF values
+                    if cache_key in _yf_indicators_cache:
+                        yf = _yf_indicators_cache[cache_key]
+                        facts['market.adx'] = facts['market_adx'] = yf.get('adx', 0)
+                        facts['market.ema_fast'] = facts['market_ema_fast'] = yf.get('ema_fast', 0)
+                        facts['market.ema_slow'] = facts['market_ema_slow'] = yf.get('ema_slow', 0)
+                        facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = yf.get('supertrend_dir', 0)
+                        facts['market.supertrend'] = facts['market_supertrend'] = yf.get('supertrend', 0)
+                        facts['data_source'] = 'yf_mcx_fallback'
+                        logger.info(f"🔄 Applied MCX YF fallback: ADX={yf.get('adx')}")
+                        return facts
+                
+                # No YF mapping or YF failed - return zeros
+                logger.warning(f"[{self.__class__.__name__}] - MCX instrument {token} has no data ({data_len} bars) and no YF fallback. Returning zeros.")
                 facts['market.adx'] = facts['market_adx'] = 0
                 facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
                 facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
@@ -57,7 +150,6 @@ class FactCalculator:
             
             logger.info(f"🔄 Using YF {yf_index} for fallback (exchange={exchange})")
             # 🔄 Fallback: Use Yahoo Finance for ALL indicators when broker candles are insufficient
-            global _yf_indicators_cache
             current_time = time.time()
             
             # Cache YF data for 5 minutes
@@ -97,6 +189,45 @@ class FactCalculator:
         # ⚡️ Optimize: Calculate indicators ONCE per tick
         indicators = self.analyzer.analyze(standardized_data)
         logger.trace(f"Indicators calculated: {list(indicators.keys())}")
+        
+        # Check if ADX is 0/NaN - try YF fallback for MCX
+        adx_value = indicators.get('market_adx', 0)
+        exchange = kwargs.get('instrument_exchange', kwargs.get('instrument.exchange', ''))
+        
+        if (adx_value == 0 or adx_value is None or (isinstance(adx_value, float) and np.isnan(adx_value))) and exchange.upper() == 'MCX':
+            yf_symbol = MCX_YF_SYMBOLS.get(token.upper())
+            if yf_symbol:
+                logger.warning(f"MCX ADX is {adx_value}, trying YF fallback for {token} ({yf_symbol})")
+                try:
+                    import yfinance as yf
+                    import talib as talib_lib
+                    ticker = yf.Ticker(yf_symbol)
+                    df = ticker.history(period='1d', interval='5m')
+                    
+                    if df is not None and len(df) >= 14:
+                        high = np.array(df['High'].values, dtype=float)
+                        low = np.array(df['Low'].values, dtype=float)
+                        close = np.array(df['Close'].values, dtype=float)
+                        
+                        adx = talib_lib.ADX(high, low, close, timeperiod=14)[-1]
+                        ema_fast = talib_lib.EMA(close, timeperiod=5)[-1]
+                        ema_slow = talib_lib.EMA(close, timeperiod=20)[-1]
+                        atr = talib_lib.ATR(high, low, close, timeperiod=10)[-1]
+                        
+                        hl2 = (high + low) / 2
+                        upper = hl2 + (3 * atr)
+                        lower = hl2 - (3 * atr)
+                        st_dir = 1 if close[-1] > lower[-1] else -1
+                        
+                        indicators['market_adx'] = indicators['market.adx'] = round(float(adx), 2) if not np.isnan(adx) else 0
+                        indicators['market_ema_fast'] = indicators['market.ema_fast'] = round(float(ema_fast), 2)
+                        indicators['market_ema_slow'] = indicators['market.ema_slow'] = round(float(ema_slow), 2)
+                        indicators['market_supertrend_dir'] = indicators['market.supertrend_dir'] = st_dir
+                        indicators['market_supertrend'] = indicators['market.supertrend'] = round(float(atr * 3), 2)
+                        
+                        logger.info(f"🔄 MCX YF fallback applied: ADX={indicators['market_adx']}, ST_dir={st_dir}")
+                except Exception as e:
+                    logger.warning(f"MCX YF fallback failed: {e}")
         
         # Add indicators as market.* facts (BOTH dot and underscore formats)
         # Indicators from TechnicalAnalyzer already have full key names like 'market_supertrend_dir'
