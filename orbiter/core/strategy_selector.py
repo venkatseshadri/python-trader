@@ -22,10 +22,23 @@ class StrategySelector:
         if not dynamic_config or not dynamic_config.get('enabled', False):
             return None, None
 
-        regime = get_market_regime('SENSEX')
-        adx = get_market_adx('SENSEX')
+        # Get index to use based on exchange
+        # NFO → NIFTY, BFO → SENSEX
+        index_by_exchange = dynamic_config.get('index_by_exchange', {})
+        
+        # Determine which index to use based on strategy
+        strategies = dynamic_config.get('strategies', {})
+        sideways = strategies.get('sideways', {})
+        trending = strategies.get('trending', {})
+        
+        # Check default/fallback strategy's exchange to determine index
+        # Default to NIFTY for NFO, SENSEX for BFO
+        index = index_by_exchange.get('NFO', 'NIFTY')  # Default to NIFTY
+        
+        regime = get_market_regime(index)
+        adx = get_market_adx(index)
 
-        logger.info(f"📊 Market Regime Check: SENSEX ADX = {adx} -> {regime.upper()}")
+        logger.info(f"📊 Market Regime Check: {index} ADX = {adx} -> {regime.upper()}")
 
         strategies = dynamic_config.get('strategies', {})
         if regime == 'sideways':
