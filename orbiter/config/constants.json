@@ -2,9 +2,7 @@
   "weekly_expiry_days": {
     "NIFTY": "Tuesday",
     "SENSEX": "Thursday",
-    "BANK_NIFTY": "Tuesday",
-    "FINNIFTY": "Tuesday",
-    "note": "Weekly expiry days unless it's a holiday - then moves to previous trading day"
+    "note": "Weekly expiry days unless it's a holiday - then moves to previous trading day. Other indices (BANKNIFTY, FINNIFTY, MIDCPNIFTY) have monthly expiries."
   },
   "action_types": {
     "app_setup": "app.setup",
