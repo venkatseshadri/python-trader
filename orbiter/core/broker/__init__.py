@@ -117,14 +117,27 @@ class BrokerClient:
         
         # Resolve symbols to tokens if needed (for MCX, symbols may be names like "GOLDTEN" not numeric tokens)
         mcx_futures_map = None
-        futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'mcx_futures_map.json')
-        if os.path.exists(futures_map_path):
+        nfo_futures_map = None
+        
+        # Load MCX futures map
+        mcx_futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'mcx_futures_map.json')
+        if os.path.exists(mcx_futures_map_path):
             try:
-                with open(futures_map_path, 'r') as f:
+                with open(mcx_futures_map_path, 'r') as f:
                     mcx_futures_map = json.load(f)
                 logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Loaded {len(mcx_futures_map)} MCX futures mappings")
             except Exception as e:
                 logger.warning(f"[{self.__class__.__name__}.start_live_feed] - Failed to load MCX futures_map: {e}")
+        
+        # Load NFO futures map
+        nfo_futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'nfo_futures_map.json')
+        if os.path.exists(nfo_futures_map_path):
+            try:
+                with open(nfo_futures_map_path, 'r') as f:
+                    nfo_futures_map = json.load(f)
+                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Loaded {len(nfo_futures_map)} NFO futures mappings")
+            except Exception as e:
+                logger.warning(f"[{self.__class__.__name__}.start_live_feed] - Failed to load NFO futures_map: {e}")
 
         def resolve_to_token(token_or_symbol, exchange):
             """Resolve symbol name to numeric token if needed."""
@@ -139,6 +152,15 @@ class BrokerClient:
                 if numeric_token:
                     logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX {token_or_symbol} -> {numeric_token} via futures_map")
                     return numeric_token
+            
+            # FIX: Check NFO futures_map for symbol names like NIFTY, BANKNIFTY, etc.
+            if nfo_futures_map:
+                # Check if token is in map (key is numeric token, value is [symbol, trading_symbol])
+                for num_token, entry in nfo_futures_map.items():
+                    if isinstance(entry, list) and len(entry) >= 2:
+                        if entry[0].upper() == token_or_symbol.upper() or entry[1].upper() == token_or_symbol.upper():
+                            logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved NFO {token_or_symbol} -> {num_token} via futures_map")
+                            return num_token
             
             # Try to resolve using broker's symbol-to-token mapping
             resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper())
