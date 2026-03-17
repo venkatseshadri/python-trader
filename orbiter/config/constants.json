@@ -1,4 +1,11 @@
 {
+  "weekly_expiry_days": {
+    "NIFTY": "Tuesday",
+    "SENSEX": "Thursday",
+    "BANK_NIFTY": "Tuesday",
+    "FINNIFTY": "Tuesday",
+    "note": "Weekly expiry days unless it's a holiday - then moves to previous trading day"
+  },
   "action_types": {
     "app_setup": "app.setup",
     "app_login": "app.login",
