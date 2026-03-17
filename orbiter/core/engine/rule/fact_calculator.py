@@ -16,32 +16,18 @@ _yf_indicators_cache = {'value': None, 'timestamp': 0}
 
 # MCX to Yahoo Finance commodity futures mapping
 MCX_YF_SYMBOLS = {
-    'GOLD': 'GC=F',
-    'GOLDM': 'GC=F',
-    'GOLDPETAL': 'GC=F',
-    'GOLDGUINEA': 'GC=F',
-    'GOLDTEN': 'GC=F',
-    'SILVER': 'SI=F',
-    'SILVERM': 'SI=F',
-    'SILVERMIC': 'SI=F',
-    'CRUDEOIL': 'CL=F',
     'CRUDEOILM': 'CL=F',
     'NATURALGAS': 'NG=F',
     'NATGASMINI': 'NG=F',
+    'GOLDM': 'GC=F',
+    'GOLDPETAL': 'GC=F',
+    'SILVERM': 'SI=F',
+    'SILVERMIC': 'SI=F',
     'COPPER': 'HG=F',
-    'ALUMINIUM': 'ALU=F',
-    'ALUMINI': 'ALU=F',
-    'LEAD': 'PB=F',
+    'ALUMINI': 'ALI=F',
     'LEADMINI': 'PB=F',
-    'ZINC': 'ZN=F',
     'ZINCMINI': 'ZN=F',
     'NICKEL': 'NI=F',
-    'COTTON': 'CT=F',
-    'CARDAMOM': ' cardamom',  # May not be available
-    'MENTHAOIL': 'MH2=F',  # Mentha Oil
-    'ELECDMBL': 'energy',   # Complex - may not work
-    'MCXBULLDEX': 'BGHL=F',  # Bullion Index
-    'MCXMETLDEX': 'metals',  # Metal Index
 }
 
 class FactCalculator:

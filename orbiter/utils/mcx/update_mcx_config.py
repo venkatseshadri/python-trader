@@ -28,17 +28,15 @@ from datetime import datetime, date
 
 # Common MCX symbols including Minis and Micros
 SYMBOLS = [
-    'CRUDEOIL', 'CRUDEOILM', 
-    'NATURALGAS', 
-    'GOLD', 'GOLDM', 'GOLDPETAL', 'GOLDGUINEA', 'GOLDTEN',
-    'SILVER', 'SILVERM', 'SILVERMIC',
-    'COPPER', 
-    'ZINC', 'ZINCMINI', 
-    'LEAD', 'LEADMINI', 
-    'ALUMINIUM', 'ALUMINI',
+    'CRUDEOILM',
+    'NATURALGAS', 'NATGASMINI',
+    'GOLDM', 'GOLDPETAL',
+    'SILVERM', 'SILVERMIC',
+    'COPPER',
+    'ZINCMINI',
+    'LEADMINI',
+    'ALUMINI',
     'NICKEL',
-    'COTTONOIL', 'ELECDMBL', 'CARDAMOM', 'NATGASMINI', 'STEELREBAR',
-    'MCXMETLDEX', 'MCXBULLDEX', 'MENTHAOIL', 'COTTON', 'KAPAS'
 ]
 
 MCX_ROOT_URL = 'https://api.shoonya.com/'
