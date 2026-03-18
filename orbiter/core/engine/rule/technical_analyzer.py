@@ -21,10 +21,16 @@ class TechnicalAnalyzer:
         close = standardized_data.get('close')
         high = standardized_data.get('high')
         low = standardized_data.get('low')
+        logger.trace(f"[TechnicalAnalyzer.analyze] START - close={type(close)}, high={type(high)}, low={type(low)}")
         
         if close is None or len(close) < 14:
+            logger.trace(f"[TechnicalAnalyzer.analyze] EARLY RETURN - close is None or len < 14: close={close is not None}, len={len(close) if close is not None else 'N/A'}")
             return indicators
 
+        logger.trace(f"[TechnicalAnalyzer.analyze] close[:3]={close[:3] if len(close) > 0 else 'empty'}, len={len(close)}")
+        logger.trace(f"[TechnicalAnalyzer.analyze] high[:3]={high[:3] if len(high) > 0 else 'empty'}, len={len(high)}")
+        logger.trace(f"[TechnicalAnalyzer.analyze] low[:3]={low[:3] if len(low) > 0 else 'empty'}, len={len(low)}")
+        
         try:
             # 1. EMAs (Trend)
             indicators['market.ema5'] = indicators['market_ema5'] = self._ema(close, 5)
