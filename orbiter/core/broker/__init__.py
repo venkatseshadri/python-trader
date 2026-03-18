@@ -7,7 +7,21 @@ from .connection import ConnectionManager
 from .master import ScripMaster
 from .resolver import ContractResolver
 from .margin import MarginCalculator
-from .executor import OrderExecutor
+# Import executor - use margin-aware if paper trade
+import os
+paper_trade = os.environ.get("ORBITER_PAPER_TRADE", "true").lower() == "true"
+if paper_trade:
+    try:
+        from orbiter.utils.margin.margin_executor import MarginAwareExecutor
+        ExecutorClass = MarginAwareExecutor
+        print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
+    except ImportError:
+        from .executor import OrderExecutor
+        ExecutorClass = OrderExecutor
+else:
+    from .executor import OrderExecutor
+    ExecutorClass = OrderExecutor
+# Original: from .executor import OrderExecutor
 from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
@@ -42,7 +56,11 @@ class BrokerClient:
         self.exchange_config = exch_config  # Store full config for access by action executors
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
         
-        self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
+        # Only pass paper_trade when using MarginAwareExecutor
+        if paper_trade:
+            self.executor = ExecutorClass(self.conn.api, self._init_logger(), execution_policy=policy, paper_trade=paper_trade)
+        else:
+            self.executor = ExecutorClass(self.conn.api, self._init_logger(), execution_policy=policy)
         logger.debug(f"[{self.__class__.__name__}.__init__] - Resolver, Margin, Executor (with policy) initialized.")
         
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
@@ -142,12 +160,17 @@ class BrokerClient:
         def resolve_to_token(token_or_symbol, exchange):
             """Resolve symbol name to numeric token if needed."""
             # If already numeric, return as-is
-            if token_or_symbol.isdigit():
+            # CRITICAL: Handle non-string inputs (dicts, etc.)
+            if not isinstance(token_or_symbol, str):
+                logger.warning(f"Non-string input {type(token_or_symbol)}, returning as-is")
+                return str(token_or_symbol) if token_or_symbol else ""
+
+            if isinstance(token_or_symbol, str) and token_or_symbol.isdigit():
                 return token_or_symbol
             
             # FIX: Check MCX futures_map first for symbol names like GOLD, ALUMINI, etc.
             # Also check trading symbols like "GOLD31MAR26", "MCXBULLDEX24MAR26", etc.
-            if mcx_futures_map and token_or_symbol.upper() in mcx_futures_map:
+            if isinstance(token_or_symbol, str) and mcx_futures_map and token_or_symbol.upper() in mcx_futures_map:
                 mcx_entry = mcx_futures_map[token_or_symbol.upper()]
                 numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
                 if numeric_token:
@@ -158,7 +181,7 @@ class BrokerClient:
             if mcx_futures_map:
                 for short_sym, mcx_entry in mcx_futures_map.items():
                     if isinstance(mcx_entry, list) and len(mcx_entry) > 1:
-                        if mcx_entry[1].upper() == token_or_symbol.upper():
+                        if isinstance(mcx_entry[1], str) and mcx_entry[1].upper() == token_or_symbol.upper():
                             numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
                             if numeric_token:
                                 logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX trading symbol {token_or_symbol} -> {numeric_token} via futures_map")
@@ -169,7 +192,7 @@ class BrokerClient:
                 # Check if token is in map (key is numeric token, value is [symbol, trading_symbol])
                 for num_token, entry in nfo_futures_map.items():
                     if isinstance(entry, list) and len(entry) >= 2:
-                        if entry[0].upper() == token_or_symbol.upper() or entry[1].upper() == token_or_symbol.upper():
+                        if (isinstance(entry[0], str) and entry[0].upper() == token_or_symbol.upper()) or (isinstance(entry[1], str) and entry[1].upper() == token_or_symbol.upper()):
                             logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved NFO {token_or_symbol} -> {num_token} via futures_map")
                             return num_token
             
@@ -284,7 +307,7 @@ class BrokerClient:
                     token = item
                 
                 # CRITICAL: If token is a symbol name (not numeric), resolve it
-                if token and not token.isdigit():
+                if token and isinstance(token, str) and not token.isdigit():
                     logger.trace(f"[{self.__class__.__name__}.prime_candles] - Token '{token}' is symbol name, resolving to numeric...")
                     
                     # FIX: Check if symbol exists in mcx_futures_map.json
@@ -299,8 +322,9 @@ class BrokerClient:
                             with open(futures_map_path, 'r') as f:
                                 mcx_map = json.load(f)
                             # Check if symbol exists in futures_map (key is symbol name like 'ZINC')
-                            if token.upper() in mcx_map:
-                                mcx_entry = mcx_map[token.upper()]
+                            token_upper = str(token).upper() if token else ''
+                            if token_upper in mcx_map:
+                                mcx_entry = mcx_map[token_upper]
                                 # mcx_entry format: [symbol, tsym, lot, expiry, token]
                                 numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
                                 trading_symbol = mcx_entry[1] if len(mcx_entry) > 1 else None
@@ -310,7 +334,7 @@ class BrokerClient:
                                 # FIX: Also check if token matches trading symbol (e.g., "GOLDTEN31MAR26", "MCXBULLDEX24MAR26")
                                 for short_sym, mcx_entry in mcx_map.items():
                                     if isinstance(mcx_entry, list) and len(mcx_entry) > 1:
-                                        if mcx_entry[1].upper() == token.upper():
+                                        if isinstance(token, str) and isinstance(mcx_entry[1], str) and mcx_entry[1].upper() == token.upper():
                                             numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
                                             trading_symbol = mcx_entry[1] if len(mcx_entry) > 1 else None
                                             exch = 'MCX'
@@ -323,7 +347,7 @@ class BrokerClient:
                     if not numeric_token:
                         # Step 1: Use TOKEN_TO_SYMBOL for prefix matching to find trading symbol
                         for tok, tsym in self.master.TOKEN_TO_SYMBOL.items():
-                            if tsym.upper().startswith(token.upper()):
+                            if isinstance(tsym, str) and isinstance(token, str) and tsym.upper().startswith(token.upper()):
                                 logger.trace(f"[{self.__class__.__name__}.prime_candles] - Found trading symbol: {tsym}")
                                 trading_symbol = tsym
                                 break
@@ -455,6 +479,11 @@ class BrokerClient:
         return self.master.TOKEN_TO_COMPANY.get(token, self.get_symbol(token, exchange))
     def get_token(self, symbol): 
         logger.trace(f"[{self.__class__.__name__}.get_token] - Getting token for symbol: {symbol}")
+        # Handle dict input (e.g., {'symbol': 'ALUMINI', 'token': '487655', ...})
+        if isinstance(symbol, dict):
+            symbol = symbol.get('symbol') or symbol.get('token') or ''
+        if not symbol:
+            return None
         result = self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
         logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
         return result
