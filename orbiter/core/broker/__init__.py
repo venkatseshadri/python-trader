@@ -364,8 +364,11 @@ class BrokerClient:
                     
                     if numeric_token:
                         token = numeric_token
+                    elif token and isinstance(token, str) and token.isdigit():
+                        # Token is already numeric, keep it
+                        pass
                     else:
-                        # Ultimate fallback to get_token
+                        # Token is a symbol name (non-numeric), try to resolve
                         token = self.get_token(token)
                     
                     key = f"{exch}|{token}"
