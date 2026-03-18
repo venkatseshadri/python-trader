@@ -279,7 +279,7 @@ class BrokerClient:
         self.conn.start_live_feed(resolved_symbols, _tick_handler)
         logger.info(f"[{self.__class__.__name__}.start_live_feed] - Live feed started for {len(symbols)} symbols.")
 
-    def prime_candles(self, symbols: List[Any], lookback_mins: int = 120):
+    def prime_candles(self, symbols: List[Any], lookback_mins: int = 300):
         logger.debug(f"[{self.__class__.__name__}.prime_candles] - Priming {len(symbols)} symbols with last {lookback_mins} minutes data.")
         if not symbols: return
         print(self.constants.get('magic_strings', 'prime_candles_start_msg', "⏳ Priming {count} symbols...").format(count=len(symbols), minutes=lookback_mins))

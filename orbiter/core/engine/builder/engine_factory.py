@@ -72,7 +72,7 @@ class EngineFactory:
             
             # Prime with mock data
             if universe:
-                client.prime_candles(universe, lookback_mins=120)
+                client.prime_candles(universe, lookback_mins=300)  # 300 mins = ~60 candles for ADX warmup
         else:
             broker_creds_path = DataManager.get_manifest_path(session_manager.project_root, project_manifest_schema.get('mandatory_files_key', 'mandatory_files'), 'broker_credentials')
             client = BrokerClient(session_manager.project_root, broker_creds_path, segment_name=seg_name)
