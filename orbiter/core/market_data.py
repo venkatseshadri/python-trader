@@ -23,7 +23,7 @@ class MarketData:
             
             # Get strategy parameters for lookback/interval
             # These come from strategy config, not hardcoded here
-            lookback = 120  # Default, could come from strategy bundle
+            lookback = 300  # 300 mins = ~60 candles for ADX warmup (was 120)
             interval = 5   # Default
             
             client.start_live_feed(symbols)
