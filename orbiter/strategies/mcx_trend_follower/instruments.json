@@ -7,13 +7,6 @@
     "derivative": "future"
   },
   {
-    "symbol": "COPPER",
-    "token": "487657",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
     "symbol": "CRUDEOILM",
     "token": "472790",
     "exchange": "MCX",
@@ -21,22 +14,8 @@
     "derivative": "future"
   },
   {
-    "symbol": "GOLDPETAL",
-    "token": "477175",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
     "symbol": "LEADMINI",
     "token": "487659",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "NATURALGAS",
-    "token": "475111",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
@@ -51,6 +30,34 @@
   {
     "symbol": "SILVERMIC",
     "token": "466029",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "SILVERM",
+    "token": "457533",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDM",
+    "token": "477904",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDTEN",
+    "token": "477176",
+    "exchange": "MCX",
+    "instrument_type": "future",
+    "derivative": "future"
+  },
+  {
+    "symbol": "GOLDGUINEA",
+    "token": "477174",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"

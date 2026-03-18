@@ -20,15 +20,13 @@ MCX_YF_SYMBOLS = {
     'NATURALGAS': 'NG=F',
     'NATGASMINI': 'NG=F',
     'GOLDM': 'GC=F',
-    'GOLDPETAL': 'GC=F',
+    'GOLDTEN': 'GC=F',
+    'GOLDGUINEA': 'GC=F',
     'SILVERM': 'SI=F',
     'SILVERMIC': 'SI=F',
-    'COPPER': 'HG=F',
-    'COPPERM': 'COPPERM.MCX',
     'ALUMINI': 'ALI=F',
     'LEADMINI': 'PB=F',
     'ZINCMINI': 'ZN=F',
-    'NICKEL': 'NI=F',
 }
 
 class FactCalculator:
