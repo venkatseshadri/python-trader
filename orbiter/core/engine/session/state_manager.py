@@ -29,12 +29,16 @@ class StateManager:
 
         self.active_positions = {}
         
-        # Handle clear_paper_positions flag
+        # Paper trading: separate file for paper positions (set early for clear flag)
+        self.paper_positions_file = DataManager.get_manifest_path(project_root, 'settings', 'paper_positions_file')
+        
+        # Handle clear_paper_positions flag (must be after paper_positions_file is set)
         if clear_paper_positions:
             logger.warning("🧹 clear_paper_positions=true - Clearing all paper positions on startup")
-            self.clear_paper_positions()
+            self._clear_paper_positions_simple()
         else:
             self._load_paper_positions()
+        
         self.exit_history = {}
         self.opening_scores = {}
         
@@ -57,13 +61,17 @@ class StateManager:
         
         self.state_file = DataManager.get_manifest_path(project_root, 'settings', 'session_state_file')
         self.client.set_span_cache_path(DataManager.get_manifest_path(project_root, 'settings', 'span_cache_file'))
-        
-        # Paper trading: separate file for paper positions (not synced to broker)
-        self.paper_positions_file = DataManager.get_manifest_path(project_root, 'settings', 'paper_positions_file')
-        
-        # Load paper positions if exists
-        self._load_paper_positions()
 
+
+    def _clear_paper_positions_simple(self):
+        """Clear paper positions file without accessing other instance variables (for startup use)"""
+        self.active_positions = {}
+        try:
+            if os.path.exists(self.paper_positions_file):
+                os.remove(self.paper_positions_file)
+            logger.info("🧹 Paper positions cleared")
+        except Exception as e:
+            logger.warning(f"Failed to clear paper positions: {e}")
 
     def _load_paper_positions(self):
         """Load paper positions from file (for paper trading persistence)"""
