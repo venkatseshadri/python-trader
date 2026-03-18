@@ -5,6 +5,7 @@ Used for dynamic strategy selection (not for trade scoring).
 """
 import yfinance as yf
 import talib
+import numpy as np
 import logging
 
 logger = logging.getLogger("ORBITER")
@@ -114,6 +115,11 @@ def get_all_indicators(index_name: str = 'SENSEX', interval: str = '5m') -> dict
         ema_fast = talib.EMA(close, timeperiod=5)
         ema_slow = talib.EMA(close, timeperiod=20)
         
+        # Handle NaN in ADX
+        adx_value = float(adx[-1])
+        if np.isnan(adx_value):
+            adx_value = 0.0  # Default to 0 if ADX is NaN
+        
         # SuperTrend calculation
         atr = talib.ATR(high, low, close, timeperiod=10)
         hl2 = (high + low) / 2
@@ -124,7 +130,7 @@ def get_all_indicators(index_name: str = 'SENSEX', interval: str = '5m') -> dict
         st_dir = 1 if close[-1] > lower[-1] else -1
         
         return {
-            'adx': round(float(adx[-1]), 2),
+            'adx': round(adx_value, 2),
             'ema_fast': round(float(ema_fast[-1]), 2),
             'ema_slow': round(float(ema_slow[-1]), 2),
             'supertrend_dir': st_dir,
