@@ -79,12 +79,39 @@ class TechnicalAnalyzer:
 
     def _adx(self, high, low, close, period):
         try:
-            logger.trace(f"[_adx] high={high[:3] if len(high) > 0 else 'empty'}, low={low[:3] if len(low) > 0 else 'empty'}, close={close[:3] if len(close) > 0 else 'empty'}, len={len(close)}")
-            val = talib.ADX(high, low, close, timeperiod=period)[-1]
-            logger.trace(f"[_adx] raw result: {val}")
-            return round(float(val), 2) if not np.isnan(val) else 0.0
+            logger.trace(f"[_adx] START - high type={type(high)}, low type={type(low)}, close type={type(close)}")
+            logger.trace(f"[_adx] high[:5]={high[:5] if hasattr(high, '__getitem__') and len(high) > 0 else 'N/A'}")
+            logger.trace(f"[_adx] low[:5]={low[:5] if hasattr(low, '__getitem__') and len(low) > 0 else 'N/A'}")
+            logger.trace(f"[_adx] close[:5]={close[:5] if hasattr(close, '__getitem__') and len(close) > 0 else 'N/A'}")
+            logger.trace(f"[_adx] len(close)={len(close) if hasattr(close, '__len__') else 'no len'}")
+            
+            # Check for NaN in input data
+            if hasattr(high, '__iter__') and len(high) > 0:
+                high_arr = np.array(high)
+                logger.trace(f"[_adx] high has NaN={np.any(np.isnan(high_arr))}, min={np.min(high_arr)}, max={np.max(high_arr)}")
+            if hasattr(low, '__iter__') and len(low) > 0:
+                low_arr = np.array(low)
+                logger.trace(f"[_adx] low has NaN={np.any(np.isnan(low_arr))}, min={np.min(low_arr)}, max={np.max(low_arr)}")
+            if hasattr(close, '__iter__') and len(close) > 0:
+                close_arr = np.array(close)
+                logger.trace(f"[_adx] close has NaN={np.any(np.isnan(close_arr))}, min={np.min(close_arr)}, max={np.max(close_arr)}")
+            
+            # Check if high <= low (flat data causes NaN)
+            if hasattr(high, '__iter__') and hasattr(low, '__iter__') and len(high) > 0 and len(low) > 0:
+                flat_count = np.sum(np.array(high) <= np.array(low))
+                logger.trace(f"[_adx] candles where high <= low: {flat_count}/{len(high)}")
+            
+            adx_arr = talib.ADX(high, low, close, timeperiod=period)
+            val = adx_arr[-1]
+            logger.trace(f"[_adx] talib.ADX result array[:5]={adx_arr[:5]}, last={val}")
+            
+            result = round(float(val), 2) if not np.isnan(val) else 0.0
+            logger.trace(f"[_adx] FINAL result={result}")
+            return result
         except Exception as e:
-            logger.trace(f"[_adx] error: {e}")
+            logger.trace(f"[_adx] EXCEPTION: {e}")
+            import traceback
+            logger.trace(f"[_adx] traceback: {traceback.format_exc()}")
             return 0.0
 
     def _atr(self, high, low, close, period):

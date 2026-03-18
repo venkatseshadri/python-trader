@@ -174,6 +174,11 @@ class FactCalculator:
             return facts
 
         # ⚡️ Optimize: Calculate indicators ONCE per tick
+        logger.trace(f"[fact_calculator.calculate_technical_facts] standardized_data keys: {list(standardized_data.keys())}")
+        logger.trace(f"[fact_calculator.calculate_technical_facts] close array: {standardized_data.get('close', 'NOT FOUND')[:5] if 'close' in standardized_data else 'NOT FOUND'}")
+        logger.trace(f"[fact_calculator.calculate_technical_facts] high array: {standardized_data.get('high', 'NOT FOUND')[:5] if 'high' in standardized_data else 'NOT FOUND'}")
+        logger.trace(f"[fact_calculator.calculate_technical_facts] low array: {standardized_data.get('low', 'NOT FOUND')[:5] if 'low' in standardized_data else 'NOT FOUND'}")
+        
         indicators = self.analyzer.analyze(standardized_data)
         logger.trace(f"Indicators calculated: {list(indicators.keys())}")
         
