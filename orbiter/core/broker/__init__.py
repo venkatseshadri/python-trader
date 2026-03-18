@@ -318,7 +318,26 @@ class BrokerClient:
                             endtime=end_dt.timestamp(), 
                             interval=interval
                         )
-                        # ... rest of the code
+                        
+                        # Store candles in SYMBOLDICT
+                        if res and isinstance(res, list):
+                            if key not in self.SYMBOLDICT:
+                                sym = self.get_symbol(tk, exchange=ex)
+                                self.SYMBOLDICT[key] = {
+                                    'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
+                                    'token': tk, 'exchange': ex, 'ltp': float(res[-1]['intc']),
+                                    'high': float(res[-1].get('inth', 0)), 'low': float(res[-1].get('intl', 0)), 
+                                    'volume': int(res[-1].get('v', 0))
+                                }
+                            self.SYMBOLDICT[key]['candles'] = res
+                            success_count += 1
+                            logger.debug(f"[{self.__class__.__name__}.prime_candles] - Primed {key} with {len(res)} candles. Last: {res[-1].get('intc', '?')}")
+                        else:
+                            logger.warning(f"[{self.__class__.__name__}.prime_candles] - No history returned for {key}. Live feed will populate data.")
+                        
+                        # Add delay to avoid rate limiting
+                        import time
+                        time.sleep(0.1)
                         continue
                 
                 # CRITICAL: If token is a symbol name (not numeric), resolve it
