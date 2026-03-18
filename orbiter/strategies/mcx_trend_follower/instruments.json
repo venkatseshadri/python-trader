@@ -1,182 +1,56 @@
 [
   {
     "symbol": "ALUMINI",
-    "token": "ALUMINI",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "ALUMINIUM",
-    "token": "ALUMINIUM",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "CARDAMOM",
-    "token": "CARDAMOM",
+    "token": "487655",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "COPPER",
-    "token": "COPPER",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "COTTON",
-    "token": "COTTON",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "CRUDEOIL",
-    "token": "CRUDEOIL",
+    "token": "487657",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "CRUDEOILM",
-    "token": "CRUDEOILM",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "ELECDMBL",
-    "token": "ELECDMBL",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "GOLD",
-    "token": "GOLD",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "GOLDGUINEA",
-    "token": "GOLDGUINEA",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "GOLDM",
-    "token": "GOLDM",
+    "token": "472790",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "GOLDPETAL",
-    "token": "GOLDPETAL",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "GOLDTEN",
-    "token": "GOLDTEN",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "LEAD",
-    "token": "LEAD",
+    "token": "477175",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "LEADMINI",
-    "token": "LEADMINI",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "MCXBULLDEX",
-    "token": "MCXBULLDEX",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "MCXMETLDEX",
-    "token": "MCXMETLDEX",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "MENTHAOIL",
-    "token": "MENTHAOIL",
+    "token": "487659",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "NATGASMINI",
-    "token": "NATGASMINI",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "NATURALGAS",
-    "token": "NATURALGAS",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "NICKEL",
-    "token": "NICKEL",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "SILVER",
-    "token": "SILVER",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "SILVERM",
-    "token": "SILVERM",
+    "token": "475112",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "SILVERMIC",
-    "token": "SILVERMIC",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
-    "symbol": "ZINC",
-    "token": "ZINC",
+    "token": "466029",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"
   },
   {
     "symbol": "ZINCMINI",
-    "token": "ZINCMINI",
+    "token": "487663",
     "exchange": "MCX",
     "instrument_type": "future",
     "derivative": "future"

@@ -146,12 +146,23 @@ class BrokerClient:
                 return token_or_symbol
             
             # FIX: Check MCX futures_map first for symbol names like GOLD, ALUMINI, etc.
+            # Also check trading symbols like "GOLD31MAR26", "MCXBULLDEX24MAR26", etc.
             if mcx_futures_map and token_or_symbol.upper() in mcx_futures_map:
                 mcx_entry = mcx_futures_map[token_or_symbol.upper()]
                 numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
                 if numeric_token:
                     logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX {token_or_symbol} -> {numeric_token} via futures_map")
                     return numeric_token
+            
+            # FIX: Also check if token matches trading symbol (e.g., "GOLDTEN31MAR26", "MCXBULLDEX24MAR26")
+            if mcx_futures_map:
+                for short_sym, mcx_entry in mcx_futures_map.items():
+                    if isinstance(mcx_entry, list) and len(mcx_entry) > 1:
+                        if mcx_entry[1].upper() == token_or_symbol.upper():
+                            numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
+                            if numeric_token:
+                                logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX trading symbol {token_or_symbol} -> {numeric_token} via futures_map")
+                                return numeric_token
             
             # FIX: Check NFO futures_map for symbol names like NIFTY, BANKNIFTY, etc.
             if nfo_futures_map:
@@ -295,6 +306,16 @@ class BrokerClient:
                                 trading_symbol = mcx_entry[1] if len(mcx_entry) > 1 else None
                                 exch = 'MCX'  # It's an MCX instrument
                                 logger.trace(f"[{self.__class__.__name__}.prime_candles] - MCX: {token} -> {trading_symbol} (token: {numeric_token}) from futures_map")
+                            else:
+                                # FIX: Also check if token matches trading symbol (e.g., "GOLDTEN31MAR26", "MCXBULLDEX24MAR26")
+                                for short_sym, mcx_entry in mcx_map.items():
+                                    if isinstance(mcx_entry, list) and len(mcx_entry) > 1:
+                                        if mcx_entry[1].upper() == token.upper():
+                                            numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
+                                            trading_symbol = mcx_entry[1] if len(mcx_entry) > 1 else None
+                                            exch = 'MCX'
+                                            logger.trace(f"[{self.__class__.__name__}.prime_candles] - MCX: {token} -> {trading_symbol} (token: {numeric_token}) via trading symbol match")
+                                            break
                         except Exception as e:
                             logger.warning(f"[{self.__class__.__name__}.prime_candles] - Failed to load MCX futures_map: {e}")
                     

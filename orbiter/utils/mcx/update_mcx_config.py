@@ -32,7 +32,7 @@ SYMBOLS = [
     'NATURALGAS', 'NATGASMINI',
     'GOLDM', 'GOLDPETAL',
     'SILVERM', 'SILVERMIC',
-    'COPPER',
+    'COPPER', 'COPPERM',
     'ZINCMINI',
     'LEADMINI',
     'ALUMINI',

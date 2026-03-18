@@ -24,6 +24,7 @@ MCX_YF_SYMBOLS = {
     'SILVERM': 'SI=F',
     'SILVERMIC': 'SI=F',
     'COPPER': 'HG=F',
+    'COPPERM': 'COPPERM.MCX',
     'ALUMINI': 'ALI=F',
     'LEADMINI': 'PB=F',
     'ZINCMINI': 'ZN=F',

@@ -4,17 +4,16 @@ from datetime import time as dt_time
 
 # Common MCX symbols including Minis and Micros (Corrected via API Discovery)
 SYMBOLS_UNIVERSE = [
-    'CRUDEOIL', 'CRUDEOILM', 'NATURALGAS', 
-    'GOLD', 'GOLDM', 'GOLDPETAL', 
-    'SILVER', 'SILVERM', 'SILVERMIC',
-    'COPPER', 'ZINC', 'ZINCMINI', 'LEAD', 'LEADMINI', 'ALUMINIUM'
+    'CRUDEOILM', 'NATGASMINI', 
+    'GOLDPETAL', 
+    'SILVERMIC',
+    'COPPER', 'ZINCMINI', 'LEADMINI', 'ALUMINI'
 ]
 
 # This will be populated by update_mcx_config.py
 SYMBOLS_FUTURE_UNIVERSE = [
-    'MCX|467013', 'MCX|467014', 'MCX|467385', 'MCX|454818', 'MCX|472781',
-    'MCX|472788', 'MCX|451666', 'MCX|451669', 'MCX|458305', 'MCX|477167',
-    'MCX|477171', 'MCX|477172', 'MCX|477168', 'MCX|477169', 'MCX|477166'
+    'MCX|472790', 'MCX|475111', 'MCX|477175', 'MCX|466029',
+    'MCX|487657', 'MCX|487663', 'MCX|487659', 'MCX|487655', 'MCX|487660'
 ]
 
 MARKET_OPEN = dt_time(9, 0)

@@ -4,5 +4,5 @@
     "eod_square_off_time": "15:15:00",
     "conflict_check_enabled": true
   },
-  "active_strategy_path": "nifty_fno_topn_trend/strategy.json"
+  "active_strategy_path": "mcx_trend_follower/strategy.json"
 }
