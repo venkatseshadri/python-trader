@@ -300,12 +300,14 @@ class BrokerClient:
                 
                 if isinstance(item, dict):
                     # Use token directly if available, else get it from symbol
+                    logger.warning(f"[prime_candles] Processing dict item: {item}")
                     token = item.get('token', '')
                     # CRITICAL: Ensure token is string for comparison
                     token = str(token) if token else ''
                     exch = item.get('exchange', 'NSE')
                 else:
                     # item is a string (symbol name)
+                    logger.warning(f"[prime_candles] Processing string item: {item}")
                     token = item
                 
                 # CRITICAL: If token is a symbol name (not numeric), resolve it
@@ -326,6 +328,7 @@ class BrokerClient:
                                 mcx_map = json.load(f)
                             # Check if symbol exists in futures_map (key is symbol name like 'ZINC')
                             token_upper = str(token).upper() if token else ''
+                            logger.warning(f"[prime_candles] Looking up token_upper='{token_upper}' in mcx_map, keys={list(mcx_map.keys())[:5]}")
                             if token_upper in mcx_map:
                                 mcx_entry = mcx_map[token_upper]
                                 # mcx_entry format: [symbol, tsym, lot, expiry, token]
