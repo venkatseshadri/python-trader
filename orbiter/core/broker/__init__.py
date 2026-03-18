@@ -301,12 +301,15 @@ class BrokerClient:
                 if isinstance(item, dict):
                     # Use token directly if available, else get it from symbol
                     token = item.get('token', '')
+                    # CRITICAL: Ensure token is string for comparison
+                    token = str(token) if token else ''
                     exch = item.get('exchange', 'NSE')
                 else:
                     # item is a string (symbol name)
                     token = item
                 
                 # CRITICAL: If token is a symbol name (not numeric), resolve it
+                logger.trace(f"[prime_candles] DEBUG: token='{token}', isdigit={token.isdigit() if token else 'empty'}")
                 if token and isinstance(token, str) and not token.isdigit():
                     logger.trace(f"[{self.__class__.__name__}.prime_candles] - Token '{token}' is symbol name, resolving to numeric...")
                     
