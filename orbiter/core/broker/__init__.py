@@ -361,9 +361,8 @@ class BrokerClient:
                             if numeric_token:
                                 logger.trace(f"[{self.__class__.__name__}.prime_candles] - Resolved {token} -> numeric token {numeric_token}")
                             else:
-                                # Fallback: use the token as-is if SYMBOL_TO_TOKEN lookup fails
-                                logger.warning(f"[{self.__class__.__name__}.prime_candles] - No numeric token found for {trading_symbol}, using as-is")
-                                numeric_token = token
+                                # Symbol not found in mcx_futures_map, keep numeric_token as None
+                                pass
                     
                     if numeric_token:
                         token = numeric_token
