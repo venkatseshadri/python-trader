@@ -97,7 +97,7 @@ class ArgumentParser:
         
         # Known arguments - process these, but still pass through unknown args
         # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file'}
+        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:

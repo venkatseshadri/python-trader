@@ -83,7 +83,7 @@ class EngineFactory:
             client.master.TOKEN_TO_SYMBOL['NFO|51714'] = constants.get('magic_strings', 'token_to_symbol_nfo_51714')
             logger.debug(f"[{EngineFactory.__name__}.build_engine] - Hardcoded NIFTY token mappings applied.")
         
-        state = StateManager(client, universe, full_config, segment_name=seg_name)
+        state = StateManager(client, universe, full_config, segment_name=seg_name, clear_paper_positions=context.get('clear_paper_positions', False) if context else False)
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - StateManager initialized.")
         
         from orbiter.bot.sheets import log_buy_signals, log_closed_positions, update_active_positions, update_engine_state, get_engine_state

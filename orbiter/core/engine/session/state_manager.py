@@ -13,7 +13,7 @@ import rule_engine
 logger = logging.getLogger("ORBITER")
 
 class StateManager:
-    def __init__(self, client, symbols: List[str], config: Dict[str, Any], segment_name: str = 'nfo'):
+    def __init__(self, client, symbols: List[str], config: Dict[str, Any], segment_name: str = 'nfo', clear_paper_positions: bool = False):
         logger.debug(f"[{self.__class__.__name__}.__init__] - Initializing StateManager for segment: {segment_name}")
         self.client = client
         self.symbols = symbols
@@ -28,6 +28,13 @@ class StateManager:
         self.rule_file_schema = self.meta_config.get_key('rule_file_schema')
 
         self.active_positions = {}
+        
+        # Handle clear_paper_positions flag
+        if clear_paper_positions:
+            logger.warning("🧹 clear_paper_positions=true - Clearing all paper positions on startup")
+            self.clear_paper_positions()
+        else:
+            self._load_paper_positions()
         self.exit_history = {}
         self.opening_scores = {}
         
@@ -67,6 +74,7 @@ class StateManager:
                     self.active_positions = data.get('positions', {})
                     if self.active_positions:
                         logger.info(f"📄 Loaded {len(self.active_positions)} paper positions from disk")
+                        logger.warning(f"⚠️  {len(self.active_positions)} existing paper positions loaded. Use --clear_paper_positions=true to start fresh.")
             except Exception as e:
                 logger.warning(f"Failed to load paper positions: {e}")
 

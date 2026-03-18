@@ -40,6 +40,19 @@
 |------|-------------|
 | `--office_mode=true` | Live data but no trades (for RPI takeover) |
 
+### Paper Positions
+
+| Flag | Description |
+|------|-------------|
+| `--clear_paper_positions=true` | Clear all existing paper positions on startup (start fresh) |
+
+On startup, Orbiter loads existing paper positions from disk. If positions exist, a warning is logged:
+```
+⚠️  N existing paper positions loaded. Use --clear_paper_positions=true to start fresh.
+```
+
+This is important for strategies like Iron Condor that only trade when `portfolio.active_positions == 0`.
+
 ### Alternative Syntax
 
 | Flag | Also works as |
