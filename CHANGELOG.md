@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.4.0-20260318-a3251f4] - 2026-03-18
+### Changed
+- Added MCX margin-based trading with live margin checks
+- Added mcx_instruments.json with 10 valid MCX instruments (tokens, lot sizes, margins)
+- Replaced hardcoded MCX config with JSON-based loading
+- Added get_mcx_margin() and get_mcx_lot_size() helper functions
+- Added margin check in executor before placing MCX trades
+- Removed NICKEL and GOLDPETAL (not available in broker)
+- Added GOLDTEN and GOLDGUINEA to instrument list
+- Cleaned mcx_futures_map.json to match mcx_instruments.json
+
 ## [3.10.9-20260220-b873975] - 2026-02-20
 ### Changed
 - Automated release update using original versioning scheme.
