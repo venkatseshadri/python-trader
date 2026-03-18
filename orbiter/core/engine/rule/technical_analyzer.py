@@ -73,9 +73,13 @@ class TechnicalAnalyzer:
 
     def _adx(self, high, low, close, period):
         try:
+            logger.trace(f"[_adx] high={high[:3] if len(high) > 0 else 'empty'}, low={low[:3] if len(low) > 0 else 'empty'}, close={close[:3] if len(close) > 0 else 'empty'}, len={len(close)}")
             val = talib.ADX(high, low, close, timeperiod=period)[-1]
+            logger.trace(f"[_adx] raw result: {val}")
             return round(float(val), 2) if not np.isnan(val) else 0.0
-        except: return 0.0
+        except Exception as e:
+            logger.trace(f"[_adx] error: {e}")
+            return 0.0
 
     def _atr(self, high, low, close, period):
         try:
