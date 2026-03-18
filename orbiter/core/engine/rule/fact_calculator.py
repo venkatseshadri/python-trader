@@ -181,10 +181,11 @@ class FactCalculator:
         adx_value = indicators.get('market_adx', 0)
         logger.trace(f"[fact_calculator] adx_value={adx_value}, type={type(adx_value)}, is_nan={np.isnan(adx_value) if isinstance(adx_value, float) else 'not_float'}")
         exchange = kwargs.get('instrument_exchange', kwargs.get('instrument.exchange', ''))
-        logger.trace(f"[fact_calculator] exchange={exchange}, token={token}")
+        symbol = kwargs.get('instrument_symbol', kwargs.get('instrument.symbol', token))  # Use symbol name for YF lookup
+        logger.trace(f"[fact_calculator] exchange={exchange}, token={token}, symbol={symbol}")
         
         if (adx_value == 0 or adx_value is None or (isinstance(adx_value, float) and np.isnan(adx_value))) and exchange.upper() == 'MCX':
-            yf_symbol = MCX_YF_SYMBOLS.get(token.upper())
+            yf_symbol = MCX_YF_SYMBOLS.get(symbol.upper() if isinstance(symbol, str) else token.upper())
             if yf_symbol:
                 logger.warning(f"MCX ADX is {adx_value}, trying YF fallback for {token} ({yf_symbol})")
                 try:
