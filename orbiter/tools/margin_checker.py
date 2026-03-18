@@ -49,36 +49,29 @@ def print_margin_report(limits, title="CURRENT MARGIN STATUS"):
 
 
 def get_mc_margin_per_lot(symbol, exchange='MCX'):
-    """Get approximate margin required per lot for MCX symbols."""
-    margin_map = {
-        'CRUDEOILM': 45000,
-        'NATURALGAS': 15000,
-        'NATGASMINI': 6000,
-        'GOLDM': 80000,
-        'GOLDPETAL': 12000,
-        'SILVERM': 120000,
-        'SILVERMIC': 12000,
-        'COPPER': 25000,
-        'ZINCMINI': 7000,
-        'LEADMINI': 12000,
-        'ALUMINI': 8000,
-    }
-    return margin_map.get(symbol, 25000)
+    """Get approximate margin required per lot for MCX symbols from config."""
+    from orbiter.config.mcx.config import get_mcx_margin
+    margin = get_mcx_margin(symbol)
+    if margin > 0:
+        return margin
+    return 25000  # default fallback
 
 
 def simulate_trade_impact(limits, symbol, quantity, price, exchange='MCX'):
     """Simulate the margin impact of a trade."""
-    lot_size = 1
-    if symbol == 'CRUDEOILM':
-        lot_size = 10
-    elif symbol == 'NATURALGAS':
-        lot_size = 1250
-    elif symbol == 'NATGASMINI':
-        lot_size = 250
-    elif symbol == 'SILVERM':
-        lot_size = 5
-    elif symbol == 'SILVERMIC':
-        lot_size = 1
+    from orbiter.config.mcx.config import get_mcx_lot_size
+    lot_size = get_mcx_lot_size(symbol)
+    if lot_size == 1:  # default fallback
+        if symbol == 'CRUDEOILM':
+            lot_size = 10
+        elif symbol == 'NATURALGAS':
+            lot_size = 1250
+        elif symbol == 'NATGASMINI':
+            lot_size = 250
+        elif symbol == 'SILVERM':
+            lot_size = 5
+        elif symbol == 'SILVERMIC':
+            lot_size = 1
     
     total_value = price * quantity * lot_size
     # Approximate margin: 10-15% of notional for MCX futures
