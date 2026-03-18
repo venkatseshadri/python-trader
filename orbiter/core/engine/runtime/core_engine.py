@@ -131,7 +131,9 @@ class Engine:
                 'token': token, 
                 'instrument.exchange': exch, 
                 'instrument_exchange': exch,
-                'position': self.state.active_positions.get(lookup_key, {})
+                'position': self.state.active_positions.get(lookup_key, {}),
+                'portfolio.active_positions': len(self.state.active_positions),
+                'portfolio_active_positions': len(self.state.active_positions),
             }
             if isinstance(instrument, dict):
                 for k, v in instrument.items():
