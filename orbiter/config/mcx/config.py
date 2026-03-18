@@ -4,10 +4,10 @@ from datetime import time as dt_time
 
 # Common MCX symbols including Minis and Micros (Corrected via API Discovery)
 SYMBOLS_UNIVERSE = [
-    'CRUDEOILM', 'NATGASMINI', 
+    'CRUDEOILM', 'NATGASMINI', 'NATURALGAS', 
     'GOLDPETAL', 
     'SILVERMIC',
-    'COPPER', 'ZINCMINI', 'LEADMINI', 'ALUMINI'
+    'COPPER', 'ZINCMINI', 'LEADMINI', 'ALUMINI', 'NICKEL'
 ]
 
 # This will be populated by update_mcx_config.py
