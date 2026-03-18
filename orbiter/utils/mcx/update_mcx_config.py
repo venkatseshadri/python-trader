@@ -36,7 +36,6 @@ SYMBOLS = [
     'ZINCMINI',
     'LEADMINI',
     'ALUMINI',
-    'NICKEL',
 ]
 
 MCX_ROOT_URL = 'https://api.shoonya.com/'

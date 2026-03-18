@@ -13,9 +13,10 @@
     "n1": "nifty_fno_topn_trend",
     "n2": "nifty_50_nfo_expiry_day_short_straddle",
     "s1": "bsensex_bfo_topn_trend",
-    "s2": "sensex_bfo_expiry_day_short_straddle"
+    "s2": "sensex_bfo_expiry_day_short_straddle",
+    "x1": "mcx_trend_follower"
   },
-  "default_strategy": "mcx_trend_follower",
+  "default_strategy": "nifty_fno_topn_trend",
   "defaults": {
     "trade_score": 0.4,
     "top_n": 1,

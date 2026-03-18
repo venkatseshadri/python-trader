@@ -62,7 +62,6 @@ def get_mc_margin_per_lot(symbol, exchange='MCX'):
         'ZINCMINI': 7000,
         'LEADMINI': 12000,
         'ALUMINI': 8000,
-        'NICKEL': 22000,
     }
     return margin_map.get(symbol, 25000)
 

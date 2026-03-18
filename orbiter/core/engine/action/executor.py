@@ -12,6 +12,30 @@ from .executors.futures import FutureActionExecutor, FutureSimulationExecutor
 
 logger = logging.getLogger("ORBITER")
 
+def get_available_margin(client) -> float:
+    """Fetch available margin from broker."""
+    try:
+        limits = client.api.get_limits()
+        if limits and limits.get('stat') == 'Ok':
+            return float(limits.get('cash', 0))
+    except Exception as e:
+        logger.warning(f"Could not fetch margin: {e}")
+    return 0.0
+
+def check_margin_for_trade(client, exchange: str, symbol: str, required_margin: float) -> tuple:
+    """Check if enough margin available. Returns (allowed, available, required)."""
+    if exchange.upper() != 'MCX':
+        return True, 0, 0  # Skip for non-MCX
+    
+    if required_margin <= 0:
+        return True, 0, 0
+    
+    available = get_available_margin(client)
+    if available >= required_margin:
+        return True, available, required_margin
+    else:
+        return False, available, required_margin
+
 class ActionExecutor:
     """
     Facade Executor. 
@@ -76,6 +100,21 @@ class ActionExecutor:
             if tsym and pos_tsym and tsym.upper() in pos_tsym.upper():
                 logger.info(f"⏭️ Order blocked: {tsym} already in active positions")
                 return {"stat": "Ok", "blocked": True, "reason": "already_in_positions"}
+        
+        # 3. MARGIN CHECK for MCX
+        exchange = params.get('exchange', '').upper()
+        if is_live and exchange == 'MCX':
+            from orbiter.config.mcx.config import get_mcx_margin
+            symbol_for_margin = params.get('symbol', '')
+            required_margin = get_mcx_margin(symbol_for_margin)
+            if required_margin > 0:
+                allowed, available, required = check_margin_for_trade(
+                    self.state.client, exchange, symbol_for_margin, required_margin
+                )
+                if not allowed:
+                    logger.warning(f"⛔ MARGIN BLOCK: Need ₹{required:,.0f} but only ₹{available:,.0f} available for {symbol_for_margin}")
+                    return {"stat": "Ok", "blocked": True, "reason": "insufficient_margin", "available": available, "required": required}
+                logger.info(f"✅ Margin OK: ₹{available:,.0f} available, ₹{required:,.0f} required for {symbol_for_margin}")
         
         # 3. Determine Mode
         is_live = params.get('execute', True)

@@ -42,13 +42,6 @@
     "derivative": "future"
   },
   {
-    "symbol": "NICKEL",
-    "token": "487660",
-    "exchange": "MCX",
-    "instrument_type": "future",
-    "derivative": "future"
-  },
-  {
     "symbol": "NATGASMINI",
     "token": "475112",
     "exchange": "MCX",

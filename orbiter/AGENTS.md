@@ -151,41 +151,47 @@ This runs at startup to determine market regime for the day.
 
 ## MCX Futures Update
 
-MCX contracts expire monthly. The system automatically checks for expired contracts and updates them.
+MCX contracts expire monthly. The system uses `config/mcx/mcx_instruments.json` for instrument configuration.
 
-### Manual Update
+### Manual Update (Tokens & Margins)
 
-To manually update MCX contracts:
+To get latest tokens and margin requirements:
 
 ```bash
-cd /Users/vseshadri/python
-source .venv/bin/activate
-PYTHONPATH=/Users/vseshadri/python python -m orbiter.utils.mcx.update_mcx_config
+python orbiter/tools/mcx_risk_audit_v4_0.py
 ```
 
-This will:
-1. Connect to Shoonya broker
-2. Search for current month futures for each commodity
-3. Update `data/mcx_futures_map.json` with new tokens and expiry dates
+This will update:
+- `config/mcx/mcx_instruments.json` - tokens, lot sizes, margins
+- `data/mcx_futures_map.json` - futures mapping
 
-### Auto-Update
+### MCX Instruments Config
 
-The `ScripMaster.check_and_update_mcx_expiry()` method checks for expired contracts at startup and automatically calls the update utility if needed.
-
-### mcx_futures_map.json Format
+The system now uses `config/mcx/mcx_instruments.json` for MCX trading:
 
 ```json
 {
-  "CRUDEOIL": [
-    "CRUDEOIL",
-    "CRUDEOIL19MAR26",
-    100,
-    "19Mar26"
+  "instruments": [
+    {
+      "symbol": "CRUDEOILM",
+      "token": "472790",
+      "lot_size": 10,
+      "margin_per_lot": 38149
+    }
   ]
 }
 ```
 
-Format: `[symbol, trading_symbol, lot_size, expiry_date]`
+### Margin Check Before Trade
+
+The executor now checks available margin before placing MCX trades:
+- Fetches available margin from broker
+- Blocks trade if insufficient margin
+- Logs: `⛔ MARGIN BLOCK: Need ₹X but only ₹Y available`
+
+Helper functions in `config/mcx/config.py`:
+- `get_mcx_margin(symbol)` - returns required margin
+- `get_mcx_lot_size(symbol)` - returns lot size
 
 > **Note:** Token keys are symbol names (e.g., "CRUDEOIL"), not numeric tokens. Token resolution happens via ScripMaster.
 
