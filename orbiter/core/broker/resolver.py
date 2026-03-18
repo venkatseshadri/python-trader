@@ -196,7 +196,7 @@ class ContractResolver:
         
         expiry = self._select_expiry(symbol, expiry_type, instrument, exchange_override=exchange)
         if not expiry: 
-            logger.error(f"❌ no_expiry_found_for_{symbol} (instrument={instrument}, expiry_type={expiry_type})")
+            logger.debug(f"🔍 no_expiry_found_for_{symbol} (instrument={instrument}, expiry_type={expiry_type})")
             return {"ok": False, "reason": f"no_expiry_found_for_{symbol}"}
         
         rows = self._get_option_rows(symbol, ltp, expiry, instrument, exchange_override=exchange)
@@ -206,7 +206,7 @@ class ContractResolver:
         logger.debug(f"🔍 [resolve_option_symbol] strikes_count={len(strikes)} for {symbol}")
         
         if not strikes: 
-            logger.error(f"❌ no_strikes for {symbol}: rows={len(rows)}, instrument={instrument}, expiry={expiry}")
+            logger.debug(f"🔍 no_strikes for {symbol}: rows={len(rows)}, instrument={instrument}, expiry={expiry}")
             return {"ok": False, "reason": "no_strikes"}
         atm_strike = min(strikes, key=lambda s: abs(s - ltp))
         atm_idx = strikes.index(atm_strike)

@@ -17,7 +17,6 @@ class MarginCalculator:
 
         atm_row, hedge_row = get_row(spread.get('atm_symbol')), get_row(spread.get('hedge_symbol'))
         if not atm_row or not hedge_row:
-            logger.trace(f"[MarginCalculator.calculate_span_for_spread] - Failed to find rows for {spread.get('atm_symbol')} or {spread.get('hedge_symbol')}")
             return {'ok': False, 'reason': 'option_symbol_not_found'}
 
         def format_date(raw):
