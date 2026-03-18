@@ -300,15 +300,26 @@ class BrokerClient:
                 
                 if isinstance(item, dict):
                     # Use token directly if available, else get it from symbol
-                    logger.warning(f"[prime_candles] Processing dict item: {item}")
                     token = item.get('token', '')
                     # CRITICAL: Ensure token is string for comparison
                     token = str(token) if token else ''
-                    exch = item.get('exchange', 'NSE')
-                else:
-                    # item is a string (symbol name)
-                    logger.warning(f"[prime_candles] Processing string item: {item}")
-                    token = item
+                    # FIX: If token is already numeric, use it directly without resolution
+                    if token.isdigit():
+                        # Token is already numeric (e.g., '487655'), use it directly
+                        exch = item.get('exchange', 'NSE')
+                        key = f"{exch}|{token}"
+                        ex, tk = key.split('|')
+                        # Get interval from strategy parameters, default to 5 minutes
+                        interval = self._priming_interval if hasattr(self, '_priming_interval') else 5
+                        res = self.api.get_time_price_series(
+                            exchange=ex, 
+                            token=tk, 
+                            starttime=start_dt.timestamp(), 
+                            endtime=end_dt.timestamp(), 
+                            interval=interval
+                        )
+                        # ... rest of the code
+                        continue
                 
                 # CRITICAL: If token is a symbol name (not numeric), resolve it
                 logger.trace(f"[prime_candles] DEBUG: token='{token}', isdigit={token.isdigit() if token else 'empty'}")
