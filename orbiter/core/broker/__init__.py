@@ -197,13 +197,13 @@ class BrokerClient:
                             return num_token
             
             # Try to resolve using broker's symbol-to-token mapping
-            resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper())
+            resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper()) if isinstance(token_or_symbol, str) else None
             if resolved:
                 logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} -> {resolved}")
                 return resolved
             # Try with trading symbol prefix (e.g., "GOLDTEN31MAR26" -> "GOLDTEN")
             for tok, tsym in self.master.TOKEN_TO_SYMBOL.items():
-                if tsym.upper().startswith(token_or_symbol.upper()):
+                if isinstance(tsym, str) and isinstance(token_or_symbol, str) and tsym.upper().startswith(token_or_symbol.upper()):
                     logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} via prefix -> {tok}")
                     return tok
             logger.warning(f"[{self.__class__.__name__}.resolve_to_token] - Could not resolve {token_or_symbol}, using as-is")
