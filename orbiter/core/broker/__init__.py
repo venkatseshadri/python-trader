@@ -384,8 +384,9 @@ class BrokerClient:
                 ex, tk = key.split('|')
                 # Get interval from strategy parameters, default to 5 minutes
                 interval = self._priming_interval if hasattr(self, '_priming_interval') else 5
+                logger.warning(f"[prime_candles] Using key: {key} for API call")
                 res = self.api.get_time_price_series(
-                    exchange=ex, 
+                    exchange=ex,
                     token=tk, 
                     starttime=start_dt.timestamp(), 
                     endtime=end_dt.timestamp(), 
