@@ -18,41 +18,69 @@ class BrokerClient:
     """
     _MASTERS: Dict[str, ScripMaster] = {}  # Segment-aware Masters
 
-    def __init__(self, project_root: str = None, config_path: str = '../cred.yml', segment_name: str = 'nfo', paper_trade: bool = True):
-        logger.debug(f"[{self.__class__.__name__}.__init__] - Initializing BrokerClient for segment: {segment_name}")
+    def __init__(
+        self,
+        project_root: str = None,
+        config_path: str = '../cred.yml',
+        segment_name: str = 'nfo',
+        paper_trade: bool = True
+    ):
+        logger.debug(
+            f"[{self.__class__.__name__}.__init__] - "
+            f"Initializing BrokerClient for segment: {segment_name}"
+        )
         if project_root is None:
             # repo_root/orbiter/core/broker/__init__.py -> repo_root
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            project_root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            )
         self.project_root = project_root
         self.segment_name = segment_name.lower()
         self.constants = ConstantsManager.get_instance()
         self.conn = ConnectionManager(config_path)
-        
+
         if self.segment_name not in BrokerClient._MASTERS:
             BrokerClient._MASTERS[self.segment_name] = ScripMaster(project_root)
-            logger.debug(f"[{self.__class__.__name__}.__init__] - Initialized ScripMaster for segment: {self.segment_name.upper()}")
-        
+            logger.debug(
+                f"[{self.__class__.__name__}.__init__] - "
+                f"Initialized ScripMaster for segment: {self.segment_name.upper()}"
+            )
+
         self.master = BrokerClient._MASTERS[self.segment_name]
         self.resolver = ContractResolver(self.master, api=self.conn.api)
         self.margin = MarginCalculator(self.master)
-        
-        # 🛡️ Load Execution Policy for the segment
+
+        # Load Execution Policy for the segment
         from orbiter.utils.data_manager import DataManager
-        exch_config = DataManager.load_config(project_root, 'mandatory_files', 'exchange_config')
-        self.exchange_config = exch_config  # Store full config for access by action executors
+        exch_config = DataManager.load_config(
+            project_root, 'mandatory_files', 'exchange_config'
+        )
+        self.exchange_config = exch_config
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
-        
+
         # Use MarginAwareExecutor for paper trade, OrderExecutor for live
         if paper_trade:
             try:
                 from orbiter.utils.margin.margin_executor import MarginAwareExecutor
-                self.executor = MarginAwareExecutor(self.conn.api, self._init_logger(), execution_policy=policy, paper_trade=paper_trade)
+                self.executor = MarginAwareExecutor(
+                    self.conn.api,
+                    self._init_logger(),
+                    execution_policy=policy,
+                    paper_trade=paper_trade
+                )
                 print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
             except ImportError:
-                self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
+                self.executor = OrderExecutor(
+                    self.conn.api, self._init_logger(), execution_policy=policy
+                )
         else:
-            self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
-        logger.debug(f"[{self.__class__.__name__}.__init__] - Resolver, Margin, Executor (with policy) initialized.")
+            self.executor = OrderExecutor(
+                self.conn.api, self._init_logger(), execution_policy=policy
+            )
+        logger.debug(
+            f"[{self.__class__.__name__}.__init__] - "
+            "Resolver, Margin, Executor (with policy) initialized."
+        )
         
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
         self.span_cache_path = None
