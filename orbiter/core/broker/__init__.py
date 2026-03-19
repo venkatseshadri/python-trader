@@ -356,12 +356,13 @@ class BrokerClient:
         logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
         return result
     def get_ltp(self, key): 
-        logger.trace(f"[{self.__class__.__name__}.get_ltp] - Getting LTP for key: {key}")
-        return self.SYMBOLDICT.get(key, {}).get('ltp')
+        """Get LTP by key - delegates to ltp_manager."""
+        return self.conn.tick_handler.ltp_manager.get_ltp(key)
+    
     def get_dk_levels(self, key): 
-        logger.trace(f"[{self.__class__.__name__}.get_dk_levels] - Getting DK levels for key: {key}")
+        """Get DK levels by key."""
         d = self.SYMBOLDICT.get(key, {})
-        return {'ltp': d.get('ltp', 0), 'high': d.get('h', 0), 'low': d.get('l', 0)}
+        return {'ltp': d.get('ltp', 0), 'high': d.get('high', 0), 'low': d.get('low', 0)}
 
     def get_near_future(self, symbol, exchange='NFO'): 
         logger.debug(f"[{self.__class__.__name__}.get_near_future] - Getting near future for symbol: {symbol}, exchange: {exchange}")
@@ -371,21 +372,8 @@ class BrokerClient:
         return self.resolver.get_credit_spread_contracts(symbol, ltp, side, hedge_steps, expiry_type, instrument)
     
     def get_option_ltp_by_symbol(self, tsym):
-        logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - Getting option LTP by symbol: {tsym}")
-        if self.segment_name == 'mcx':
-            logger.trace(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - MCX segment, looking for futures only.")
-            for k, v in self.SYMBOLDICT.items():
-                if v.get('symbol') == tsym: 
-                    logger.trace(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - Found LTP in SYMBOLDICT: {v.get('ltp')}")
-                    return v.get('ltp')
-        
-        for r in self.master.DERIVATIVE_OPTIONS:
-            if r.get('tradingsymbol') == tsym:
-                logger.trace(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - Found derivative option, fetching quotes.")
-                success, q = self._handle_api_call(self.api.get_quotes, exchange=r['exchange'], token=r['token'])
-                if success and q:
-                    return float(q.get('lp') or q.get('ltp') or 0)
-                return None
-        logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - LTP not found for {tsym}.")
-        return None
+        """Get option LTP by symbol - delegates to ltp_manager."""
+        return self.conn.tick_handler.ltp_manager.get_option_ltp_by_symbol(
+            tsym, self.segment_name, self.master, self.api
+        )
 

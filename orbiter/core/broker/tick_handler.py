@@ -8,6 +8,7 @@ import json
 import re
 import logging
 from typing import Dict, List, Any, Callable
+from orbiter.core.broker.ltp_manager import LTPManager
 
 
 class TickHandler:
@@ -22,6 +23,8 @@ class TickHandler:
         
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
         self._tick_callbacks: List[Callable] = []
+        
+        self.ltp_manager = LTPManager(self)
     
     def register_tick_callback(self, callback: Callable):
         """Register a callback to be called on every tick."""
