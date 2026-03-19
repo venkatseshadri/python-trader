@@ -555,14 +555,6 @@ class BrokerClient:
         logger.debug(f"[{self.__class__.__name__}.get_credit_spread_contracts] - Getting credit spread contracts for symbol: {symbol}, ltp: {ltp}, side: {side}")
         return self.resolver.get_credit_spread_contracts(symbol, ltp, side, hedge_steps, expiry_type, instrument)
     
-    def calculate_span_for_spread(self, spread, product_type="I", haircut=0.20):
-        logger.debug(f"[{self.__class__.__name__}.calculate_span_for_spread] - Calculating span for spread: {spread}")
-        return self.margin.calculate_span_for_spread(spread, self.api, self.conn.cred['user'], product_type, haircut)
-    
-    def calculate_future_margin(self, future_details, product_type="I", haircut=0.20):
-        logger.debug(f"[{self.__class__.__name__}.calculate_future_margin] - Calculating future margin for: {future_details}")
-        return self.margin.calculate_future_margin(future_details, self.api, self.conn.cred['user'], product_type, haircut)
-    
     def get_option_ltp_by_symbol(self, tsym):
         logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - Getting option LTP by symbol: {tsym}")
         if self.segment_name == 'mcx':
