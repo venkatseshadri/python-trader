@@ -16,7 +16,7 @@ class AuthService:
             return False
         
         factor2 = os.environ.get("ORBITER_2FA")
-        ok = engine.state.client.login(factor2_override=factor2)
+        ok = engine.state.client.conn.login(factor2_override=factor2)
         
         logged_in = bool(ok)
         logger.info(f"Login status updated: {logged_in}")

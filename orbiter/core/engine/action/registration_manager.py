@@ -78,7 +78,7 @@ class RegistrationManager:
         if self.app:
             self.action_manager.action_registry[self.constants.get('action_types', 'app_login')] = self.app.login
         else:
-            self.action_manager.action_registry[self.constants.get('action_types', 'app_login')] = self.engine.state.client.login
+            self.action_manager.action_registry[self.constants.get('action_types', 'app_login')] = self.engine.state.client.conn.login
         self.action_manager.action_registry[self.constants.get('action_types', 'engine_tick')] = self.engine.tick
         self.action_manager.action_registry[self.constants.get('action_types', 'engine_shutdown')] = self.engine.shutdown
         self.action_manager.action_registry[self.constants.get('action_types', 'session_hibernate')] = self.session_manager.hibernate

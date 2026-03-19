@@ -116,15 +116,6 @@ class BrokerClient:
     def span_cache(self): 
         return self._span_cache if self._span_cache is not None else {}
 
-    def login(self, factor2_override=None): 
-        logger.debug(f"[{self.__class__.__name__}.login] - Attempting broker login.")
-        result = self.conn.login(factor2_override)
-        if result:
-            logger.info(f"[{self.__class__.__name__}.login] - Broker login successful.")
-        else:
-            logger.error(f"[{self.__class__.__name__}.login] - Broker login failed.")
-        return result
-
     def _is_session_expired(self, response) -> bool:
         """Check if response indicates session expired."""
         if isinstance(response, dict):
@@ -147,7 +138,7 @@ class BrokerClient:
                 if self._is_session_expired(response):
                     if attempt < max_retries - 1:
                         logger.warning(f"🔑 Session expired. Re-authenticating (attempt {attempt + 1}/{max_retries})...")
-                        if self.login():
+                        if self.conn.login():
                             logger.info(f"✅ Re-login successful. Retrying API call...")
                             continue
                     logger.error(f"❌ Session expired and re-authentication failed.")
