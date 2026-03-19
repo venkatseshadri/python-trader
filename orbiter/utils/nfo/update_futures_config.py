@@ -12,7 +12,7 @@ import time
 # Ensure we can import from project root (orbiter/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from orbiter.core.client import BrokerClient
+from orbiter.core.broker import BrokerClient
 import orbiter.config.config as config
 import logging
 

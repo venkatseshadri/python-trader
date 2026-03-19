@@ -1,22 +1,62 @@
 {
-  "NIFTY": [
-    "NIFTY",
-    "26000",
-    "54586"
-  ],
-  "BANKNIFTY": [
-    "BANKNIFTY",
-    "26009",
-    "51160"
-  ],
-  "FINNIFTY": [
-    "FINNIFTY",
-    "26037",
-    "54399"
-  ],
-  "MIDCPNIFTY": [
-    "MIDCPNIFTY",
-    "26004",
-    "54356"
-  ]
+    "51715": [
+        "NIFTYNXT50",
+        "NIFTYNXT5030MAR26F"
+    ],
+    "51714": [
+        "NIFTY",
+        "NIFTY30MAR26F"
+    ],
+    "66692": [
+        "NIFTYNXT50",
+        "NIFTYNXT5028APR26F"
+    ],
+    "66691": [
+        "NIFTY",
+        "NIFTY28APR26F"
+    ],
+    "66072": [
+        "NIFTYNXT50",
+        "NIFTYNXT5026MAY26F"
+    ],
+    "66071": [
+        "NIFTY",
+        "NIFTY26MAY26F"
+    ],
+    "51701": [
+        "BANKNIFTY",
+        "BANKNIFTY30MAR26F"
+    ],
+    "66688": [
+        "BANKNIFTY",
+        "BANKNIFTY28APR26F"
+    ],
+    "66068": [
+        "BANKNIFTY",
+        "BANKNIFTY26MAY26F"
+    ],
+    "51712": [
+        "FINNIFTY",
+        "FINNIFTY30MAR26F"
+    ],
+    "66689": [
+        "FINNIFTY",
+        "FINNIFTY28APR26F"
+    ],
+    "66069": [
+        "FINNIFTY",
+        "FINNIFTY26MAY26F"
+    ],
+    "51713": [
+        "MIDCPNIFTY",
+        "MIDCPNIFTY30MAR26F"
+    ],
+    "66690": [
+        "MIDCPNIFTY",
+        "MIDCPNIFTY28APR26F"
+    ],
+    "66070": [
+        "MIDCPNIFTY",
+        "MIDCPNIFTY26MAY26F"
+    ]
 }
