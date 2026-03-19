@@ -613,28 +613,6 @@ class BrokerClient:
             logger.error(f"[{self.__class__.__name__}.get_limits] - Error fetching limits: {e}. Traceback: {traceback.format_exc()}")
             return None
 
-    def get_positions(self):
-        """Get positions - from executor's order manager if available, else from broker."""
-        if hasattr(self, 'executor') and self.executor and hasattr(self.executor, 'get_positions'):
-            return self.executor.get_positions()
-        
-        logger.debug(f"[{self.__class__.__name__}.get_positions] - Fetching positions from broker.")
-        try:
-            setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
-            setattr(self.api, '_NorenApi__accountid', self.conn.cred['user'])
-            token = getattr(self.api, '_NorenApi__susertoken', None)
-            setattr(self.api, '_NorenApi__susertoken', token)
-            
-            success, res = self._handle_api_call(self.api.get_positions)
-            if not success or not res: 
-                logger.debug(f"[{self.__class__.__name__}.get_positions] - No positions returned by broker.")
-                return []
-            ok_positions = [p for p in res if p.get('stat') == 'Ok']
-            logger.debug(f"[{self.__class__.__name__}.get_positions] - {len(ok_positions)} 'Ok' positions fetched.")
-            logger.trace(f"[{self.__class__.__name__}.get_positions] - Raw positions: {res}")
-            return ok_positions
-        except Exception as e:
-            logger.error(f"[{self.__class__.__name__}.get_positions] - Error fetching positions: {e}. Traceback: {traceback.format_exc()}")
-            return []
+
 
 
