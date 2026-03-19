@@ -579,24 +579,6 @@ class BrokerClient:
         logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - LTP not found for {tsym}.")
         return None
 
-    def place_put_credit_spread(self, **kwargs):
-        logger.debug(f"[{self.__class__.__name__}.place_put_credit_spread] - Placing PUT credit spread with kwargs: {kwargs}")
-        logger.trace(f"🔭 [Broker.place_put_credit_spread] symbol={kwargs.get('symbol')}, ltp={kwargs.get('ltp')}")
-        res = self.resolver.get_credit_spread_contracts(kwargs['symbol'], kwargs['ltp'], 'PUT', kwargs['hedge_steps'], kwargs['expiry_type'], kwargs['instrument'])
-        if not res.get('ok'): 
-            logger.error(f"[{self.__class__.__name__}.place_put_credit_spread] - Failed to get credit spread contracts: {res.get('reason')}")
-            return res
-        return self.executor.place_spread(res, kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
-
-    def place_call_credit_spread(self, **kwargs):
-        logger.debug(f"[{self.__class__.__name__}.place_call_credit_spread] - Placing CALL credit spread with kwargs: {kwargs}")
-        logger.trace(f"🔭 [Broker.place_call_credit_spread] symbol={kwargs.get('symbol')}, ltp={kwargs.get('ltp')}")
-        res = self.resolver.get_credit_spread_contracts(kwargs['symbol'], kwargs['ltp'], 'CALL', kwargs['hedge_steps'], kwargs['expiry_type'], kwargs['instrument'])
-        if not res.get('ok'): 
-            logger.error(f"[{self.__class__.__name__}.place_call_credit_spread] - Failed to get credit spread contracts: {res.get('reason')}")
-            return res
-        return self.executor.place_spread(res, kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
-
     def get_limits(self):
         logger.debug(f"[{self.__class__.__name__}.get_limits] - Fetching limits from broker.")
         try:
