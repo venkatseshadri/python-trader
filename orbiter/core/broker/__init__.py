@@ -20,19 +20,19 @@ class BrokerClient:
 
     def __init__(
         self,
-        project_root: str = None,
-        segment_name: str = 'nfo',
+        project_root: str,
+        segment_name: str,
         paper_trade: bool = True
     ):
+        if not project_root:
+            raise ValueError("project_root is required. Cannot be None or empty.")
+        if not segment_name:
+            raise ValueError("segment_name is required. Cannot be None or empty.")
+        
         logger.debug(
             f"[{self.__class__.__name__}.__init__] - "
             f"Initializing BrokerClient for segment: {segment_name}"
         )
-        if project_root is None:
-            # repo_root/orbiter/core/broker/__init__.py -> repo_root
-            project_root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            )
         self.project_root = project_root
         self.segment_name = segment_name.lower()
         self.constants = ConstantsManager.get_instance()
