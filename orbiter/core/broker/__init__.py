@@ -30,7 +30,7 @@ class BrokerClient:
             raise ValueError("segment_name is required. Cannot be None or empty.")
         
         # real_broker_trade=false means paper trading (default safe)
-        self.paper_trade = not real_broker_trade
+        self.real_broker_trade = real_broker_trade
         
         logger.debug(
             f"[{self.__class__.__name__}.__init__] - "
@@ -61,14 +61,14 @@ class BrokerClient:
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
 
         # Use MarginAwareExecutor for paper trade, OrderExecutor for live
-        if self.paper_trade:
+        if not self.real_broker_trade:
             try:
                 from orbiter.utils.margin.margin_executor import MarginAwareExecutor
                 self.executor = MarginAwareExecutor(
                     self.conn.api,
                     self._init_logger(),
                     execution_policy=policy,
-                    paper_trade=self.paper_trade
+                    paper_trade=True
                 )
                 print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
             except ImportError:
