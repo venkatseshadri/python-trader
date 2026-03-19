@@ -21,7 +21,7 @@ class EngineFactory:
     Builds the unified trading engine using the DataManager for any file lookups.
     """
     @staticmethod
-    def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, context: dict = None):
+    def build_engine(session_manager: SessionManager, action_manager: ActionManager, real_broker_trade: bool = False, context: dict = None):
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Starting engine build process.")
         constants = ConstantsManager.get_instance()
         meta_config = MetaConfigManager.get_instance(session_manager.project_root)
@@ -46,10 +46,11 @@ class EngineFactory:
         # Segment config now comes directly from SessionManager (extracted from strategy bundle)
         segment_config = session_manager.get_segment_config() 
         
+        # real_broker_trade=false means paper trading (default safe)
         full_config = {
             **global_config,
             **segment_config,
-            'paper_trade': paper_trade,
+            'paper_trade': not real_broker_trade,
             'verbose_logs': True
         }
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Merged full configuration: {full_config}")
@@ -73,7 +74,7 @@ class EngineFactory:
             if universe:
                 client.prime_candles(universe, lookback_mins=300)  # 300 mins = ~60 candles for ADX warmup
         else:
-            client = BrokerClient(session_manager.project_root, segment_name=seg_name, paper_trade=paper_trade)
+            client = BrokerClient(session_manager.project_root, segment_name=seg_name, real_broker_trade=real_broker_trade)
             logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized.")
             
             # Hardcoded NIFTY token mappings only for real broker

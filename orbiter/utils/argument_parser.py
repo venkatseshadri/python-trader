@@ -75,6 +75,7 @@ class ArgumentParser:
         logger = logging.getLogger(__name__)
         facts = {
             'paper_trade': True,  # Default to paper trade for safety
+            'real_broker_trade': False,  # Default to paper trading
             'simulation': True,
             'strategy_execution': 'fixed',
             'mock_data': False,
@@ -121,7 +122,10 @@ class ArgumentParser:
                             real_broker_trade_set = True
                             if v_clean == 'true':
                                 facts['paper_trade'] = False
+                                facts['real_broker_trade'] = True
                                 paper_trade_set = True
+                            else:
+                                facts['real_broker_trade'] = False
                         elif k_clean == 'mock_data_file':
                             facts['mock_data_file'] = v
                 else:
@@ -130,6 +134,7 @@ class ArgumentParser:
                     if k_clean == 'real_broker_trade':
                         real_broker_trade_set = True
                         facts['paper_trade'] = False
+                        facts['real_broker_trade'] = True
                         paper_trade_set = True
         
         # Set defaults based on flags

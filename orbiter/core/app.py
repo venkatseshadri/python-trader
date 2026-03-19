@@ -61,12 +61,12 @@ class OrbiterApp:
     def setup(self):
         logger.debug("Setting up engine.")
         try:
-            paper_trade = self.ctx.context.get('paper_trade', True)
+            real_broker_trade = self.ctx.context.get('real_broker_trade', False)
             
             engine = EngineFactory.build_engine(
                 self.ctx.session_manager,
                 self.ctx.action_manager,
-                paper_trade=paper_trade,
+                real_broker_trade=real_broker_trade,
                 context=self.ctx.context,
             )
             
