@@ -140,6 +140,65 @@ class TickHandler:
         connection.start_live_feed(resolved_symbols, _tick_handler)
         self.logger.info(f"[TickHandler] Live feed started for {len(symbols)} symbols.")
     
+    def prime_candles(self, symbols: List[Any], lookback_mins: int = 300):
+        """Prime SYMBOLDICT with historical candles from broker API."""
+        self.logger.debug(f"[TickHandler] Priming {len(symbols)} symbols with last {lookback_mins} minutes data.")
+        if not symbols: return
+        
+        from datetime import datetime, timedelta
+        import pytz
+        
+        ist = pytz.timezone('Asia/Kolkata')
+        end_dt = datetime.now(ist)
+        start_dt = end_dt - timedelta(minutes=lookback_mins + 15)
+        
+        success_count = 0
+        for item in symbols:
+            try:
+                token = ''
+                exch = 'NSE'
+                
+                if isinstance(item, dict):
+                    token = item.get('token', '')
+                    token = str(token) if token else ''
+                    
+                    if token.isdigit():
+                        exch = item.get('exchange', 'NSE')
+                        key = f"{exch}|{token}"
+                        ex, tk = key.split('|')
+                        interval = getattr(self, '_priming_interval', 5)
+                        res = self.api.get_time_price_series(
+                            exchange=ex,
+                            token=tk,
+                            starttime=start_dt.timestamp(),
+                            endtime=end_dt.timestamp(),
+                            interval=interval
+                        )
+                        
+                        if res and isinstance(res, list):
+                            if key not in self.SYMBOLDICT:
+                                sym = self.get_symbol(tk, exchange=ex)
+                                self.SYMBOLDICT[key] = {
+                                    'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
+                                    'token': tk, 'exchange': ex, 'ltp': float(res[-1]['intc']),
+                                    'high': float(res[-1].get('inth', 0)), 'low': float(res[-1].get('intl', 0)),
+                                    'volume': int(res[-1].get('v', 0))
+                                }
+                            self.SYMBOLDICT[key]['candles'] = res
+                            success_count += 1
+                            self.logger.debug(f"[TickHandler] Primed {key} with {len(res)} candles.")
+                        
+                        import time
+                        time.sleep(0.1)
+                        continue
+                
+                import time
+                time.sleep(0.1)
+            except Exception as e:
+                self.logger.error(f"[TickHandler] Error priming {item}: {e}")
+        
+        self.logger.debug(f"[TickHandler] Primed {success_count}/{len(symbols)} symbols.")
+    
     def _load_futures_map(self, exchange: str):
         """Load futures map for exchange."""
         path = os.path.join(self.project_root, 'orbiter', 'data', f'{exchange}_futures_map.json')
