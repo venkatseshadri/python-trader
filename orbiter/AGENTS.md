@@ -225,9 +225,12 @@ If ADX shows 0 despite having data:
 ### Lock File Error
 
 ```bash
-rm -f /Users/vseshadri/python/orbiter.lock
+rm -f /home/trading_ceo/python-trader/orbiter.lock
 ```
 
 ### Session Expired
 
-Re-authenticate or check credentials in `ShoonyaApi-py/cred.yml`
+Orbiter now has auto-reconnect - it will automatically re-authenticate when session expires. If it keeps failing:
+1. Check credentials in `ShoonyaApi-py/cred.yml`
+2. Ensure TOTP key is valid
+3. Check broker API status

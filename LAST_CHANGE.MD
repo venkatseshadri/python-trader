@@ -1,4 +1,35 @@
-# Last Technical Change: MCX Trading & VPS Deployment
+# Last Technical Change: Session Auto-Reconnect & Bug Fixes
+
+**Date:** 2026-03-19
+**Status:** COMPLETED (Build: `v4.2.0`)
+
+## v4.2.0 Changes
+
+### 1. Auto-Reconnect on Session Expiry
+- Added `_is_session_expired()` to detect broker session expiry
+- Added `_handle_api_call()` wrapper for automatic re-authentication
+- Applied to: get_limits, get_positions, get_order_history, get_option_ltp_by_symbol, get_option_theta
+- Max 2 retry attempts before giving up
+
+### 2. Fixed "No Data" Error
+- Fixed broker API calls using trading symbol instead of numeric token
+- Now looks up numeric token from SYMBOL_TO_TOKEN master before API call
+- Resolved "Error Occurred : 5 no data" responses
+
+### 3. Code Cleanup
+- Removed `office_mode` completely from codebase
+- Removed `config_path` parameter from BrokerClient (ConnectionManager handles auth)
+- Fixed BrokerClient call in engine_factory.py
+
+### 4. Version Format
+- Now using A.B.C format: 4.2.0, 4.2.1, 4.3.0, 5.0.0
+- Minor fixes: patch version (x.x.1)
+- New features: minor version (x.3.0)
+- Major changes: major version (5.0.0)
+
+---
+
+# Previous: MCX Trading & VPS Deployment
 
 **Date:** 2026-02-26
 **Status:** COMPLETED (Build: `v3.3.0-20260226`)
