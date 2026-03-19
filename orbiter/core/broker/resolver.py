@@ -49,12 +49,22 @@ class ContractResolver:
         rows = []
         try:
             # Get lot size from broker API using get_security_info on the future
-            # First get the future token for this symbol
+            # First get the numeric token for this symbol from master
             future_symbol = f"{symbol.upper()}{expiry.strftime('%b%y').upper()}"
-            future_info = self.api.get_security_info(exchange=exchange, token=future_symbol)
             
-            lot_size = int(future_info.get('ls', 25)) if future_info else 25
-            logger.debug(f"🔄 Got lot_size={lot_size} for {symbol} from broker API")
+            # Look up numeric token from master
+            numeric_token = self.master.SYMBOL_TO_TOKEN.get(future_symbol)
+            if not numeric_token:
+                # Try alternative format
+                numeric_token = self.master.SYMBOL_TO_TOKEN.get(symbol.upper())
+            
+            if numeric_token:
+                future_info = self.api.get_security_info(exchange=exchange, token=numeric_token)
+            else:
+                future_info = None
+            
+            lot_size = int(future_info.get('ls', 25)) if future_info and future_info.get('ls') else 25
+            logger.debug(f"🔄 Got lot_size={lot_size} for {symbol} from broker API (token={numeric_token})")
             
             # Generate strikes around ATM (ltp)
             strike_step = 50 if ltp > 2000 else 20 if ltp > 500 else 10
