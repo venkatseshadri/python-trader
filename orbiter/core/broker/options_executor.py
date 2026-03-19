@@ -9,14 +9,14 @@ from orbiter.core.broker.executor_base import BaseOrderExecutor
 
 
 class OptionsOrderExecutor(BaseOrderExecutor):
-    """Base executor for option orders with Greeks calculation."""
+    """Base executor for option orders with Greeks calculation and order management."""
     
     def __init__(self, api, master=None, resolver=None, execution_policy: Dict = None, 
                  project_root: str = None, segment_name: str = None, paper_trade: bool = False):
         super().__init__(api, execution_policy, project_root, segment_name, paper_trade)
         self.master = master
         self.resolver = resolver
-        self.policy = self.execution_policy
+        self.policy = self.execution_policy or {}
     
     def get_option_theta(self, symbol: str, expiry_date: str, strike_price: float, option_type: str) -> Optional[float]:
         """Fetches the Theta value for a given option contract."""
@@ -33,7 +33,6 @@ class OptionsOrderExecutor(BaseOrderExecutor):
                 return None
             
             spot_key = f"{self.segment_name.upper() if self.segment_name else 'NSE'}|{token}"
-            from orbiter.core.broker import BrokerClient
             spot_price = 0.0
             if hasattr(self, 'SYMBOLDICT'):
                 live_data = self.SYMBOLDICT.get(spot_key)

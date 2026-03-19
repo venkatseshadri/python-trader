@@ -6,8 +6,6 @@ Paper Order Executor - Simulated trading with margin checks.
 import logging
 import os
 from typing import Dict, List
-from orbiter.core.broker.future_executor import FutureOrderExecutor
-from orbiter.core.broker.options_executor import OptionsOrderExecutor
 from orbiter.core.broker.paper_future_executor import PaperFutureOrderExecutor
 from orbiter.core.broker.paper_options_executor import PaperOptionsOrderExecutor
 
@@ -70,20 +68,14 @@ class PaperOrderExecutor:
         return self._options_executor.get_option_theta(symbol, expiry_date, strike_price, option_type)
     
     def get_order_history(self) -> List[Dict]:
-        """Get order history from future and options executors."""
-        future_orders = self._future_executor.get_order_history()
-        option_orders = self._options_executor.get_order_history()
-        return future_orders + option_orders
+        """Get order history from composed executors."""
+        return self._future_executor.get_order_history() + self._options_executor.get_order_history()
     
     def get_positions(self) -> List[Dict]:
-        """Get positions from future and options executors."""
-        future_positions = self._future_executor.get_positions()
-        option_positions = self._options_executor.get_positions()
-        return future_positions + option_positions
+        """Get positions from composed executors."""
+        return self._future_executor.get_positions() + self._options_executor.get_positions()
     
     def record_order(self, order_result: Dict):
         """Record an order in the appropriate executor."""
-        if 'future' in str(order_result.get('tsym', '')).lower():
-            self._future_executor.record_order(order_result)
-        else:
-            self._options_executor.record_order(order_result)
+        self._future_executor.record_order(order_result)
+        self._options_executor.record_order(order_result)

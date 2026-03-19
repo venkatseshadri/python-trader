@@ -3,13 +3,13 @@
 Future Order Executor - base class for future order placement.
 """
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Dict
 from orbiter.core.broker.executor_base import BaseOrderExecutor
 
 
 class FutureOrderExecutor(BaseOrderExecutor):
-    """Base executor for future orders with contract resolution."""
+    """Base executor for future orders with contract resolution and order management."""
     
     def __init__(self, api, master=None, resolver=None, execution_policy: Dict = None, 
                  project_root: str = None, segment_name: str = None, paper_trade: bool = False):
