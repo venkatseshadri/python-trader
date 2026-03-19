@@ -1,27 +1,13 @@
 import os
 import logging
 import json
-import traceback # Import traceback
+import traceback
 from typing import Dict, Optional, Any, List
 from .connection import ConnectionManager
 from .master import ScripMaster
 from .resolver import ContractResolver
 from .margin import MarginCalculator
-# Import executor - use margin-aware if paper trade
-import os
-paper_trade = os.environ.get("ORBITER_PAPER_TRADE", "true").lower() == "true"
-if paper_trade:
-    try:
-        from orbiter.utils.margin.margin_executor import MarginAwareExecutor
-        ExecutorClass = MarginAwareExecutor
-        print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
-    except ImportError:
-        from .executor import OrderExecutor
-        ExecutorClass = OrderExecutor
-else:
-    from .executor import OrderExecutor
-    ExecutorClass = OrderExecutor
-# Original: from .executor import OrderExecutor
+from .executor import OrderExecutor
 from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
@@ -32,7 +18,7 @@ class BrokerClient:
     """
     _MASTERS: Dict[str, ScripMaster] = {}  # Segment-aware Masters
 
-    def __init__(self, project_root: str = None, config_path: str = '../cred.yml', segment_name: str = 'nfo'):
+    def __init__(self, project_root: str = None, config_path: str = '../cred.yml', segment_name: str = 'nfo', paper_trade: bool = True):
         logger.debug(f"[{self.__class__.__name__}.__init__] - Initializing BrokerClient for segment: {segment_name}")
         if project_root is None:
             # repo_root/orbiter/core/broker/__init__.py -> repo_root
@@ -56,11 +42,16 @@ class BrokerClient:
         self.exchange_config = exch_config  # Store full config for access by action executors
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
         
-        # Only pass paper_trade when using MarginAwareExecutor
+        # Use MarginAwareExecutor for paper trade, OrderExecutor for live
         if paper_trade:
-            self.executor = ExecutorClass(self.conn.api, self._init_logger(), execution_policy=policy, paper_trade=paper_trade)
+            try:
+                from orbiter.utils.margin.margin_executor import MarginAwareExecutor
+                self.executor = MarginAwareExecutor(self.conn.api, self._init_logger(), execution_policy=policy, paper_trade=paper_trade)
+                print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
+            except ImportError:
+                self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
         else:
-            self.executor = ExecutorClass(self.conn.api, self._init_logger(), execution_policy=policy)
+            self.executor = OrderExecutor(self.conn.api, self._init_logger(), execution_policy=policy)
         logger.debug(f"[{self.__class__.__name__}.__init__] - Resolver, Margin, Executor (with policy) initialized.")
         
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
