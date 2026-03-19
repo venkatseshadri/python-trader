@@ -104,43 +104,4 @@ class BrokerClient:
     def DERIVATIVE_OPTIONS(self): return self.master.DERIVATIVE_OPTIONS
     @property
     def DERIVATIVE_LOADED(self): return self.master.DERIVATIVE_LOADED
-    
-    def _is_session_expired(self, response) -> bool:
-        """Check if response indicates session expired."""
-        if isinstance(response, dict):
-            stat = response.get('stat', '')
-            if stat == 'Not_Ok':
-                emsg = response.get('emsg', '')
-                if 'session' in emsg.lower() or 'session' in str(emsg).lower():
-                    return True
-        return False
-
-    def _handle_api_call(self, api_method, *args, max_retries=2, **kwargs):
-        """
-        Wrapper for API calls that handles session expiry automatically.
-        Returns (success, response) tuple.
-        """
-        for attempt in range(max_retries):
-            try:
-                response = api_method(*args, **kwargs)
-                
-                if self._is_session_expired(response):
-                    if attempt < max_retries - 1:
-                        logger.warning(f"🔑 Session expired. Re-authenticating (attempt {attempt + 1}/{max_retries})...")
-                        if self.conn.login():
-                            logger.info(f"✅ Re-login successful. Retrying API call...")
-                            continue
-                    logger.error(f"❌ Session expired and re-authentication failed.")
-                    return False, response
-                return True, response
-                
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    logger.warning(f"API call failed: {e}. Retrying...")
-                    continue
-                logger.error(f"API call failed after {max_retries} attempts: {e}")
-                return False, None
-        return False, None
-
-
 
