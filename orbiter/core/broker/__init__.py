@@ -648,30 +648,3 @@ class BrokerClient:
         if hasattr(self, 'executor') and self.executor:
             return self.executor.get_positions()
         return []
-
-    def get_option_theta(self, symbol: str, expiry_date: str, strike_price: float, option_type: str) -> Optional[float]:
-        """Fetches the Theta value for a given option contract."""
-        logger.debug(f"[{self.__class__.__name__}.get_option_theta] - Fetching Theta for {symbol}, Expiry: {expiry_date}, Strike: {strike_price}, Type: {option_type}")
-        try:
-            # Parameters for API call need to be precise. Assuming some common ones.
-            # 'InterestRate' and 'Volatility' might need defaults or fetching from config.
-            success, ret = self._handle_api_call(
-                self.api.option_greek,
-                expiredate=expiry_date,
-                StrikePrice=str(strike_price),
-                SpotPrice=str(self.get_ltp(f"{self.segment_name.upper()}|{self.get_token(symbol)}") or 0.0),
-                InterestRate='10',
-                Volatility='20',
-                OptionType=option_type.upper()
-            )
-            
-            if success and ret and ret.get('stat') == 'Ok':
-                theta = float(ret.get('theta', 0.0)) # Default to 0.0 if 'theta' key not found
-                logger.debug(f"[{self.__class__.__name__}.get_option_theta] - Fetched Theta: {theta}")
-                return theta
-            else:
-                logger.warning(f"[{self.__class__.__name__}.get_option_theta] - API call returned non-OK status or missing data: {ret}")
-                return None
-        except Exception as e:
-            logger.error(f"[{self.__class__.__name__}.get_option_theta] - Error fetching option greek: {e}. Traceback: {traceback.format_exc()}")
-            return None
