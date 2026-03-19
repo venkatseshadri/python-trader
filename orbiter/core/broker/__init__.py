@@ -147,6 +147,43 @@ class BrokerClient:
             logger.error(f"[{self.__class__.__name__}.login] - Broker login failed.")
         return result
 
+    def _is_session_expired(self, response) -> bool:
+        """Check if response indicates session expired."""
+        if isinstance(response, dict):
+            stat = response.get('stat', '')
+            if stat == 'Not_Ok':
+                emsg = response.get('emsg', '')
+                if 'session' in emsg.lower() or 'session' in str(emsg).lower():
+                    return True
+        return False
+
+    def _handle_api_call(self, api_method, *args, max_retries=2, **kwargs):
+        """
+        Wrapper for API calls that handles session expiry automatically.
+        Returns (success, response) tuple.
+        """
+        for attempt in range(max_retries):
+            try:
+                response = api_method(*args, **kwargs)
+                
+                if self._is_session_expired(response):
+                    if attempt < max_retries - 1:
+                        logger.warning(f"🔑 Session expired. Re-authenticating (attempt {attempt + 1}/{max_retries})...")
+                        if self.login():
+                            logger.info(f"✅ Re-login successful. Retrying API call...")
+                            continue
+                    logger.error(f"❌ Session expired and re-authentication failed.")
+                    return False, response
+                return True, response
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"API call failed: {e}. Retrying...")
+                    continue
+                logger.error(f"API call failed after {max_retries} attempts: {e}")
+                return False, None
+        return False, None
+
     def start_live_feed(self, symbols):
         logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Starting live feed for {len(symbols)} symbols.")
         logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")
@@ -578,8 +615,10 @@ class BrokerClient:
         for r in self.master.DERIVATIVE_OPTIONS:
             if r.get('tradingsymbol') == tsym:
                 logger.trace(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - Found derivative option, fetching quotes.")
-                q = self.api.get_quotes(exchange=r['exchange'], token=r['token'])
-                return float(q.get('lp') or q.get('ltp') or 0) if q else None
+                success, q = self._handle_api_call(self.api.get_quotes, exchange=r['exchange'], token=r['token'])
+                if success and q:
+                    return float(q.get('lp') or q.get('ltp') or 0)
+                return None
         logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - LTP not found for {tsym}.")
         return None
 
@@ -609,8 +648,8 @@ class BrokerClient:
             token = getattr(self.api, '_NorenApi__susertoken', None)
             setattr(self.api, '_NorenApi__susertoken', token)
 
-            res = self.api.get_limits()
-            if not res or res.get('stat') != 'Ok':
+            success, res = self._handle_api_call(self.api.get_limits)
+            if not success or not res or res.get('stat') != 'Ok':
                 logger.warning(f"[{self.__class__.__name__}.get_limits] - Broker did not return OK status for limits: {res}")
                 return None
             
@@ -641,8 +680,8 @@ class BrokerClient:
             token = getattr(self.api, '_NorenApi__susertoken', None)
             setattr(self.api, '_NorenApi__susertoken', token)
             
-            res = self.api.get_positions()
-            if not res: 
+            success, res = self._handle_api_call(self.api.get_positions)
+            if not success or not res: 
                 logger.debug(f"[{self.__class__.__name__}.get_positions] - No positions returned by broker.")
                 return []
             ok_positions = [p for p in res if p.get('stat') == 'Ok']
@@ -656,8 +695,8 @@ class BrokerClient:
     def get_order_history(self):
         logger.debug(f"[{self.__class__.__name__}.get_order_history] - Fetching order history from broker.")
         try:
-            res = self.api.get_order_book()
-            if not res: 
+            success, res = self._handle_api_call(self.api.get_order_book)
+            if not success or not res: 
                 logger.debug(f"[{self.__class__.__name__}.get_order_history] - No order history returned by broker.")
                 return []
             ok_orders = [o for o in res if o.get('stat') == 'Ok']
@@ -722,16 +761,17 @@ class BrokerClient:
         try:
             # Parameters for API call need to be precise. Assuming some common ones.
             # 'InterestRate' and 'Volatility' might need defaults or fetching from config.
-            ret = self.api.option_greek(
+            success, ret = self._handle_api_call(
+                self.api.option_greek,
                 expiredate=expiry_date,
                 StrikePrice=str(strike_price),
-                SpotPrice=str(self.get_ltp(f"{self.segment_name.upper()}|{self.get_token(symbol)}") or 0.0), # Use current LTP or default
-                InterestRate='10', # Placeholder, might need dynamic fetching
-                Volatility='20',   # Placeholder, might need dynamic fetching
-                OptionType=option_type.upper() # CE or PE
+                SpotPrice=str(self.get_ltp(f"{self.segment_name.upper()}|{self.get_token(symbol)}") or 0.0),
+                InterestRate='10',
+                Volatility='20',
+                OptionType=option_type.upper()
             )
             
-            if ret and ret.get('stat') == 'Ok':
+            if success and ret and ret.get('stat') == 'Ok':
                 theta = float(ret.get('theta', 0.0)) # Default to 0.0 if 'theta' key not found
                 logger.debug(f"[{self.__class__.__name__}.get_option_theta] - Fetched Theta: {theta}")
                 return theta
