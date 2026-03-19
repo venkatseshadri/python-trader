@@ -54,6 +54,9 @@ class BrokerClient:
         config = DataManager.load_config(project_root, 'optional_files', 'broker_config')
         cache_path = config.get('span_cache_path') if config else None
         self.margin = MarginCalculator(self.master, cache_path)
+        
+        from orbiter.core.broker.tick_handler import TickHandler
+        self.tick_handler = TickHandler(self.conn.api, self.master, project_root, self.segment_name)
 
         # Load Execution Policy for the segment
         from orbiter.utils.data_manager import DataManager
@@ -79,12 +82,16 @@ class BrokerClient:
             "Resolver, Margin, Executor (with policy) initialized."
         )
         
-        self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
-        self._tick_callbacks = []
+        self._local_symbol_dict: Dict[str, Dict[str, Any]] = {}
+    
+    @property
+    def SYMBOLDICT(self) -> Dict[str, Dict[str, Any]]:
+        """Get symbol dict from tick handler."""
+        return self.tick_handler.SYMBOLDICT
 
     def register_tick_callback(self, callback):
         """Register a callback to be called on every tick."""
-        self._tick_callbacks.append(callback)
+        self.tick_handler.register_tick_callback(callback)
         logger.debug(f"Registered tick callback: {callback.__name__}")
         self._priming_interval = 5  # Default 5-min candles
 
@@ -142,154 +149,8 @@ class BrokerClient:
         return False, None
 
     def start_live_feed(self, symbols):
-        logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Starting live feed for {len(symbols)} symbols.")
-        logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Input symbols: {symbols[:3]}...")
-        
-        # Resolve symbols to tokens if needed (for MCX, symbols may be names like "GOLDTEN" not numeric tokens)
-        mcx_futures_map = None
-        nfo_futures_map = None
-        
-        # Load MCX futures map
-        mcx_futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'mcx_futures_map.json')
-        if os.path.exists(mcx_futures_map_path):
-            try:
-                with open(mcx_futures_map_path, 'r') as f:
-                    mcx_futures_map = json.load(f)
-                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Loaded {len(mcx_futures_map)} MCX futures mappings")
-            except Exception as e:
-                logger.warning(f"[{self.__class__.__name__}.start_live_feed] - Failed to load MCX futures_map: {e}")
-        
-        # Load NFO futures map
-        nfo_futures_map_path = os.path.join(self.project_root, 'orbiter', 'data', 'nfo_futures_map.json')
-        if os.path.exists(nfo_futures_map_path):
-            try:
-                with open(nfo_futures_map_path, 'r') as f:
-                    nfo_futures_map = json.load(f)
-                logger.trace(f"[{self.__class__.__name__}.start_live_feed] - Loaded {len(nfo_futures_map)} NFO futures mappings")
-            except Exception as e:
-                logger.warning(f"[{self.__class__.__name__}.start_live_feed] - Failed to load NFO futures_map: {e}")
-
-        def resolve_to_token(token_or_symbol, exchange):
-            """Resolve symbol name to numeric token if needed."""
-            # If already numeric, return as-is
-            # CRITICAL: Handle non-string inputs (dicts, etc.)
-            if not isinstance(token_or_symbol, str):
-                logger.warning(f"Non-string input {type(token_or_symbol)}, returning as-is")
-                return str(token_or_symbol) if token_or_symbol else ""
-
-            if isinstance(token_or_symbol, str) and token_or_symbol.isdigit():
-                return token_or_symbol
-            
-            # FIX: Check MCX futures_map first for symbol names like GOLD, ALUMINI, etc.
-            # Also check trading symbols like "GOLD31MAR26", "MCXBULLDEX24MAR26", etc.
-            if isinstance(token_or_symbol, str) and mcx_futures_map and token_or_symbol.upper() in mcx_futures_map:
-                mcx_entry = mcx_futures_map[token_or_symbol.upper()]
-                numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
-                if numeric_token:
-                    logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX {token_or_symbol} -> {numeric_token} via futures_map")
-                    return numeric_token
-            
-            # FIX: Also check if token matches trading symbol (e.g., "GOLDTEN31MAR26", "MCXBULLDEX24MAR26")
-            if mcx_futures_map:
-                for short_sym, mcx_entry in mcx_futures_map.items():
-                    if isinstance(mcx_entry, list) and len(mcx_entry) > 1:
-                        if isinstance(mcx_entry[1], str) and mcx_entry[1].upper() == token_or_symbol.upper():
-                            numeric_token = str(mcx_entry[4]) if len(mcx_entry) > 4 else None
-                            if numeric_token:
-                                logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved MCX trading symbol {token_or_symbol} -> {numeric_token} via futures_map")
-                                return numeric_token
-            
-            # FIX: Check NFO futures_map for symbol names like NIFTY, BANKNIFTY, etc.
-            if nfo_futures_map:
-                # Check if token is in map (key is numeric token, value is [symbol, trading_symbol])
-                for num_token, entry in nfo_futures_map.items():
-                    if isinstance(entry, list) and len(entry) >= 2:
-                        if (isinstance(entry[0], str) and entry[0].upper() == token_or_symbol.upper()) or (isinstance(entry[1], str) and entry[1].upper() == token_or_symbol.upper()):
-                            logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved NFO {token_or_symbol} -> {num_token} via futures_map")
-                            return num_token
-            
-            # Try to resolve using broker's symbol-to-token mapping
-            resolved = self.master.SYMBOL_TO_TOKEN.get(token_or_symbol.upper()) if isinstance(token_or_symbol, str) else None
-            if resolved:
-                logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} -> {resolved}")
-                return resolved
-            # Try with trading symbol prefix (e.g., "GOLDTEN31MAR26" -> "GOLDTEN")
-            for tok, tsym in self.master.TOKEN_TO_SYMBOL.items():
-                if isinstance(tsym, str) and isinstance(token_or_symbol, str) and tsym.upper().startswith(token_or_symbol.upper()):
-                    logger.trace(f"[{self.__class__.__name__}.resolve_to_token] - Resolved {token_or_symbol} via prefix -> {tok}")
-                    return tok
-            logger.warning(f"[{self.__class__.__name__}.resolve_to_token] - Could not resolve {token_or_symbol}, using as-is")
-            return token_or_symbol
-        
-        # Pre-process symbols to resolve token names to numeric tokens
-        resolved_symbols = []
-        for s in symbols:
-            if isinstance(s, dict):
-                tk = str(s.get('token'))
-                ex = s.get('exchange', 'NSE')
-                # Resolve token if not numeric
-                resolved_tk = resolve_to_token(tk, ex)
-                if resolved_tk != tk:
-                    logger.debug(f"[{self.__class__.__name__}.start_live_feed] - Token resolved: {tk} -> {resolved_tk}")
-                resolved_symbols.append({**s, 'token': resolved_tk})
-            else:
-                # Plain symbol - keep as-is, connection manager will handle
-                resolved_symbols.append(s)
-        
-        def _tick_handler(msg, tk, ex):
-            key = f"{ex}|{tk}"
-            sym = self.get_symbol(tk, exchange=ex)
-            
-            existing_data = self.SYMBOLDICT.get(key, {})
-            existing_candles = existing_data.get('candles', [])
-            
-            # 🔥 Real-time Candle population: Convert tick to a pseudo-candle if no history exists yet
-            if not existing_candles:
-                pseudo_candle = {
-                    'stat': 'Ok', # 🔥 Critical for FactConverter
-                    'time': msg.get('t', '00-00-0000 00:00:00'),
-                    'into': msg['lp'], 'inth': msg.get('h', msg['lp']), 
-                    'intl': msg.get('l', msg['lp']), 'intc': msg['lp'],
-                    'v': msg.get('v', '0'), 'ssboe': msg.get('ssboe', '0')
-                }
-                existing_candles = [pseudo_candle]
-            else:
-                # Update last candle's close with newest LTP
-                existing_candles[-1]['intc'] = msg['lp']
-                if float(msg.get('h', 0)) > float(existing_candles[-1]['inth']): existing_candles[-1]['inth'] = msg['h']
-                if float(msg.get('l', 0)) < float(existing_candles[-1]['intl']) and float(msg.get('l', 0)) > 0: existing_candles[-1]['intl'] = msg['l']
-
-            tick_data = {
-                **msg, 'symbol': sym, 't': sym, 'company_name': self.get_company_name(tk, exchange=ex),
-                'token': tk, 'exchange': ex, 'ltp': float(msg['lp']),
-                'high': float(msg.get('h', 0)), 'low': float(msg.get('l', 0)), 'volume': int(msg.get('v', 0)),
-                'candles': existing_candles
-            }
-            # Store at token key (e.g., MCX|477176)
-            self.SYMBOLDICT[key] = tick_data
-            
-            # Store at full trading symbol key (e.g., MCX|GOLDTEN31MAR26)
-            full_symbol = sym.split('|')[-1] if '|' in sym else sym
-            if f"{ex}|{full_symbol}" != key:
-                self.SYMBOLDICT[f"{ex}|{full_symbol}"] = tick_data
-            
-            # Also store at short symbol key (e.g., MCX|GOLDTEN) for instrument lookup
-            # Extract short symbol by removing expiry suffix like 31MAR26, 26MAR26, etc.
-            import re
-            short_symbol = re.sub(r'\d{2}[A-Z]{3}\d{2}(FC|F)?$', '', full_symbol)
-            if short_symbol != full_symbol and f"{ex}|{short_symbol}" != key:
-                self.SYMBOLDICT[f"{ex}|{short_symbol}"] = tick_data
-                logger.trace(f"[{self.__class__.__name__}._tick_handler] - Stored tick at keys: {key}, {ex}|{full_symbol}, {ex}|{short_symbol}")
-            logger.trace(f"[{self.__class__.__name__}._tick_handler] - Received tick for {sym}: {msg}")
-            
-            # Notify registered callbacks
-            for callback in self._tick_callbacks:
-                try:
-                    callback(sym, tick_data)
-                except Exception as e:
-                    logger.error(f"Tick callback error: {e}")
-        self.conn.start_live_feed(resolved_symbols, _tick_handler)
-        logger.info(f"[{self.__class__.__name__}.start_live_feed] - Live feed started for {len(symbols)} symbols.")
+        """Start live feed for given symbols."""
+        self.tick_handler.start_live_feed(self.conn, symbols)
 
     def prime_candles(self, symbols: List[Any], lookback_mins: int = 300):
         logger.debug(f"[{self.__class__.__name__}.prime_candles] - Priming {len(symbols)} symbols with last {lookback_mins} minutes data.")
