@@ -60,25 +60,14 @@ class BrokerClient:
         self.exchange_config = exch_config
         policy = exch_config.get(self.segment_name, {}).get('execution_policy', {})
 
-        # Use MarginAwareExecutor for paper trade, OrderExecutor for live
-        if not self.real_broker_trade:
-            try:
-                from orbiter.utils.margin.margin_executor import MarginAwareExecutor
-                self.executor = MarginAwareExecutor(
-                    self.conn.api,
-                    self._init_logger(),
-                    execution_policy=policy,
-                    paper_trade=True
-                )
-                print("[MARGIN] Using MarginAwareExecutor (paper trade mode)")
-            except ImportError:
-                self.executor = OrderExecutor(
-                    self.conn.api, self._init_logger(), execution_policy=policy
-                )
-        else:
-            self.executor = OrderExecutor(
-                self.conn.api, self._init_logger(), execution_policy=policy
-            )
+        # Use factory to create appropriate executor based on real_broker_trade
+        from orbiter.core.broker.executor import create_executor
+        self.executor = create_executor(
+            self.conn.api,
+            self._init_logger(),
+            real_broker_trade=self.real_broker_trade,
+            execution_policy=policy
+        )
         logger.debug(
             f"[{self.__class__.__name__}.__init__] - "
             "Resolver, Margin, Executor (with policy) initialized."
