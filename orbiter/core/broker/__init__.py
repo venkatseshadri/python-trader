@@ -63,9 +63,10 @@ class BrokerClient:
         from orbiter.core.broker.executor import create_executor
         self.executor = create_executor(
             self.conn.api,
-            self._init_logger(),
             real_broker_trade=self.real_broker_trade,
-            execution_policy=policy
+            execution_policy=policy,
+            project_root=project_root,
+            segment_name=self.segment_name
         )
         logger.debug(
             f"[{self.__class__.__name__}.__init__] - "
@@ -83,19 +84,6 @@ class BrokerClient:
         logger.debug(f"Registered tick callback: {callback.__name__}")
         self._priming_interval = 5  # Default 5-min candles
 
-
-    def _init_logger(self):
-        log_dir = os.path.join(self.project_root, 'logs', self.segment_name)
-        os.makedirs(log_dir, exist_ok=True)
-        path = os.path.join(log_dir, 'trade_calls.log')
-        
-        logger = logging.getLogger(f"trade_calls_{self.segment_name}")
-        logger.setLevel(logging.INFO)
-        if not logger.handlers:
-            h = logging.FileHandler(path)
-            h.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
-            logger.addHandler(h)
-        return logger
 
     @property
     def api(self): return self.conn.api
