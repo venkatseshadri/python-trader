@@ -89,12 +89,6 @@ class BrokerClient:
         """Get symbol dict from tick handler."""
         return self.conn.tick_handler.SYMBOLDICT
 
-    def register_tick_callback(self, callback):
-        """Register a callback to be called on every tick."""
-        self.conn.tick_handler.register_tick_callback(callback)
-        logger.debug(f"Registered tick callback: {callback.__name__}")
-        self._priming_interval = 5  # Default 5-min candles
-
 
     @property
     def api(self): return self.conn.api
@@ -147,10 +141,6 @@ class BrokerClient:
                 logger.error(f"API call failed after {max_retries} attempts: {e}")
                 return False, None
         return False, None
-
-    def start_live_feed(self, symbols):
-        """Start live feed for given symbols."""
-        self.conn.tick_handler.start_live_feed(self.conn, symbols)
 
     def prime_candles(self, symbols: List[Any], lookback_mins: int = 300):
         logger.debug(f"[{self.__class__.__name__}.prime_candles] - Priming {len(symbols)} symbols with last {lookback_mins} minutes data.")
