@@ -49,7 +49,11 @@ class BrokerClient:
 
         self.master = BrokerClient._MASTERS[self.segment_name]
         self.resolver = ContractResolver(self.master, api=self.conn.api)
-        self.margin = MarginCalculator(self.master)
+        
+        from orbiter.utils.data_manager import DataManager
+        config = DataManager.load_config(project_root, 'optional_files', 'broker_config')
+        cache_path = config.get('span_cache_path') if config else None
+        self.margin = MarginCalculator(self.master, cache_path)
 
         # Load Execution Policy for the segment
         from orbiter.utils.data_manager import DataManager
@@ -76,8 +80,6 @@ class BrokerClient:
         )
         
         self.SYMBOLDICT: Dict[str, Dict[str, Any]] = {}
-        self.span_cache_path = None
-        self._span_cache = None
         self._tick_callbacks = []
 
     def register_tick_callback(self, callback):
@@ -102,10 +104,6 @@ class BrokerClient:
     @property
     def DERIVATIVE_LOADED(self): return self.master.DERIVATIVE_LOADED
     
-    @property
-    def span_cache(self): 
-        return self._span_cache if self._span_cache is not None else {}
-
     def _is_session_expired(self, response) -> bool:
         """Check if response indicates session expired."""
         if isinstance(response, dict):
@@ -490,40 +488,6 @@ class BrokerClient:
         logger.debug(f"[{self.__class__.__name__}.load_nfo_futures_map] - Loading NFO futures map.")
         self.master.load_segment_futures_map(self.segment_name)
     
-    def set_span_cache_path(self, path): 
-        logger.trace(f"[{self.__class__.__name__}.set_span_cache_path] - Setting span cache path to: {path}")
-        self.span_cache_path = path
-
-    def load_span_cache(self):
-        logger.debug(f"[{self.__class__.__name__}.load_span_cache] - Loading span cache from: {self.span_cache_path}")
-        if not self.span_cache_path: 
-            logger.debug(f"[{self.__class__.__name__}.load_span_cache] - Span cache path not set.")
-            return
-        try:
-            if os.path.exists(self.span_cache_path):
-                with open(self.span_cache_path, 'r') as f:
-                    self._span_cache = json.load(f)
-                logger.debug(f"[{self.__class__.__name__}.load_span_cache] - Span cache loaded successfully.")
-            else: 
-                self._span_cache = {}
-                logger.debug(f"[{self.__class__.__name__}.load_span_cache] - Span cache file not found, initializing empty cache.")
-        except Exception as e: 
-            self._span_cache = {}
-            logger.error(f"[{self.__class__.__name__}.load_span_cache] - Failed to load span cache: {e}. Traceback: {traceback.format_exc()}")
-
-    def save_span_cache(self):
-        logger.debug(f"[{self.__class__.__name__}.save_span_cache] - Saving span cache to: {self.span_cache_path}")
-        if not self.span_cache_path or self._span_cache is None: 
-            logger.debug(f"[{self.__class__.__name__}.save_span_cache] - Span cache path not set or cache is empty. Skipping save.")
-            return
-        try:
-            os.makedirs(os.path.dirname(self.span_cache_path), exist_ok=True)
-            with open(self.span_cache_path, 'w') as f:
-                json.dump(self._span_cache, f)
-            logger.debug(f"[{self.__class__.__name__}.save_span_cache] - Span cache saved successfully.")
-        except Exception as e: 
-            logger.error(f"[{self.__class__.__name__}.save_span_cache] - Failed to save span cache: {e}. Traceback: {traceback.format_exc()}")
-
     def get_symbol(self, token, exchange='NSE'): 
         logger.trace(f"[{self.__class__.__name__}.get_symbol] - Getting symbol for token: {token}, exchange: {exchange}")
         return self.master.TOKEN_TO_SYMBOL.get(token, f"{exchange}|{token}")
