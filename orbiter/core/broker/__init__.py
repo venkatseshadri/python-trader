@@ -355,10 +355,6 @@ class BrokerClient:
         result = self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
         logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
         return result
-    def get_ltp(self, key): 
-        """Get LTP by key - delegates to ltp_manager."""
-        return self.conn.tick_handler.ltp_manager.get_ltp(key)
-    
     def get_dk_levels(self, key): 
         """Get DK levels by key."""
         d = self.SYMBOLDICT.get(key, {})
@@ -370,10 +366,4 @@ class BrokerClient:
     def get_credit_spread_contracts(self, symbol, ltp, side, hedge_steps=4, expiry_type="monthly", instrument="OPTSTK"):
         logger.debug(f"[{self.__class__.__name__}.get_credit_spread_contracts] - Getting credit spread contracts for symbol: {symbol}, ltp: {ltp}, side: {side}")
         return self.resolver.get_credit_spread_contracts(symbol, ltp, side, hedge_steps, expiry_type, instrument)
-    
-    def get_option_ltp_by_symbol(self, tsym):
-        """Get option LTP by symbol - delegates to ltp_manager."""
-        return self.conn.tick_handler.ltp_manager.get_option_ltp_by_symbol(
-            tsym, self.segment_name, self.master, self.api
-        )
 
