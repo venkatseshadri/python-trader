@@ -6,6 +6,22 @@ class MarginCalculator:
     def __init__(self, scrip_master, cache_path: str = None):
         self.master = scrip_master
         self.span_cache = SpanCache(cache_path)
+        self._margin_checker = None
+    
+    def get_limits(self) -> Dict:
+        """Get trading limits."""
+        if self._margin_checker:
+            limits = self._margin_checker.get_limits()
+            if limits:
+                return limits
+        return {
+            'liquid_cash': 0,
+            'collateral_value': 0,
+            'margin_used': 0,
+            'total_power': 0,
+            'available': 0,
+            'payin': 0
+        }
     
     def set_span_cache_path(self, path: str):
         """Set the span cache file path."""

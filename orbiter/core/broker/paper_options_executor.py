@@ -27,6 +27,10 @@ class PaperOptionsOrderExecutor(OptionsOrderExecutor):
         """Execute option order through margin-aware executor."""
         return self._executor.place_option_order(option_details, side, execute, product_type, price_type)
     
+    def place_option_order(self, option_details: Dict, side: str, execute: bool, product_type: str, price_type: str) -> Dict:
+        """Place option order - delegates to _execute_option_order."""
+        return self._execute_option_order(option_details, side, execute, product_type, price_type)
+    
     def place_spread(self, spread_details: Dict, execute: bool, product_type: str, price_type: str) -> Dict:
         """Place spread order through margin-aware executor."""
         return self._executor.place_spread(spread_details, execute, product_type, price_type)

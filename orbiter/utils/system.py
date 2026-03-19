@@ -7,7 +7,6 @@ import subprocess
 from datetime import datetime
 from .data_manager import ConfigLoader
 from .argument_parser import ArgumentParser
-from .constants_manager import ConstantsManager
 
 LOCK_ACQUIRE = "acquire"
 LOCK_RELEASE = "release"

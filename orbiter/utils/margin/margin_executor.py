@@ -142,3 +142,8 @@ class MarginAwareExecutor(OrderExecutorInterface):
             self._record_paper_trade(atm_sym, lot, 0, "spread")
         
         return result
+    
+    def place_future_order_full(self, symbol: str, exchange: str, side: str, execute: bool, 
+                                product_type: str, price_type: str, token: str = None, **kwargs) -> Dict:
+        """Place future order with full resolution - not implemented in margin executor."""
+        return {'ok': False, 'reason': 'use_future_executor'}
