@@ -73,9 +73,8 @@ class EngineFactory:
             if universe:
                 client.prime_candles(universe, lookback_mins=300)  # 300 mins = ~60 candles for ADX warmup
         else:
-            broker_creds_path = DataManager.get_manifest_path(session_manager.project_root, project_manifest_schema.get('mandatory_files_key', 'mandatory_files'), 'broker_credentials')
-            client = BrokerClient(session_manager.project_root, broker_creds_path, segment_name=seg_name, paper_trade=paper_trade)
-            logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized with credentials from {broker_creds_path}.")
+            client = BrokerClient(session_manager.project_root, segment_name=seg_name, paper_trade=paper_trade)
+            logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized.")
             
             # Hardcoded NIFTY token mappings only for real broker
             client.master.TOKEN_TO_SYMBOL['51714'] = constants.get('magic_strings', 'token_to_symbol_nifty_51714')
