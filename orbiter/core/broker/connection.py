@@ -59,6 +59,7 @@ class ConnectionManager:
         self._symbols_to_subscribe = []
         self._on_tick_callback = None
         self._pending_reconnect = False
+        self.tick_handler = None
         
         # Load credentials - search multiple locations
         possible_creds = []

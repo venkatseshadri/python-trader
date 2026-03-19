@@ -56,7 +56,7 @@ class BrokerClient:
         self.margin = MarginCalculator(self.master, cache_path)
         
         from orbiter.core.broker.tick_handler import TickHandler
-        self.tick_handler = TickHandler(self.conn.api, self.master, project_root, self.segment_name)
+        self.conn.tick_handler = TickHandler(self.conn.api, self.master, project_root, self.segment_name)
 
         # Load Execution Policy for the segment
         from orbiter.utils.data_manager import DataManager
@@ -87,11 +87,11 @@ class BrokerClient:
     @property
     def SYMBOLDICT(self) -> Dict[str, Dict[str, Any]]:
         """Get symbol dict from tick handler."""
-        return self.tick_handler.SYMBOLDICT
+        return self.conn.tick_handler.SYMBOLDICT
 
     def register_tick_callback(self, callback):
         """Register a callback to be called on every tick."""
-        self.tick_handler.register_tick_callback(callback)
+        self.conn.tick_handler.register_tick_callback(callback)
         logger.debug(f"Registered tick callback: {callback.__name__}")
         self._priming_interval = 5  # Default 5-min candles
 
@@ -150,7 +150,7 @@ class BrokerClient:
 
     def start_live_feed(self, symbols):
         """Start live feed for given symbols."""
-        self.tick_handler.start_live_feed(self.conn, symbols)
+        self.conn.tick_handler.start_live_feed(self.conn, symbols)
 
     def prime_candles(self, symbols: List[Any], lookback_mins: int = 300):
         logger.debug(f"[{self.__class__.__name__}.prime_candles] - Priming {len(symbols)} symbols with last {lookback_mins} minutes data.")
