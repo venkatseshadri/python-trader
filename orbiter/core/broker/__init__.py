@@ -581,38 +581,3 @@ class BrokerClient:
         logger.debug(f"[{self.__class__.__name__}.get_option_ltp_by_symbol] - LTP not found for {tsym}.")
         return None
 
-    def get_limits(self):
-        logger.debug(f"[{self.__class__.__name__}.get_limits] - Fetching limits from broker.")
-        try:
-            setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
-            setattr(self.api, '_NorenApi__accountid', self.conn.cred['user'])
-            token = getattr(self.api, '_NorenApi__susertoken', None)
-            setattr(self.api, '_NorenApi__susertoken', token)
-
-            success, res = self._handle_api_call(self.api.get_limits)
-            if not success or not res or res.get('stat') != 'Ok':
-                logger.warning(f"[{self.__class__.__name__}.get_limits] - Broker did not return OK status for limits: {res}")
-                return None
-            
-            cash = float(res.get('cash', 0))
-            collateral = float(res.get('collateral', 0))
-            used = float(res.get('marginused', 0))
-            total_power = cash + collateral
-            
-            limits_data = {
-                'liquid_cash': cash,              
-                'collateral_value': collateral,   
-                'margin_used': used,              
-                'total_power': total_power,       
-                'available': total_power - used,  
-                'payin': float(res.get('payin', 0))
-            }
-            logger.debug(f"[{self.__class__.__name__}.get_limits] - Limits fetched: {limits_data}")
-            return limits_data
-        except Exception as e:
-            logger.error(f"[{self.__class__.__name__}.get_limits] - Error fetching limits: {e}. Traceback: {traceback.format_exc()}")
-            return None
-
-
-
-
