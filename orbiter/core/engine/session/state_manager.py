@@ -252,7 +252,7 @@ class StateManager:
                 ghost_pos["entry_price"] = float(p.get('avgprc', 0))
                 ghost_pos["entry_time"] = datetime.now()
                 ghost_pos["symbol"] = p['tsym']
-                ghost_pos["company_name"] = self.client.get_company_name(p['token'], exchange=p['exch'])
+                ghost_pos["company_name"] = self.client.master.TOKEN_TO_COMPANY.get(p['token'], p['tsym'])
                 ghost_pos["lot_size"] = abs(qty)
                 ghost_pos["pnl_rs"] = float(p.get('rpnl', 0)) + float(p.get('urpnl', 0))
 

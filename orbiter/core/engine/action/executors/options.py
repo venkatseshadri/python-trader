@@ -24,12 +24,12 @@ class OptionActionExecutor(BaseActionExecutor):
         else:
             primary_exch = 'NFO'  # NFO for Nifty F&O, not NSE!
         exch = params.get('exchange', primary_exch)
-        token = self.state.client.get_token(symbol)
+        token = self.state.client.master.SYMBOL_TO_TOKEN.get(symbol.upper())
         
-        ltp = self.state.client.get_ltp(f"{exch}|{token}")
+        ltp = self.state.client.conn.tick_handler.ltp_manager.get_ltp(f"{exch}|{token}")
         if not ltp:
             # Fallback: Index LTP might be on NSE even for NFO options
-            ltp = self.state.client.get_ltp(f"NSE|{token}") or 25000.0
+            ltp = self.state.client.conn.tick_handler.ltp_manager.get_ltp(f"NSE|{token}") or 25000.0
             
         # 2. Resolve Strike
         # Support both 'expiry' and 'expiry_type' keys from rules.json

@@ -222,7 +222,7 @@ class SummaryManager:
                 # Try multiple sources for the symbol name
                 raw_symbol = data.get('symbol') or data.get('tsym')
                 if not raw_symbol or '|' in str(raw_symbol):
-                    raw_symbol = self.broker.get_symbol(token_id, exchange=exch)
+                    raw_symbol = self.broker.master.TOKEN_TO_SYMBOL.get(token_id, f"{exch}|{token_id}")
                 
                 import re
                 clean_name = re.sub(r'\d{2}[A-Z]{3}\d{2}[FC]$', '', str(raw_symbol))
@@ -234,7 +234,7 @@ class SummaryManager:
                 baseline_price = 0.0
                 
                 try:
-                    spot_token_id = self.broker.get_token(clean_name)
+                    spot_token_id = self.broker.master.SYMBOL_TO_TOKEN.get(clean_name.upper())
                     if spot_token_id and not spot_token_id.startswith('NFO') and not spot_token_id.startswith('MCX'):
                         quote = self.broker.api.get_quotes(exchange='NSE', token=spot_token_id)
                         if quote:

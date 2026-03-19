@@ -162,11 +162,11 @@ class Engine:
             # Symbol resolution: prioritize instrument.json symbol
             symbol_name = instrument.get('symbol') if isinstance(instrument, dict) else None
             if not symbol_name:
-                symbol_name = self.state.client.get_symbol(token, exchange=exch).split('|')[-1]
+                symbol_name = self.state.client.master.TOKEN_TO_SYMBOL.get(token, f"{exch}|{token}").split('|')[-1]
             
             company_name = instrument.get('company_name') if isinstance(instrument, dict) else None
             if not company_name:
-                company_name = self.state.client.get_company_name(token, exchange=exch)
+                company_name = self.state.client.master.TOKEN_TO_COMPANY.get(token, symbol_name)
             
             logger.trace(f"[{self.__class__.__name__}.tick] - Resolved: Symbol={symbol_name}, Company={company_name}")
 
@@ -273,7 +273,7 @@ class Engine:
                 # 2. Fallback: If spreads failed, it might be a Future strategy (MCX)
                 if not span_pe.get('ok'):
                     # 🔥 CRITICAL: Get actual trading symbol from broker master
-                    trading_symbol = self.state.client.get_symbol(token, exchange=exch)
+                    trading_symbol = self.state.client.master.TOKEN_TO_SYMBOL.get(token, f"{exch}|{token}")
                     
                     # If it returns "MCX|472790", it means lookup failed in master. 
                     # Try using company_name if it looks like a trading symbol (not containing |)

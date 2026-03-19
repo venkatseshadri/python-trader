@@ -142,33 +142,5 @@ class BrokerClient:
                 return False, None
         return False, None
 
-    def close(self):
-        logger.debug(f"[{self.__class__.__name__}.close] - Closing broker connection.")
-        self.conn.close()
-    def load_symbol_mapping(self): 
-        logger.debug(f"[{self.__class__.__name__}.load_symbol_mapping] - Loading symbol mappings.")
-        self.master.load_mappings(self.segment_name)
-    def download_scrip_master(self, exchange): 
-        logger.debug(f"[{self.__class__.__name__}.download_scrip_master] - Downloading scrip master for exchange: {exchange}.")
-        self.master.download_scrip_master(exchange)
-    def load_nfo_futures_map(self): 
-        logger.debug(f"[{self.__class__.__name__}.load_nfo_futures_map] - Loading NFO futures map.")
-        self.master.load_segment_futures_map(self.segment_name)
-    
-    def get_symbol(self, token, exchange='NSE'): 
-        logger.trace(f"[{self.__class__.__name__}.get_symbol] - Getting symbol for token: {token}, exchange: {exchange}")
-        return self.master.TOKEN_TO_SYMBOL.get(token, f"{exchange}|{token}")
-    def get_company_name(self, token, exchange='NSE'): 
-        logger.trace(f"[{self.__class__.__name__}.get_company_name] - Getting company name for token: {token}, exchange: {exchange}")
-        return self.master.TOKEN_TO_COMPANY.get(token, self.get_symbol(token, exchange))
-    def get_token(self, symbol): 
-        logger.trace(f"[{self.__class__.__name__}.get_token] - Getting token for symbol: {symbol}")
-        # Handle dict input (e.g., {'symbol': 'ALUMINI', 'token': '487655', ...})
-        if isinstance(symbol, dict):
-            symbol = symbol.get('symbol') or symbol.get('token') or ''
-        if not symbol:
-            return None
-        result = self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
-        logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
-        return result
+
 
