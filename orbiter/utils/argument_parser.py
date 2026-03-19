@@ -65,7 +65,8 @@ class ArgumentParser:
         Turns list of CLI args into facts dict.
         
         Examples:
-        - ['--paper_trade=true', '--strategyCode=m1'] -> {paper_trade: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
+        - ['--strategyCode=m1'] -> {paper_trade: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
+        - ['--real_broker_trade=true', '--strategyCode=m1'] -> {paper_trade: False, strategyid: 'mcx_trend_follower'}
         - ['--strategyExecution=dynamic'] -> {paper_trade: True, strategy_execution: 'dynamic'}
         
         Raises:
@@ -74,6 +75,7 @@ class ArgumentParser:
         logger = logging.getLogger(__name__)
         facts = {
             'paper_trade': True,  # Default to paper trade for safety
+            'simulation': True,
             'strategy_execution': 'fixed',
             'mock_data': False,
             'mock_data_file': None
@@ -83,10 +85,11 @@ class ArgumentParser:
         use_strategy_code = False
         strategy_execution = 'fixed'
         paper_trade_set = False
+        real_broker_trade_set = False
         
         # Known arguments - process these, but still pass through unknown args
         # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'paper_trade', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
+        known_args = {'real_broker_trade', 'strategy_id', 'strategyid', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -107,21 +110,26 @@ class ArgumentParser:
                     
                     # Only process known args for logic
                     if k_clean in known_args:
-                        if k_clean in ('strategy_id', 'strategycode'):
+                        if k_clean in ('strategy_id', 'strategyid', 'strategycode'):
                             parsed_strategy_input = v
                         elif k_clean in ('strategy_code',):
                             parsed_strategy_input = v
                             use_strategy_code = True
                         elif k_clean in ('strategy_execution', 'strategyexecution'):
                             strategy_execution = v
-                        elif k_clean == 'paper_trade':
-                            paper_trade_set = True
+                        elif k_clean == 'real_broker_trade':
+                            real_broker_trade_set = True
+                            if v_clean == 'true':
+                                facts['paper_trade'] = False
+                                paper_trade_set = True
                         elif k_clean == 'mock_data_file':
                             facts['mock_data_file'] = v
                 else:
                     k_clean = clean.lower().replace("-", "_")
                     facts[k_clean] = True
-                    if k_clean == 'paper_trade':
+                    if k_clean == 'real_broker_trade':
+                        real_broker_trade_set = True
+                        facts['paper_trade'] = False
                         paper_trade_set = True
         
         # Set defaults based on flags

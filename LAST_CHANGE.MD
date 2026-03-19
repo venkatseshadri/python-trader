@@ -1,4 +1,17 @@
-# Last Technical Change: Session Auto-Reconnect & Bug Fixes
+# Last Technical Change: CLI Refactor - real_broker_trade Flag
+
+**Date:** 2026-03-19
+**Status:** COMPLETED (Build: `v4.3.0`)
+
+## v4.3.0 Changes
+
+### CLI Refactor: --real_broker_trade Flag
+- Replaced `--paper_trade=false` with `--real_broker_trade=true`
+- Default is now paper_trade (safe by default)
+- Use `--real_broker_trade=true` to enable live trading
+- Updated AGENTS.md documentation
+
+### Previous: Session Auto-Reconnect & Bug Fixes
 
 **Date:** 2026-03-19
 **Status:** COMPLETED (Build: `v4.2.0`)

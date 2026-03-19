@@ -8,9 +8,9 @@
 
 | What you want... | Command |
 |-----------------|---------|
-| Test at home (after market) | `ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyCode=m1` |
-| Paper trade live | `python -m orbiter.main --paper_trade=true --strategyCode=m1` |
-| Live trade | `python -m orbiter.main --paper_trade=false --strategyCode=m1` |
+| Test at home (after market) | `ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --strategyCode=m1` |
+| Paper trade live | `python -m orbiter.main --strategyCode=m1` |
+| Live trade | `python -m orbiter.main --real_broker_trade=true --strategyCode=m1` |
 
 ## CLI Flags (Command Line Arguments)
 
@@ -18,10 +18,10 @@
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--paper_trade=true` | Paper trading - no real orders placed (SAFE) | `--paper_trade=true` |
-| `--paper_trade=false` | Real trading - place actual orders | `--paper_trade=false` |
+| `--real_broker_trade=true` | Real trading - place actual orders | `--real_broker_trade=true` |
+| (no flag) | Paper trading - no real orders placed (SAFE) | default |
 
-**Default:** `paper_trade=true` (always safe unless you explicitly set false)
+**Default:** `paper_trade=true` (always safe unless you explicitly set `--real_broker_trade=true`)
 
 ### Strategy Selection
 
@@ -52,7 +52,7 @@ This is important for strategies like Iron Condor that only trade when `portfoli
 | Flag | Also works as |
 |------|---------------|
 | `--strategyCode=s1` | `--strategy_code=s1`, `--strategyId=bsensex_bfo_topn_trend` |
-| `--paper_trade=false` | `--paper_trade=false` |
+| `--real_broker_trade=true` | Live trading - place actual orders |
 
 ## Environment Variables
 
@@ -95,37 +95,37 @@ The YF ADX is used for scoring only. For dynamic strategy selection, the system 
 
 ### Test at home (outside market hours)
 ```bash
-ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyCode=s1
+ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --strategyCode=s1
 ```
 
 ### Paper trade during market hours
 ```bash
-python -m orbiter.main --paper_trade=true --strategyCode=s1
+python -m orbiter.main --strategyCode=s1
 ```
 
 ### Live trading during market hours
 ```bash
-python -m orbiter.main --paper_trade=false --strategyCode=s1
+python -m orbiter.main --real_broker_trade=true --strategyCode=s1
 ```
 
 ### Debug mode (verbose logging)
 ```bash
-ORBITER_LOG_LEVEL=TRACE python -m orbiter.main --paper_trade=true --strategyCode=m1
+ORBITER_LOG_LEVEL=TRACE python -m orbiter.main --strategyCode=m1
 ```
 
 ### Dynamic strategy selection (auto-select based on ADX)
 ```bash
-ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyExecution=dynamic
+ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --strategyExecution=dynamic
 ```
 
 ## Mode Matrix
 
-| Scenario | Paper Trade | Simulate Market Hours | Result |
-|----------|-------------|----------------------|--------|
-| Testing at home after hours | true | true | Run, no trades |
-| Paper trade during hours | true | false | Run, no trades |
-| Live trade during hours | false | false | Run, real trades |
-| Test live at home | false | true | Run, real trades |
+| Scenario | Real Broker Trade | Simulate Market Hours | Result |
+|----------|-------------------|----------------------|--------|
+| Testing at home after hours | false | true | Run, no trades |
+| Paper trade during hours | false | false | Run, no trades |
+| Live trade during hours | true | false | Run, real trades |
+| Test live at home | true | true | Run, real trades |
 
 ## Dynamic Strategy Selection
 
