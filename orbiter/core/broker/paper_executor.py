@@ -10,7 +10,6 @@ from orbiter.core.broker.future_executor import FutureOrderExecutor
 from orbiter.core.broker.options_executor import OptionsOrderExecutor
 from orbiter.core.broker.paper_future_executor import PaperFutureOrderExecutor
 from orbiter.core.broker.paper_options_executor import PaperOptionsOrderExecutor
-from orbiter.core.broker.order_manager import OrderManager
 
 
 def _create_logger(project_root: str, segment_name: str) -> logging.Logger:
@@ -41,7 +40,6 @@ class PaperOrderExecutor:
         self.segment_name = segment_name
         
         self.logger = _create_logger(project_root, segment_name)
-        self.order_manager = OrderManager(project_root, segment_name, paper_trade=True)
         
         self._future_executor = PaperFutureOrderExecutor(
             api, master, resolver, execution_policy, project_root, segment_name
@@ -72,13 +70,20 @@ class PaperOrderExecutor:
         return self._options_executor.get_option_theta(symbol, expiry_date, strike_price, option_type)
     
     def get_order_history(self) -> List[Dict]:
-        """Get order history from order manager."""
-        return self.order_manager.get_order_history()
+        """Get order history from future and options executors."""
+        future_orders = self._future_executor.get_order_history()
+        option_orders = self._options_executor.get_order_history()
+        return future_orders + option_orders
     
     def get_positions(self) -> List[Dict]:
-        """Get positions from order manager."""
-        return self.order_manager.get_positions()
+        """Get positions from future and options executors."""
+        future_positions = self._future_executor.get_positions()
+        option_positions = self._options_executor.get_positions()
+        return future_positions + option_positions
     
     def record_order(self, order_result: Dict):
-        """Record an order in the order manager."""
-        self.order_manager.record_order(order_result)
+        """Record an order in the appropriate executor."""
+        if 'future' in str(order_result.get('tsym', '')).lower():
+            self._future_executor.record_order(order_result)
+        else:
+            self._options_executor.record_order(order_result)
