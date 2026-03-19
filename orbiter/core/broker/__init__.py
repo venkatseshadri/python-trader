@@ -637,14 +637,4 @@ class BrokerClient:
             logger.error(f"[{self.__class__.__name__}.get_positions] - Error fetching positions: {e}. Traceback: {traceback.format_exc()}")
             return []
 
-    def get_order_history(self):
-        """Get order history - from executor if available, else from broker."""
-        if hasattr(self, 'executor') and self.executor:
-            return self.executor.get_order_history()
-        return []
 
-    def get_positions(self):
-        """Get positions - from executor if available, else from broker."""
-        if hasattr(self, 'executor') and self.executor:
-            return self.executor.get_positions()
-        return []
