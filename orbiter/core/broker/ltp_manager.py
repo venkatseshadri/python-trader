@@ -41,3 +41,8 @@ class LTPManager:
         
         self.logger.debug(f"[LTPManager] LTP not found for {tsym}.")
         return None
+    
+    def get_dk_levels(self, key: str) -> Dict:
+        """Get DK levels (ltp, high, low) from SYMBOLDICT."""
+        d = self.tick_handler.SYMBOLDICT.get(key, {})
+        return {'ltp': d.get('ltp', 0), 'high': d.get('high', 0), 'low': d.get('low', 0)}

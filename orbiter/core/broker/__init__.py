@@ -355,15 +355,4 @@ class BrokerClient:
         result = self.master.SYMBOL_TO_TOKEN.get(symbol.upper(), symbol)
         logger.trace(f"[{self.__class__.__name__}.get_token] - SYMBOL_TO_TOKEN lookup for {symbol.upper()}: {result}")
         return result
-    def get_dk_levels(self, key): 
-        """Get DK levels by key."""
-        d = self.SYMBOLDICT.get(key, {})
-        return {'ltp': d.get('ltp', 0), 'high': d.get('high', 0), 'low': d.get('low', 0)}
-
-    def get_near_future(self, symbol, exchange='NFO'): 
-        logger.debug(f"[{self.__class__.__name__}.get_near_future] - Getting near future for symbol: {symbol}, exchange: {exchange}")
-        return self.resolver.get_near_future(symbol, exchange, self.api)
-    def get_credit_spread_contracts(self, symbol, ltp, side, hedge_steps=4, expiry_type="monthly", instrument="OPTSTK"):
-        logger.debug(f"[{self.__class__.__name__}.get_credit_spread_contracts] - Getting credit spread contracts for symbol: {symbol}, ltp: {ltp}, side: {side}")
-        return self.resolver.get_credit_spread_contracts(symbol, ltp, side, hedge_steps, expiry_type, instrument)
 
