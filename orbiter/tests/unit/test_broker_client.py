@@ -86,12 +86,12 @@ class TestBrokerClient(unittest.TestCase):
     def test_init_and_properties(self):
         client = self._make_client()
         self.assertEqual(client.segment_name, 'nfo')
-        self.assertEqual(client.TOKEN_TO_SYMBOL.get('123'), 'RECLTD')
+        self.assertEqual(client.master.TOKEN_TO_SYMBOL.get('123'), 'RECLTD')
 
     def test_start_live_feed_updates_symboldict(self):
         client = self._make_client()
-        client.start_live_feed(['NSE|123'])
-        self.assertIn('NSE|123', client.SYMBOLDICT)
+        client.conn.tick_handler.start_live_feed(client.conn, ['NSE|123'])
+        self.assertIn('NSE|123', client.conn.tick_handler.SYMBOLDICT)
         self.assertEqual(client.SYMBOLDICT['NSE|123']['ltp'], 100.0)
 
     def test_prime_candles(self):

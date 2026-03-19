@@ -50,9 +50,9 @@ def main():
         
         # If symbol lookup failed (returns NSE|token), try to load mapping
         if "|" in symbol:
-            if not client.TOKEN_TO_SYMBOL:
-                client.load_symbol_mapping()
-            symbol = client.TOKEN_TO_SYMBOL.get(token_id, symbol)
+            if not client.master.TOKEN_TO_SYMBOL:
+                client.master.load_mappings(client.segment_name)
+            symbol = client.master.TOKEN_TO_SYMBOL.get(token_id, symbol)
             
         if "|" in symbol:
             print(f"⚠️ Could not resolve symbol for {token}")

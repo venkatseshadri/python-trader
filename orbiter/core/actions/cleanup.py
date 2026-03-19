@@ -24,7 +24,7 @@ def square_off_all_positions(state: Any, reason: str = "SYSTEM_REQUEST"):
                 side = 'S' if 'LONG' in strategy else 'B'
                 qty = info.get('lot_size', 0)
                 exch = token.split('|')[0] if '|' in token else 'NFO'
-                tsym = state.client.TOKEN_TO_SYMBOL.get(token.split('|')[-1])
+                tsym = state.client.master.TOKEN_TO_SYMBOL.get(token.split('|')[-1])
                 if qty > 0 and tsym:
                     p_type = state.config.get('OPTION_PRICE_TYPE', 'MKT')
                     fut_exit_p = 0

@@ -4,18 +4,24 @@ BrokerClient - Central Gateway for Broker API Interactions.
 This module provides the BrokerClient class which acts as a unified interface
 to the broker's trading API. It composes several specialized managers:
 
-- ConnectionManager: WebSocket connection and session management
-- ScripMaster: Market data and instrument definitions
-- ContractResolver: Contract resolution for orders
-- MarginCalculator: Margin calculations
-- TickHandler: Real-time tick data management
-- OrderExecutor: Order placement (paper or live)
+- conn: ConnectionManager - WebSocket connection and session management
+- master: ScripMaster - Market data and instrument definitions
+- resolver: ContractResolver - Contract resolution for orders
+- margin: MarginCalculator - Margin calculations
+- executor: OrderExecutor - Order placement (paper or live)
+- conn.tick_handler: TickHandler - Real-time tick data management
 
 Usage:
     from orbiter.core.broker import BrokerClient
     
     client = BrokerClient(project_root="/path/to/project", segment_name="nse")
     client.executor.place_future_order(...)
+    
+    # Access tick data
+    client.conn.tick_handler.SYMBOLDICT
+    
+    # Access master data
+    client.master.TOKEN_TO_SYMBOL
 """
 
 import logging
@@ -107,47 +113,3 @@ class BrokerClient:
         """Load configuration file."""
         from orbiter.utils.data_manager import DataManager
         return DataManager.load_config(self.project_root, 'optional_files', config_name) or {}
-
-    # ========================================================================
-    # Properties - Delegate to composed managers
-    # ========================================================================
-    
-    @property
-    def api(self):
-        """Direct access to broker API."""
-        return self.conn.api
-    
-    @property
-    def SYMBOLDICT(self) -> Dict:
-        """Real-time symbol data from tick handler."""
-        return self.conn.tick_handler.SYMBOLDICT
-    
-    @property
-    def TOKEN_TO_SYMBOL(self) -> Dict:
-        """Token to trading symbol mapping."""
-        return self.master.TOKEN_TO_SYMBOL
-    
-    @property
-    def SYMBOL_TO_TOKEN(self) -> Dict:
-        """Trading symbol to token mapping."""
-        return self.master.SYMBOL_TO_TOKEN
-    
-    @property
-    def TOKEN_TO_COMPANY(self) -> Dict:
-        """Token to company name mapping."""
-        return self.master.TOKEN_TO_COMPANY
-    
-    @property
-    def TOKEN_TO_LOTSIZE(self) -> Dict:
-        """Token to lot size mapping."""
-        return self.master.TOKEN_TO_LOTSIZE
-    
-    @property
-    def DERIVATIVE_OPTIONS(self) -> list:
-        """List of derivative options."""
-        return self.master.DERIVATIVE_OPTIONS
-    
-    @property
-    def DERIVATIVE_LOADED(self) -> bool:
-        """Whether derivative data is loaded."""
-        return self.master.DERIVATIVE_LOADED
