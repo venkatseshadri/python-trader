@@ -36,7 +36,7 @@ class FutureActionExecutor(BaseActionExecutor):
         price_type = params.get('price_type') or _get_exchange_value(self.state.client, exchange, 'default_price_type', 'LMT')
         
         # Resolve Future Contract
-        res = self.state.client.place_future_order(
+        res = self.state.client.executor.place_future_order_full(
             symbol=symbol,
             exchange=exchange,
             side=side,

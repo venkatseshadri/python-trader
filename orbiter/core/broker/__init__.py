@@ -649,25 +649,6 @@ class BrokerClient:
             return self.executor.get_positions()
         return []
 
-    def place_future_order(self, **kwargs):
-        """Place future order - delegates to executor for full resolution and execution."""
-        logger.debug(f"[{self.__class__.__name__}.place_future_order] - Preparing to place future order with kwargs: {kwargs}")
-        
-        if hasattr(self.executor, 'place_future_order_full'):
-            result = self.executor.place_future_order_full(
-                symbol=kwargs['symbol'],
-                exchange=kwargs.get('exchange', 'NFO'),
-                side=kwargs['side'],
-                execute=kwargs['execute'],
-                product_type=kwargs['product_type'],
-                price_type=kwargs['price_type'],
-                token=kwargs.get('token')
-            )
-            return result
-        
-        logger.error(f"[{self.__class__.__name__}.place_future_order] - Executor does not support place_future_order_full")
-        return {'ok': False, 'reason': 'executor_not_supported'}
-
     def get_option_theta(self, symbol: str, expiry_date: str, strike_price: float, option_type: str) -> Optional[float]:
         """Fetches the Theta value for a given option contract."""
         logger.debug(f"[{self.__class__.__name__}.get_option_theta] - Fetching Theta for {symbol}, Expiry: {expiry_date}, Strike: {strike_price}, Type: {option_type}")
