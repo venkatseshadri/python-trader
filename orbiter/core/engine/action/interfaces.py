@@ -15,7 +15,13 @@ class OrderExecutorInterface(ABC):
     
     @abstractmethod
     def place_future_order(self, future_details: Dict, side: str, execute: bool, product_type: str, price_type: str) -> Dict:
-        """Place a future order."""
+        """Place a future order with pre-resolved details."""
+        pass
+    
+    @abstractmethod
+    def place_future_order_full(self, symbol: str, exchange: str, side: str, execute: bool, 
+                                 product_type: str, price_type: str, token: str = None, **kwargs) -> Dict:
+        """Place a future order with full resolution (symbol -> contract details)."""
         pass
     
     @abstractmethod

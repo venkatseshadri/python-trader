@@ -63,6 +63,8 @@ class BrokerClient:
         from orbiter.core.broker.executor import create_executor
         self.executor = create_executor(
             self.conn.api,
+            master=self.master,
+            resolver=self.resolver,
             real_broker_trade=self.real_broker_trade,
             execution_policy=policy,
             project_root=project_root,
@@ -636,25 +638,6 @@ class BrokerClient:
             return []
 
     def get_order_history(self):
-        """Get order history - from executor's order manager if available, else from broker."""
-        if hasattr(self, 'executor') and self.executor and hasattr(self.executor, 'get_order_history'):
-            return self.executor.get_order_history()
-        
-        logger.debug(f"[{self.__class__.__name__}.get_order_history] - Fetching order history from broker.")
-        try:
-            success, res = self._handle_api_call(self.api.get_order_book)
-            if not success or not res: 
-                logger.debug(f"[{self.__class__.__name__}.get_order_history] - No order history returned by broker.")
-                return []
-            ok_orders = [o for o in res if o.get('stat') == 'Ok']
-            logger.debug(f"[{self.__class__.__name__}.get_order_history] - {len(ok_orders)} 'Ok' orders fetched.")
-            logger.trace(f"[{self.__class__.__name__}.get_order_history] - Raw order book: {res}")
-            return ok_orders
-        except Exception as e:
-            logger.error(f"[{self.__class__.__name__}.get_order_history] - Error fetching order history: {e}. Traceback: {traceback.format_exc()}")
-            return []
-
-    def get_order_history(self):
         """Get order history - from executor if available, else from broker."""
         if hasattr(self, 'executor') and self.executor:
             return self.executor.get_order_history()
@@ -667,60 +650,23 @@ class BrokerClient:
         return []
 
     def place_future_order(self, **kwargs):
-        """Place future order - resolves contract then delegates to executor."""
+        """Place future order - delegates to executor for full resolution and execution."""
         logger.debug(f"[{self.__class__.__name__}.place_future_order] - Preparing to place future order with kwargs: {kwargs}")
-        symbol, exchange = kwargs['symbol'], kwargs.get('exchange', 'NFO')
-        res = self.resolver.get_near_future(symbol, exchange, self.api)
         
-        if not res and kwargs.get('token'):
-            token_in = str(kwargs.get('token'))
-            tsym = self.master.TOKEN_TO_SYMBOL.get(token_in)
-            if tsym:
-                res = {'token': token_in, 'tsym': tsym}
-                logger.debug(f"[{self.__class__.__name__}.place_future_order] - Resolved via Map: {token_in} -> {tsym}")
-
-        if not res: 
-            logger.error(f"[{self.__class__.__name__}.place_future_order] - Future contract not found for {symbol}.")
-            return {'ok': False, 'reason': 'future_not_found'}
+        if hasattr(self.executor, 'place_future_order_full'):
+            result = self.executor.place_future_order_full(
+                symbol=kwargs['symbol'],
+                exchange=kwargs.get('exchange', 'NFO'),
+                side=kwargs['side'],
+                execute=kwargs['execute'],
+                product_type=kwargs['product_type'],
+                price_type=kwargs['price_type'],
+                token=kwargs.get('token')
+            )
+            return result
         
-        lot_size = 0
-        
-        if hasattr(self, 'SYMBOLDICT'):
-            live_data = self.SYMBOLDICT.get(res['token'])
-            if live_data and live_data.get('ls'):
-                lot_size = int(live_data['ls'])
-                logger.trace(f"[{self.__class__.__name__}.place_future_order] - Found lot size in Live Feed: {lot_size}")
-
-                if lot_size <= 0:
-                    tok_id = str(res['token'].split("|")[-1])
-                    cached_ls = self.master.TOKEN_TO_LOTSIZE.get(tok_id)
-                    if cached_ls:
-                        lot_size = cached_ls
-                        logger.trace(f"[{self.__class__.__name__}.place_future_order] - Found lot size in Memory Cache: {lot_size}")
-        
-        if lot_size <= 0:
-            tsym = res.get('tsym') or res.get('tradingsymbol')
-            for r in self.master.DERIVATIVE_OPTIONS:
-                if r.get('tradingsymbol') == tsym:
-                    lot_size = int(r.get('lotsize', 0))
-                    break
-        
-        if lot_size <= 0: 
-            tsym = res.get('tsym') or res.get('tradingsymbol')
-            logger.error(f"[{self.__class__.__name__}.place_future_order] - Invalid lot size for {tsym}.")
-            return {'ok': False, 'reason': 'invalid_lot_size'}
-        
-        tsym = res.get('tsym') or res.get('tradingsymbol')
-        details = {'tsym': tsym, 'lot_size': lot_size, 'exchange': exchange, 'token': res.get('token', '')}
-        logger.debug(f"[{self.__class__.__name__}.place_future_order] - Future order details resolved: {details}")
-        
-        result = self.executor.place_future_order(details, kwargs['side'], kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
-        
-        # Record order in executor's order manager
-        if hasattr(self.executor, 'record_order'):
-            self.executor.record_order(result)
-        
-        return result
+        logger.error(f"[{self.__class__.__name__}.place_future_order] - Executor does not support place_future_order_full")
+        return {'ok': False, 'reason': 'executor_not_supported'}
 
     def get_option_theta(self, symbol: str, expiry_date: str, strike_price: float, option_type: str) -> Optional[float]:
         """Fetches the Theta value for a given option contract."""
