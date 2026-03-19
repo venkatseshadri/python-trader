@@ -7,7 +7,6 @@ from .connection import ConnectionManager
 from .master import ScripMaster
 from .resolver import ContractResolver
 from .margin import MarginCalculator
-from .executor import OrderExecutor
 from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
@@ -83,19 +82,6 @@ class BrokerClient:
         self._tick_callbacks.append(callback)
         logger.debug(f"Registered tick callback: {callback.__name__}")
         self._priming_interval = 5  # Default 5-min candles
-        
-        # Download appropriate scrip master based on segment
-        if self.segment_name == 'mcx':
-            exchange = 'MCX'
-        elif self.segment_name == 'bfo':
-            exchange = 'BFO'
-        else:
-            exchange = 'NFO'
-        self.download_scrip_master(exchange)
-        logger.debug(f"[{self.__class__.__name__}.__init__] - Scrip master downloaded for segment: {self.segment_name.upper()}")
-        
-        self.load_symbol_mapping()
-        logger.debug(f"[{self.__class__.__name__}.__init__] - Symbol mappings loaded.")
 
 
     def _init_logger(self):
