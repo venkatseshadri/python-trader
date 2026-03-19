@@ -554,6 +554,7 @@ class BrokerClient:
     def get_credit_spread_contracts(self, symbol, ltp, side, hedge_steps=4, expiry_type="monthly", instrument="OPTSTK"):
         logger.debug(f"[{self.__class__.__name__}.get_credit_spread_contracts] - Getting credit spread contracts for symbol: {symbol}, ltp: {ltp}, side: {side}")
         return self.resolver.get_credit_spread_contracts(symbol, ltp, side, hedge_steps, expiry_type, instrument)
+    
     def calculate_span_for_spread(self, spread, product_type="I", haircut=0.20):
         logger.debug(f"[{self.__class__.__name__}.calculate_span_for_spread] - Calculating span for spread: {spread}")
         return self.margin.calculate_span_for_spread(spread, self.api, self.conn.cred['user'], product_type, haircut)
