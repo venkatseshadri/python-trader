@@ -12,7 +12,7 @@ class BrokerOrderExecutor(BaseOrderExecutor):
     """Real broker trading executor."""
     
     def __init__(self, api, execution_policy: Dict = None, project_root: str = None, segment_name: str = None):
-        super().__init__(api, execution_policy, project_root, segment_name)
+        super().__init__(api, execution_policy, project_root, segment_name, paper_trade=False)
         self.policy = self.execution_policy
         self.logger.info("[BROKER] BrokerOrderExecutor initialized for live trading")
 

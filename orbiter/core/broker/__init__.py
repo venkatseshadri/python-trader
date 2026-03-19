@@ -612,6 +612,10 @@ class BrokerClient:
             return None
 
     def get_positions(self):
+        """Get positions - from executor's order manager if available, else from broker."""
+        if hasattr(self, 'executor') and self.executor and hasattr(self.executor, 'get_positions'):
+            return self.executor.get_positions()
+        
         logger.debug(f"[{self.__class__.__name__}.get_positions] - Fetching positions from broker.")
         try:
             setattr(self.api, '_NorenApi__username', self.conn.cred['user'])
@@ -632,6 +636,10 @@ class BrokerClient:
             return []
 
     def get_order_history(self):
+        """Get order history - from executor's order manager if available, else from broker."""
+        if hasattr(self, 'executor') and self.executor and hasattr(self.executor, 'get_order_history'):
+            return self.executor.get_order_history()
+        
         logger.debug(f"[{self.__class__.__name__}.get_order_history] - Fetching order history from broker.")
         try:
             success, res = self._handle_api_call(self.api.get_order_book)
@@ -646,7 +654,20 @@ class BrokerClient:
             logger.error(f"[{self.__class__.__name__}.get_order_history] - Error fetching order history: {e}. Traceback: {traceback.format_exc()}")
             return []
 
+    def get_order_history(self):
+        """Get order history - from executor if available, else from broker."""
+        if hasattr(self, 'executor') and self.executor:
+            return self.executor.get_order_history()
+        return []
+
+    def get_positions(self):
+        """Get positions - from executor if available, else from broker."""
+        if hasattr(self, 'executor') and self.executor:
+            return self.executor.get_positions()
+        return []
+
     def place_future_order(self, **kwargs):
+        """Place future order - resolves contract then delegates to executor."""
         logger.debug(f"[{self.__class__.__name__}.place_future_order] - Preparing to place future order with kwargs: {kwargs}")
         symbol, exchange = kwargs['symbol'], kwargs.get('exchange', 'NFO')
         res = self.resolver.get_near_future(symbol, exchange, self.api)
@@ -692,7 +713,14 @@ class BrokerClient:
         tsym = res.get('tsym') or res.get('tradingsymbol')
         details = {'tsym': tsym, 'lot_size': lot_size, 'exchange': exchange, 'token': res.get('token', '')}
         logger.debug(f"[{self.__class__.__name__}.place_future_order] - Future order details resolved: {details}")
-        return self.executor.place_future_order(details, kwargs['side'], kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
+        
+        result = self.executor.place_future_order(details, kwargs['side'], kwargs['execute'], kwargs['product_type'], kwargs['price_type'])
+        
+        # Record order in executor's order manager
+        if hasattr(self.executor, 'record_order'):
+            self.executor.record_order(result)
+        
+        return result
 
     def get_option_theta(self, symbol: str, expiry_date: str, strike_price: float, option_type: str) -> Optional[float]:
         """Fetches the Theta value for a given option contract."""
