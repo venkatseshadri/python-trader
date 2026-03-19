@@ -2,7 +2,7 @@ import pytest
 import datetime
 from unittest.mock import MagicMock
 from orbiter.core.broker.resolver import ContractResolver
-from orbiter.core.broker.margin import MarginCalculator
+from orbiter.utils.margin.margin_calculator import MarginCalculator
 
 def test_is_last_thursday():
     resolver = ContractResolver(MagicMock())

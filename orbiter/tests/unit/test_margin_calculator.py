@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from orbiter.core.broker.margin import MarginCalculator
+from orbiter.utils.margin.margin_calculator import MarginCalculator
 
 
 class FakeApi:

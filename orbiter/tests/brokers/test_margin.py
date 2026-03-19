@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from orbiter.core.broker.margin import MarginCalculator
+from orbiter.utils.margin.margin_calculator import MarginCalculator
 
 class TestMarginCalculator(unittest.TestCase):
 

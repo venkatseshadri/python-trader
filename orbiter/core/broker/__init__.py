@@ -6,7 +6,7 @@ from typing import Dict, Optional, Any, List
 from .connection import ConnectionManager
 from .master import ScripMaster
 from .resolver import ContractResolver
-from .margin import MarginCalculator
+from orbiter.utils.margin.margin_calculator import MarginCalculator
 from orbiter.utils.constants_manager import ConstantsManager
 
 logger = logging.getLogger("ORBITER")
