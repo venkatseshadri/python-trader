@@ -1,0 +1,139 @@
+python3: can't open file '/home/trading_ceo/orbiter/main.py': [Errno 2] No such file or directory
+Traceback (most recent call last):
+  File "/home/trading_ceo/python-trader/orbiter/main.py", line 8, in <module>
+    from orbiter.utils.system import get_project_root
+ModuleNotFoundError: No module named 'orbiter'
+✨ ORBITER v3.3.0-20260318-95d8d75 | PID: 712056
+[MARGIN] Using MarginAwareExecutor (paper trade mode)
+2026-03-18 04:02:28,113 | INFO     | Logging initialized to level: DEBUG
+2026-03-18 04:02:28,113 | INFO     | ❌ Another Orbiter instance is already running. Lockfile exists: /home/trading_ceo/python-trader/orbiter.lock
+2026-03-18 04:02:28,113 | CRITICAL | 💥 CRITICAL SYSTEM FAILURE: Another Orbiter instance is already running.
+Traceback (most recent call last):
+  File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 19, in manage_lockfile
+    lockfile_path.touch(exist_ok=False)
+  File "/usr/lib/python3.12/pathlib.py", line 1305, in touch
+    fd = os.open(self, flags, mode)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileExistsError: [Errno 17] File exists: '/home/trading_ceo/python-trader/orbiter.lock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/trading_ceo/python-trader/orbiter/main.py", line 32, in run_orchestrator
+    manage_lockfile(project_root, LOCK_ACQUIRE)
+  File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 29, in manage_lockfile
+    raise RuntimeError("Another Orbiter instance is already running.")
+RuntimeError: Another Orbiter instance is already running.
+
+2026-03-18 04:02:28,136 | ERROR    | Traceback (most recent call last):
+2026-03-18 04:02:28,137 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 19, in manage_lockfile
+2026-03-18 04:02:28,137 | ERROR    | lockfile_path.touch(exist_ok=False)
+2026-03-18 04:02:28,137 | ERROR    | File "/usr/lib/python3.12/pathlib.py", line 1305, in touch
+2026-03-18 04:02:28,137 | ERROR    | fd = os.open(self, flags, mode)
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | ^
+2026-03-18 04:02:28,137 | ERROR    | FileExistsError
+2026-03-18 04:02:28,137 | ERROR    | :
+2026-03-18 04:02:28,137 | ERROR    | [Errno 17] File exists: '/home/trading_ceo/python-trader/orbiter.lock'
+2026-03-18 04:02:28,137 | ERROR    | During handling of the above exception, another exception occurred:
+2026-03-18 04:02:28,137 | ERROR    | Traceback (most recent call last):
+2026-03-18 04:02:28,137 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/main.py", line 48, in <module>
+2026-03-18 04:02:28,137 | ERROR    | run_orchestrator()
+2026-03-18 04:02:28,137 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/main.py", line 32, in run_orchestrator
+2026-03-18 04:02:28,137 | ERROR    | manage_lockfile(project_root, LOCK_ACQUIRE)
+2026-03-18 04:02:28,137 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 29, in manage_lockfile
+2026-03-18 04:02:28,137 | ERROR    | raise RuntimeError("Another Orbiter instance is already running.")
+2026-03-18 04:02:28,137 | ERROR    | RuntimeError
+2026-03-18 04:02:28,137 | ERROR    | :
+2026-03-18 04:02:28,137 | ERROR    | Another Orbiter instance is already running.
+✨ ORBITER v3.3.0-20260318-95d8d75 | PID: 712375
+[MARGIN] Using MarginAwareExecutor (paper trade mode)
+2026-03-18 04:03:01,822 | INFO     | Logging initialized to level: DEBUG
+2026-03-18 04:03:01,822 | INFO     | ❌ Another Orbiter instance is already running. Lockfile exists: /home/trading_ceo/python-trader/orbiter.lock
+2026-03-18 04:03:01,823 | CRITICAL | 💥 CRITICAL SYSTEM FAILURE: Another Orbiter instance is already running.
+Traceback (most recent call last):
+  File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 19, in manage_lockfile
+    lockfile_path.touch(exist_ok=False)
+  File "/usr/lib/python3.12/pathlib.py", line 1305, in touch
+    fd = os.open(self, flags, mode)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileExistsError: [Errno 17] File exists: '/home/trading_ceo/python-trader/orbiter.lock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/trading_ceo/python-trader/orbiter/main.py", line 32, in run_orchestrator
+    manage_lockfile(project_root, LOCK_ACQUIRE)
+  File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 29, in manage_lockfile
+    raise RuntimeError("Another Orbiter instance is already running.")
+RuntimeError: Another Orbiter instance is already running.
+
+2026-03-18 04:03:01,850 | ERROR    | Traceback (most recent call last):
+2026-03-18 04:03:01,851 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 19, in manage_lockfile
+2026-03-18 04:03:01,851 | ERROR    | lockfile_path.touch(exist_ok=False)
+2026-03-18 04:03:01,851 | ERROR    | File "/usr/lib/python3.12/pathlib.py", line 1305, in touch
+2026-03-18 04:03:01,851 | ERROR    | fd = os.open(self, flags, mode)
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | ^
+2026-03-18 04:03:01,851 | ERROR    | FileExistsError
+2026-03-18 04:03:01,851 | ERROR    | :
+2026-03-18 04:03:01,851 | ERROR    | [Errno 17] File exists: '/home/trading_ceo/python-trader/orbiter.lock'
+2026-03-18 04:03:01,851 | ERROR    | During handling of the above exception, another exception occurred:
+2026-03-18 04:03:01,851 | ERROR    | Traceback (most recent call last):
+2026-03-18 04:03:01,851 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/main.py", line 48, in <module>
+2026-03-18 04:03:01,852 | ERROR    | run_orchestrator()
+2026-03-18 04:03:01,852 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/main.py", line 32, in run_orchestrator
+2026-03-18 04:03:01,852 | ERROR    | manage_lockfile(project_root, LOCK_ACQUIRE)
+2026-03-18 04:03:01,852 | ERROR    | File "/home/trading_ceo/python-trader/orbiter/utils/lock.py", line 29, in manage_lockfile
+2026-03-18 04:03:01,852 | ERROR    | raise RuntimeError("Another Orbiter instance is already running.")
+2026-03-18 04:03:01,852 | ERROR    | RuntimeError
+2026-03-18 04:03:01,852 | ERROR    | :
+2026-03-18 04:03:01,852 | ERROR    | Another Orbiter instance is already running.

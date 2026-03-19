@@ -1,0 +1,86 @@
+{
+  "# NOTE": "Run 'python orbiter/tools/mcx_risk_audit_v4_0.py' to update this file with latest tokens and margins",
+  "# Last Updated": "2026-03-18",
+  "instruments": [
+    {
+      "symbol": "CRUDEOILM",
+      "token": "472790",
+      "exchange": "MCX",
+      "lot_size": 10,
+      "margin_per_lot": 38149,
+      "description": "Crude Oil Mini"
+    },
+    {
+      "symbol": "NATGASMINI",
+      "token": "475112",
+      "exchange": "MCX",
+      "lot_size": 250,
+      "margin_per_lot": 22760,
+      "description": "Natural Gas Mini"
+    },
+    {
+      "symbol": "SILVERMIC",
+      "token": "466029",
+      "exchange": "MCX",
+      "lot_size": 1,
+      "margin_per_lot": 30444,
+      "description": "Silver Micro"
+    },
+    {
+      "symbol": "SILVERM",
+      "token": "457533",
+      "exchange": "MCX",
+      "lot_size": 5,
+      "margin_per_lot": 152111,
+      "description": "Silver Mini"
+    },
+    {
+      "symbol": "GOLDM",
+      "token": "477904",
+      "exchange": "MCX",
+      "lot_size": 100,
+      "margin_per_lot": 2144450,
+      "description": "Gold Mini"
+    },
+    {
+      "symbol": "GOLDTEN",
+      "token": "477176",
+      "exchange": "MCX",
+      "lot_size": 10,
+      "margin_per_lot": 215572,
+      "description": "Gold Ten"
+    },
+    {
+      "symbol": "GOLDGUINEA",
+      "token": "477174",
+      "exchange": "MCX",
+      "lot_size": 8,
+      "margin_per_lot": 140280,
+      "description": "Gold Guinea"
+    },
+    {
+      "symbol": "ALUMINI",
+      "token": "487655",
+      "exchange": "MCX",
+      "lot_size": 1000,
+      "margin_per_lot": 34220,
+      "description": "Aluminium Mini"
+    },
+    {
+      "symbol": "ZINCMINI",
+      "token": "487663",
+      "exchange": "MCX",
+      "lot_size": 1000,
+      "margin_per_lot": 37758,
+      "description": "Zinc Mini"
+    },
+    {
+      "symbol": "LEADMINI",
+      "token": "487659",
+      "exchange": "MCX",
+      "lot_size": 1000,
+      "margin_per_lot": 18775,
+      "description": "Lead Mini"
+    }
+  ]
+}

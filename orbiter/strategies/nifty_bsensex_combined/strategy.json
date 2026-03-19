@@ -1,0 +1,15 @@
+{
+  "name": "Nifty FnO TopN Trend",
+  "exchange_id": "nfo",
+  "strategy_type": "top_n",
+  "files": {
+    "rules_file": "orbiter/strategies/nifty_fno_topn_trend/rules.json",
+    "instruments_file": "orbiter/strategies/nifty_fno_topn_trend/instruments.json",
+    "filters_file": "orbiter/strategies/nifty_fno_topn_trend/filters.json"
+  },
+  "strategy_parameters": {
+    "top_n": 5,
+    "trend_score_threshold": 0.5,
+    "priming_lookback_mins": 240
+  }
+}

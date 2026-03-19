@@ -31,11 +31,11 @@ class TestArgumentParser(unittest.TestCase):
         
     def test_parse_cli_strategy_code(self):
         """Test --strategyCode= resolves to strategyId"""
-        system_json = {"strategy_codes": {"m1": "mcx_trend_follower"}}
-        system_path = os.path.join(self.project_root, "orbiter", "config")
-        os.makedirs(system_path, exist_ok=True)
-        with open(os.path.join(system_path, "system.json"), "w") as f:
-            json.dump(system_json, f)
+        config_json = {"strategy_codes": {"m1": "mcx_trend_follower"}, "default_strategy": "mcx_trend_follower"}
+        config_path = os.path.join(self.project_root, "orbiter", "config")
+        os.makedirs(config_path, exist_ok=True)
+        with open(os.path.join(config_path, "config.json"), "w") as f:
+            json.dump(config_json, f)
         
         # Create strategy directory
         strat_path = os.path.join(self.project_root, "orbiter", "strategies", "mcx_trend_follower")
@@ -49,13 +49,13 @@ class TestArgumentParser(unittest.TestCase):
         
     def test_parse_cli_strategy_id_full_name(self):
         """Test --strategyId= with full name still works"""
-        system_json = {"strategy_codes": {"m1": "mcx_trend_follower"}}
-        system_path = os.path.join(self.project_root, "orbiter", "config")
-        os.makedirs(system_path, exist_ok=True)
-        with open(os.path.join(system_path, "system.json"), "w") as f:
-            json.dump(system_json, f)
+        config_json = {"strategy_codes": {"m1": "mcx_trend_follower"}, "default_strategy": "mcx_trend_follower"}
+        config_path = os.path.join(self.project_root, "orbiter", "config")
+        os.makedirs(config_path, exist_ok=True)
+        with open(os.path.join(config_path, "config.json"), "w") as f:
+            json.dump(config_json, f)
         
-        # Also create strategy directory so validation passes
+        # Create strategy directory so validation passes
         strat_path = os.path.join(self.project_root, "orbiter", "strategies", "nifty_fno_topn_trend")
         os.makedirs(strat_path, exist_ok=True)
             
@@ -77,15 +77,22 @@ class TestArgumentParser(unittest.TestCase):
         
     def test_parse_cli_ignores_extra_args(self):
         """Test only first 5 arguments are processed, 6th ignored"""
+        config_json = {"default_strategy": "default"}
+        config_path = os.path.join(self.project_root, "orbiter", "config")
+        os.makedirs(config_path, exist_ok=True)
+        with open(os.path.join(config_path, "config.json"), "w") as f:
+            json.dump(config_json, f)
+        
+        # Note: Only first 5 args are processed - extra args (6th onwards) are ignored
         facts = ArgumentParser.parse_cli_to_facts(
-            ['--simulation=true', '--strategyId=test', '--strategyExecution=fixed', '--unknown=value', '--extra=ignored'], 
-            project_root=None
+            ['--simulation=true', '--strategyId=test', '--strategyExecution=fixed', '--unknown=value', '--extra=ignored', '--sixth=ignored'], 
+            project_root=self.project_root
         )
         self.assertIn('simulation', facts)
         self.assertIn('strategyid', facts)
         self.assertIn('strategy_execution', facts)
         # 6th arg should be ignored
-        self.assertNotIn('extra', facts)
+        self.assertNotIn('sixth', facts)
 
     def test_dynamic_mode_enabled(self):
         """Test --strategyExecution=dynamic loads config"""
@@ -123,6 +130,12 @@ class TestArgumentParser(unittest.TestCase):
         
     def test_dynamic_mode_with_strategy_id_raises_error(self):
         """Test --strategyExecution=dynamic with --strategyId raises error"""
+        config_json = {"default_strategy": "default"}
+        config_path = os.path.join(self.project_root, "orbiter", "config")
+        os.makedirs(config_path, exist_ok=True)
+        with open(os.path.join(config_path, "config.json"), "w") as f:
+            json.dump(config_json, f)
+        
         with self.assertRaises(ValueError) as ctx:
             ArgumentParser.parse_cli_to_facts(
                 ['--strategyExecution=dynamic', '--strategyId=mcx_trend_follower'],

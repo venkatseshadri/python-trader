@@ -10,6 +10,7 @@ Provides abstract interface for order execution with two implementations:
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any
+from orbiter.core.engine.action.interfaces import OrderExecutorInterface
 
 
 class OrderExecutorInterface(ABC):

@@ -1,0 +1,14 @@
+{
+  "name": "💰 Synergy Gold Strategy",
+  "description": "Balanced daily consistency strategy. 50/50 EMA Location + Slope, 0.15 Threshold, 50% TSL.",
+  "config": {
+    "entry_start_time": "11:30",
+    "entry_end_time": "14:30",
+    "trade_threshold": 0.15,
+    "sl_pct": 15.0,
+    "tsl_activation_rs": 1000,
+    "tsl_retracement_pct": 50,
+    "weights": [0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0],
+    "soft_sl_atr": false
+  }
+}

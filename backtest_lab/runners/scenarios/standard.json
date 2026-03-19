@@ -1,0 +1,12 @@
+{
+  "name": "1. Standard Baseline",
+  "description": "Balanced F1-F7 logic at 10:30 AM",
+  "config": {
+    "entry_start_time": "10:30",
+    "entry_end_time": "14:30",
+    "trade_threshold": 0.20,
+    "sl_pct": 10.0,
+    "enabled_filters": [1, 2, 3, 4, 5, 6, 7],
+    "weights": [1.0, 1.2, 1.2, 0.6, 1.2, 1.2, 1.0]
+  }
+}

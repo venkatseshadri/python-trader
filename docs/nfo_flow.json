@@ -1,0 +1,64 @@
+{
+  "xml": {
+    "mxfile": {
+      "diagram": {
+        "id": "nfo-flow",
+        "name": "NFO Trading Flow",
+        "root": "NFO Flow"
+      }
+    },
+    "diagram": {
+      "nodeDataArray": [
+        {"id": "1", "text": "START: Strategy Run", "type": "start"},
+        {"id": "2", "text": "Load instruments.json\n(stock symbols)", "type": "process"},
+        {"id": "3", "text": "For each stock symbol:\nGet futures data from broker", "type": "process"},
+        {"id": "4", "text": "futures_master.json\n(exists)", "type": "decision", "yes": "5", "no": "6"},
+        {"id": "5", "text": "Load futures data\nfrom futures_master.json", "type": "process"},
+        {"id": "6", "text": "Return error:\nNo futures data", "type": "end"},
+        {"id": "7", "text": "Calculate indicators\n(ADX, EMA, SuperTrend)", "type": "process"},
+        {"id": "8", "text": "Score calculation\n(based on rules.json)", "type": "process"},
+        {"id": "9", "text": "Score >= Threshold?", "type": "decision", "yes": "10", "no": "2"},
+        {"id": "10", "text": "TRADE: Place Options Order", "type": "process"},
+        {"id": "11", "text": "resolve_option_symbol()\n(symbol, ltp, option_type,\nstrike_logic, expiry_type)", "type": "process"},
+        {"id": "12", "text": "_select_expiry()\n(determine expiry date)", "type": "process"},
+        {"id": "13", "text": "_get_option_rows()\n(symbol, ltp, expiry,\ninstrument)", "type": "process"},
+        {"id": "14", "text": "Local file has\noption data?", "type": "decision", "yes": "15", "no": "16"},
+        {"id": "15", "text": "Return rows from\nfutures_master.json", "type": "process"},
+        {"id": "16", "text": "Query broker API\nget_security_info()", "type": "process"},
+        {"id": "17", "text": "Get lot_size from\nbroker API response", "type": "process"},
+        {"id": "18", "text": "Generate strikes\naround ATM (ltp)", "type": "process"},
+        {"id": "19", "text": "Return option rows\nwith lot_size", "type": "process"},
+        {"id": "20", "text": "Apply strike_logic\n(ATM, ATM+1, ATM-4)", "type": "process"},
+        {"id": "21", "text": "Return contract details\n(token, tradingsymbol,\nlot_size, exchange)", "type": "process"},
+        {"id": "22", "text": "place_spread()\nExecute order via broker", "type": "process"},
+        {"id": "23", "text": "END", "type": "end"}
+      ],
+      "edgeDataArray": [
+        {"from": "1", "to": "2"},
+        {"from": "2", "to": "3"},
+        {"from": "3", "to": "4"},
+        {"from": "4", "to": "5", "text": "yes"},
+        {"from": "4", "to": "6", "text": "no"},
+        {"from": "5", "to": "7"},
+        {"from": "7", "to": "8"},
+        {"from": "8", "to": "9"},
+        {"from": "9", "to": "10", "text": "yes"},
+        {"from": "9", "to": "2", "text": "no (next stock)"},
+        {"from": "10", "to": "11"},
+        {"from": "11", "to": "12"},
+        {"from": "12", "to": "13"},
+        {"from": "13", "to": "14"},
+        {"from": "14", "to": "15", "text": "yes"},
+        {"from": "14", "to": "16", "text": "no"},
+        {"from": "15", "to": "20"},
+        {"from": "16", "to": "17"},
+        {"from": "17", "to": "18"},
+        {"from": "18", "to": "19"},
+        {"from": "19", "to": "20"},
+        {"from": "20", "to": "21"},
+        {"from": "21", "to": "22"},
+        {"from": "22", "to": "23"}
+      ]
+    }
+  }
+}

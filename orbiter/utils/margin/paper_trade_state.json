@@ -1,0 +1,11 @@
+{
+  "config": {
+    "initial_capital": 100000,
+    "cash": 100000,
+    "used_margin": 0,
+    "mtm": 0,
+    "positions": []
+  },
+  "positions": [],
+  "last_updated": "2026-03-18T02:30:38.197594"
+}
