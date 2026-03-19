@@ -41,7 +41,7 @@ class TestCoreEngineTickRealData(unittest.TestCase):
         )
         state = SimpleNamespace(client=client, symbols=[token], active_positions=[], verbose_logs=False)
 
-        engine = Engine(state, session, action_manager, office_mode=True)
+        engine = Engine(state, session, action_manager)
         engine.tick()
 
 

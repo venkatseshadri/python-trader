@@ -62,18 +62,13 @@ class OrbiterApp:
         logger.debug("Setting up engine.")
         try:
             paper_trade = self.ctx.context.get('paper_trade', True)
-            office_mode = self.ctx.context.get('office_mode', False)
             
             engine = EngineFactory.build_engine(
                 self.ctx.session_manager,
                 self.ctx.action_manager,
                 paper_trade=paper_trade,
-                office_mode=office_mode,
                 context=self.ctx.context,
             )
-            
-            if office_mode:
-                self._send_office_mode_signal()
             
             AppBuilder.setup_engine(self.ctx, engine, self)
             self.initialized = True
@@ -83,15 +78,6 @@ class OrbiterApp:
             logger.critical(self.ctx.constants.get('magic_strings', 'setup_failed_msg', "❌ Setup failed: {error}").format(error=e))
             logger.critical(traceback.format_exc())
             return False
-
-    def _send_office_mode_signal(self):
-        from orbiter.utils.telegram_notifier import send_telegram_msg
-        try:
-            send_telegram_msg("🏢 <b>OFFICE MODE ACTIVE</b>\n\nMBP is taking over trading.\nFreezing RPI...")
-            send_telegram_msg("/freeze")
-            logger.info("📤 Sent freeze signal to RPI via Telegram")
-        except Exception as e:
-            logger.warning(f"Failed to send Telegram freeze: {e}")
 
     def login(self):
         self.ctx.logged_in = AuthService.login(self.ctx.engine)

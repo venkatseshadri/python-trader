@@ -98,13 +98,12 @@ class TestSystemUtils(unittest.TestCase):
         """Verify that any arguments beyond the first five are entirely ignored."""
         mock_exists.return_value = True
         mock_isdir.return_value = True
-        args = ["--simulation=true", "--strategyId=strat1", "--strategyExecution=fixed", "--office_mode=false", "--known=value", "--extraArg=foo"]
+        args = ["--simulation=true", "--strategyId=strat1", "--strategyExecution=fixed", "--unknown=value", "--extraArg=foo"]
         facts = ArgumentParser.parse_cli_to_facts(args, project_root="/fake/root")
         
         self.assertTrue(facts.get('simulation'))
         self.assertEqual(facts.get('strategyid'), 'strat1')
         self.assertEqual(facts.get('strategy_execution'), 'fixed')
-        self.assertEqual(facts.get('office_mode'), False)
         self.assertNotIn('extraarg', facts)
 
     @patch('os.path.isdir')

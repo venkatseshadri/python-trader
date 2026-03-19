@@ -34,12 +34,6 @@
 | `--strategyCode=s2` | BSE SENSEX Expiry Day Short Straddle | Sensex Options |
 | `--strategyExecution=dynamic` | Auto-select strategy based on ADX | |
 
-### Office Mode
-
-| Flag | Description |
-|------|-------------|
-| `--office_mode=true` | Live data but no trades (for RPI takeover) |
-
 ### Paper Positions
 
 | Flag | Description |
@@ -59,7 +53,6 @@ This is important for strategies like Iron Condor that only trade when `portfoli
 |------|---------------|
 | `--strategyCode=s1` | `--strategy_code=s1`, `--strategyId=bsensex_bfo_topn_trend` |
 | `--paper_trade=false` | `--paper_trade=false` |
-| `--office_mode=true` | `--office_mode=true` (no =value needed) |
 
 ## Environment Variables
 
@@ -125,11 +118,6 @@ ORBITER_LOG_LEVEL=TRACE python -m orbiter.main --paper_trade=true --strategyCode
 ORBITER_SIMULATE_MARKET_HOURS=true python -m orbiter.main --paper_trade=true --strategyExecution=dynamic
 ```
 
-### Office mode (MBP takes over from RPI)
-```bash
-python -m orbiter.main --office_mode=true --paper_trade=false
-```
-
 ## Mode Matrix
 
 | Scenario | Paper Trade | Simulate Market Hours | Result |
@@ -138,7 +126,6 @@ python -m orbiter.main --office_mode=true --paper_trade=false
 | Paper trade during hours | true | false | Run, no trades |
 | Live trade during hours | false | false | Run, real trades |
 | Test live at home | false | true | Run, real trades |
-| Office mode takeover | false | false | Run, live + freeze RPI |
 
 ## Dynamic Strategy Selection
 

@@ -21,7 +21,6 @@ class BrokerClient:
     def __init__(
         self,
         project_root: str = None,
-        config_path: str = '../cred.yml',
         segment_name: str = 'nfo',
         paper_trade: bool = True
     ):
@@ -37,7 +36,7 @@ class BrokerClient:
         self.project_root = project_root
         self.segment_name = segment_name.lower()
         self.constants = ConstantsManager.get_instance()
-        self.conn = ConnectionManager(config_path)
+        self.conn = ConnectionManager()
 
         if self.segment_name not in BrokerClient._MASTERS:
             BrokerClient._MASTERS[self.segment_name] = ScripMaster(project_root)

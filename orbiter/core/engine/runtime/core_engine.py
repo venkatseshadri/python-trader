@@ -16,11 +16,10 @@ class Engine:
     The trading machine. 
     It wires Fact Providers to Rule Evaluation and then to Action Registries.
     """
-    def __init__(self, state, session_manager: SessionManager, action_manager: ActionManager, office_mode=False): # Type hint SessionManager
+    def __init__(self, state, session_manager: SessionManager, action_manager: ActionManager):
         logger.debug(f"[{self.__class__.__name__}.__init__] - Initializing Engine.")
         self.state = state
         self.session_manager = session_manager
-        self.office_mode = office_mode
         self.action_logic = ActionExecutor(state)
         self.action_manager = action_manager # ActionManager passed from OrbiterApp
         self.constants = ConstantsManager.get_instance()
@@ -82,11 +81,8 @@ class Engine:
         logger.trace(f"[{self.__class__.__name__}.tick] - Evaluating global engine rules.")
         global_actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'engine_global_context'))
         if global_actions:
-            if self.office_mode:
-                logger.info(f"Office mode enabled: suppressed {len(global_actions)} global actions.")
-            else:
-                logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(global_actions)} global engine actions.")
-                self.action_manager.execute_batch(global_actions)
+            logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(global_actions)} global engine actions.")
+            self.action_manager.execute_batch(global_actions)
 
         # Evaluate instrument-specific rules
         if not symbols_to_process:
@@ -337,19 +333,16 @@ class Engine:
                 actions = None
             
             if actions:
-                if self.office_mode:
-                    logger.info(f"Office mode enabled: suppressed {len(global_actions)} global actions.")
-                else:
-                    # Inject symbol into each action's params so the executor knows which instrument triggered it
-                    logger.trace(f"🔭 [Engine.tick] BEFORE INJECT: symbol_name={symbol_name}, actions[0].get('params')={actions[0].get('params', {}) if actions else {}}")
-                    for action in actions:
-                        if 'params' not in action: action['params'] = {}
-                        if 'symbol' not in action['params']:
-                            action['params']['symbol'] = symbol_name
-                        logger.trace(f"🔭 [Engine.tick] Action params for {symbol_name}: {action.get('params', {})}")
+                # Inject symbol into each action's params so the executor knows which instrument triggered it
+                logger.trace(f"🔭 [Engine.tick] BEFORE INJECT: symbol_name={symbol_name}, actions[0].get('params')={actions[0].get('params', {}) if actions else {}}")
+                for action in actions:
+                    if 'params' not in action: action['params'] = {}
+                    if 'symbol' not in action['params']:
+                        action['params']['symbol'] = symbol_name
+                    logger.trace(f"🔭 [Engine.tick] Action params for {symbol_name}: {action.get('params', {})}")
 
-                    logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(actions)} instrument actions for {token} ({symbol_name}).")
-                    self.action_manager.execute_batch(actions)
+                logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(actions)} instrument actions for {token} ({symbol_name}).")
+                self.action_manager.execute_batch(actions)
         logger.debug(f"[{self.__class__.__name__}.tick] - Engine tick cycle complete.")
 
 

@@ -67,23 +67,13 @@ class ArgumentParser:
         Examples:
         - ['--paper_trade=true', '--strategyCode=m1'] -> {paper_trade: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
         - ['--strategyExecution=dynamic'] -> {paper_trade: True, strategy_execution: 'dynamic'}
-        - ['--office_mode=true'] -> {paper_trade: False, office_mode: True}
-        
-        Mode Matrix:
-        | paper_trade | office_mode | Result |
-        |-------------|-------------|--------|
-        | false       | false       | LIVE TRADING |
-        | true        | false       | PAPER TRADING (simulated orders) |
-        | false       | true        | OFFICE MODE (live data, no trades) |
         
         Raises:
             ValueError: If both --strategyExecution=dynamic and --strategyCode/--strategyId are provided
-            ValueError: If conflicting paper_trade/office_mode flags
         """
         logger = logging.getLogger(__name__)
         facts = {
             'paper_trade': True,  # Default to paper trade for safety
-            'office_mode': False,
             'strategy_execution': 'fixed',
             'mock_data': False,
             'mock_data_file': None
@@ -93,11 +83,10 @@ class ArgumentParser:
         use_strategy_code = False
         strategy_execution = 'fixed'
         paper_trade_set = False
-        office_mode_set = False
         
         # Known arguments - process these, but still pass through unknown args
         # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'paper_trade', 'office_mode', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
+        known_args = {'paper_trade', 'strategy_id', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -127,8 +116,6 @@ class ArgumentParser:
                             strategy_execution = v
                         elif k_clean == 'paper_trade':
                             paper_trade_set = True
-                        elif k_clean == 'office_mode':
-                            office_mode_set = True
                         elif k_clean == 'mock_data_file':
                             facts['mock_data_file'] = v
                 else:
@@ -136,23 +123,10 @@ class ArgumentParser:
                     facts[k_clean] = True
                     if k_clean == 'paper_trade':
                         paper_trade_set = True
-                    elif k_clean == 'office_mode':
-                        office_mode_set = True
-        
-        # Validate paper_trade + office_mode combination
-        if paper_trade_set and office_mode_set:
-            if facts['paper_trade'] and facts['office_mode']:
-                raise ValueError(
-                    "Invalid combination: Cannot use both --paper_trade=true and --office_mode=true. "
-                    "Use --office_mode=true for live data without trades, or --paper_trade=true for paper trading."
-                )
         
         # Set defaults based on flags
-        if not paper_trade_set and not office_mode_set:
+        if not paper_trade_set:
             facts['paper_trade'] = True
-            facts['office_mode'] = False
-        elif office_mode_set and facts['office_mode']:
-            facts['paper_trade'] = False
         
         # Handle dynamic vs fixed mode
         if strategy_execution == 'dynamic':

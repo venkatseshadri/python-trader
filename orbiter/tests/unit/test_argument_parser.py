@@ -78,13 +78,12 @@ class TestArgumentParser(unittest.TestCase):
     def test_parse_cli_ignores_extra_args(self):
         """Test only first 5 arguments are processed, 6th ignored"""
         facts = ArgumentParser.parse_cli_to_facts(
-            ['--simulation=true', '--strategyId=test', '--strategyExecution=fixed', '--office_mode=false', '--known=value', '--extra=ignored'], 
+            ['--simulation=true', '--strategyId=test', '--strategyExecution=fixed', '--unknown=value', '--extra=ignored'], 
             project_root=None
         )
         self.assertIn('simulation', facts)
         self.assertIn('strategyid', facts)
         self.assertIn('strategy_execution', facts)
-        self.assertIn('office_mode', facts)
         # 6th arg should be ignored
         self.assertNotIn('extra', facts)
 

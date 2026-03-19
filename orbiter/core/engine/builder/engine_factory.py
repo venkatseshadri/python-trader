@@ -21,7 +21,7 @@ class EngineFactory:
     Builds the unified trading engine using the DataManager for any file lookups.
     """
     @staticmethod
-    def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, office_mode: bool = False, context: dict = None):
+    def build_engine(session_manager: SessionManager, action_manager: ActionManager, paper_trade: bool = True, context: dict = None):
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Starting engine build process.")
         constants = ConstantsManager.get_instance()
         meta_config = MetaConfigManager.get_instance(session_manager.project_root)
@@ -50,7 +50,6 @@ class EngineFactory:
             **global_config,
             **segment_config,
             'paper_trade': paper_trade,
-            'office_mode': office_mode,
             'verbose_logs': True
         }
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Merged full configuration: {full_config}")
@@ -102,4 +101,4 @@ class EngineFactory:
         print(constants.get('magic_strings', 'entry_threshold_msg').format(threshold=full_config.get(trade_score_key)))
 
         logger.info(f"[{EngineFactory.__name__}.build_engine] - Engine build process complete. Returning Engine instance.")
-        return Engine(state, session_manager, action_manager, office_mode)
+        return Engine(state, session_manager, action_manager)
