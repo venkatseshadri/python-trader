@@ -6,8 +6,8 @@
 ## v4.3.0 Changes
 
 ### CLI Refactor: --real_broker_trade Flag
-- Replaced `--paper_trade=false` with `--real_broker_trade=true`
-- Default is now paper_trade (safe by default)
+- Replaced `--paper_trade` with `--real_broker_trade`
+- Default is `real_broker_trade=false` (paper trading for safety)
 - Use `--real_broker_trade=true` to enable live trading
 - Updated AGENTS.md documentation
 

@@ -16,12 +16,12 @@
 
 ### Trading Modes
 
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--real_broker_trade=true` | Real trading - place actual orders | `--real_broker_trade=true` |
-| (no flag) | Paper trading - no real orders placed (SAFE) | default |
+| Flag | Description |
+|------|-------------|
+| `--real_broker_trade=true` | Real trading - place actual orders |
+| `--real_broker_trade=false` | Paper trading - no real orders placed (DEFAULT) |
 
-**Default:** `paper_trade=true` (always safe unless you explicitly set `--real_broker_trade=true`)
+**Default:** `real_broker_trade=false` (always paper trading for safety)
 
 ### Strategy Selection
 
