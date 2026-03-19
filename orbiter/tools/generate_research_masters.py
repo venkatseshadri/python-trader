@@ -5,8 +5,8 @@ import os
 # Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(BASE_DIR, '../backtest_lab/data/orb_efficiency_stats.csv')
-BUDGET_MASTER_PATH = os.path.join(BASE_DIR, 'data/budget_master.json')
-WEIGHTS_MASTER_PATH = os.path.join(BASE_DIR, 'data/orb_weights_master.json')
+BUDGET_MASTER_PATH = os.path.join(BASE_DIR, 'data/research/budget_master.json')
+WEIGHTS_MASTER_PATH = os.path.join(BASE_DIR, 'data/research/orb_weights_master.json')
 
 def generate_masters():
     if not os.path.exists(CSV_PATH):
