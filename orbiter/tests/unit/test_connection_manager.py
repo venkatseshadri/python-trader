@@ -19,7 +19,7 @@ class FakeApi:
             return {'stat': 'Ok'}
         return {'stat': 'Not_Ok', 'emsg': 'bad'}
 
-    def start_websocket(self, subscribe_callback=None, socket_open_callback=None, order_update_callback=None):
+    def start_websocket(self, subscribe_callback=None, socket_open_callback=None, socket_close_callback=None, order_update_callback=None):
         self.start_websocket_args = (subscribe_callback, socket_open_callback, order_update_callback)
         if socket_open_callback:
             socket_open_callback()
