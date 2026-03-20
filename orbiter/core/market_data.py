@@ -26,12 +26,12 @@ class MarketData:
             lookback = 300  # 300 mins = ~60 candles for ADX warmup (was 120)
             interval = 5   # Default
             
-            client.start_live_feed(symbols)
+            client.conn.tick_handler.start_live_feed(client.conn, symbols)
             
             def _bg_prime():
                 try:
-                    client._priming_interval = interval
-                    client.prime_candles(symbols, lookback_mins=lookback)
+                    client.conn.tick_handler._priming_interval = interval
+                    client.conn.tick_handler.prime_candles(symbols, lookback_mins=lookback)
                     logger.info("✅ Background Data Priming Complete.")
                 except Exception as e:
                     logger.error(f"❌ Priming failed: {e}")
