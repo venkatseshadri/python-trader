@@ -36,7 +36,7 @@ def ratio_raider_filter(data, candles, **kwargs):
         
         # Find partner's live LTP
         partner_data = None
-        for token, val in state.client.SYMBOLDICT.items():
+        for token, val in state.client.conn.tick_handler.SYMBOLDICT.items():
             if partner_symbol in val.get('t', ''):
                 partner_data = val
                 break

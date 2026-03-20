@@ -104,24 +104,24 @@ class RuleManager:
                     index_token = '1165486'  # SENSEX on BFO
                     index_exchange = 'BFO'
                     index_lookup_key = f"BFO|{index_token}"
-                    raw_data = source.state.client.SYMBOLDICT.get(index_lookup_key)
+                    raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(index_lookup_key)
                     if raw_data:
                         exch = 'BFO'
                         token = index_token
                         logger.info(f"🔄 Using BFO SENSEX data for ADX on BSE instrument")
                     else:
                         lookup_key = f"{exch}|{token}"
-                        raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
+                        raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(lookup_key)
                         if not raw_data:
-                            raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                            raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
                 else:
                     lookup_key = f"{exch}|{token}"
-                    raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
+                    raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(lookup_key)
                     if not raw_data:
-                        raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                        raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
                     
                     if not raw_data:
-                        logger.warning(f"[{self.__class__.__name__}.evaluate] - No data found for lookup_key={lookup_key}, token={token}, exch={exch}. SYMBOLDICT sample keys: {list(source.state.client.SYMBOLDICT.keys())[:5]}")
+                        logger.warning(f"[{self.__class__.__name__}.evaluate] - No data found for lookup_key={lookup_key}, token={token}, exch={exch}. SYMBOLDICT sample keys: {list(source.state.client.conn.tick_handler.SYMBOLDICT.keys())[:5]}")
                 
                 candles = raw_data.get('candles', [])
                 standardized = self.fact_converter.convert_candle_data(candles)
@@ -204,9 +204,9 @@ class RuleManager:
                 exch = extra_facts.get('instrument_exchange') or extra_facts.get('instrument.exchange') or 'NSE'
                 lookup_key = f"{exch}|{token}"
                 
-                raw_data = source.state.client.SYMBOLDICT.get(lookup_key)
+                raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(lookup_key)
                 if not raw_data:
-                    raw_data = source.state.client.SYMBOLDICT.get(token, {})
+                    raw_data = source.state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
                 
                 candles = raw_data.get('candles', [])
                 

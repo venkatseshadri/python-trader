@@ -48,10 +48,10 @@ class Syncer:
 
         payload = []
         for token, info in state.active_positions.items():
-            data = state.client.SYMBOLDICT.get(token, {})
+            data = state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
             ltp = data.get('ltp', data.get('lp', 0))
             
-            span_cache = state.client.span_cache or {}
+            span_cache = state.client.margin.span_cache or {}
             base_sym = info.get('company_name')
             span_key = f"{base_sym}|{state.config.get('OPTION_EXPIRY')}|{state.config.get('OPTION_INSTRUMENT')}|{state.config.get('HEDGE_STEPS')}"
             margin_info = span_cache.get(span_key, {})

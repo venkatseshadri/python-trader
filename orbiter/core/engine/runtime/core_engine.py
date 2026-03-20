@@ -144,20 +144,20 @@ class Engine:
                 # Use NIFTY on NSE for ADX calculation
                 nifty_token = '26000'  # NIFTY 50
                 nifty_lookup = f"NSE|{nifty_token}"
-                nifty_data = self.state.client.SYMBOLDICT.get(nifty_lookup)
+                nifty_data = self.state.client.conn.tick_handler.SYMBOLDICT.get(nifty_lookup)
                 if nifty_data and nifty_data.get('candles'):
                     logger.info(f"🔄 Using NSE NIFTY data for ADX on BSE stock")
                     raw_data = nifty_data
             
             # Fallback lookup: try prefixed key, then raw token
             if not raw_data:
-                raw_data = self.state.client.SYMBOLDICT.get(lookup_key)
+                raw_data = self.state.client.conn.tick_handler.SYMBOLDICT.get(lookup_key)
             if not raw_data:
                 logger.trace(f"[{self.__class__.__name__}.tick] - Prefixed lookup failed for {lookup_key}. Trying raw token: {token}")
-                raw_data = self.state.client.SYMBOLDICT.get(token, {})
+                raw_data = self.state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
             
             if not raw_data:
-                logger.warning(f"[{self.__class__.__name__}.tick] - No data found for token={token}, lookup_key={lookup_key}. SYMBOLDICT sample keys: {list(self.state.client.SYMBOLDICT.keys())[:10]}")
+                logger.warning(f"[{self.__class__.__name__}.tick] - No data found for token={token}, lookup_key={lookup_key}. SYMBOLDICT sample keys: {list(self.state.client.conn.tick_handler.SYMBOLDICT.keys())[:10]}")
 
             # Symbol resolution: prioritize instrument.json symbol
             symbol_name = instrument.get('symbol') if isinstance(instrument, dict) else None
@@ -252,7 +252,7 @@ class Engine:
             expiry_type = self.state.config.get('OPTION_EXPIRY', 'monthly')
 
             span_key = f"{base_symbol}|{expiry_type}|{instrument_type}|{hedge_steps}"
-            cached = self.state.client.span_cache.get(span_key) if self.state.client.span_cache else None
+            cached = self.state.client.margin.span_cache.get(span_key) if self.state.client.margin.span_cache else None
             if cached:
                 span_pe = cached.get('pe', {'ok': False})
                 span_ce = cached.get('ce', {'ok': False})
@@ -260,13 +260,13 @@ class Engine:
             if ltp > 0 and (not span_pe.get('ok') or not span_ce.get('ok')):
                 # 1. Try resolving as Option Spreads
                 for side in ['PUT', 'CALL']:
-                    spread = self.state.client.get_credit_spread_contracts(base_symbol, ltp, side=side, 
+                    spread = self.state.client.resolver.get_credit_spread_contracts(base_symbol, ltp, side=side, 
                                                                     hedge_steps=hedge_steps,
                                                                     expiry_type=expiry_type,
                                                                     instrument=instrument_type)
                     if spread.get('ok'):
                         if not spread.get('lot_size'): spread['lot_size'] = instrument.get('lotsize') or 1
-                        margin = self.state.client.calculate_span_for_spread(spread, product_type=product)
+                        margin = self.state.client.margin.calculate_span_for_spread(spread, self.state.client.conn.api, self.state.client.conn.cred['user'], product_type=product)
                         if side == 'PUT': span_pe = margin
                         else: span_ce = margin
                 
@@ -287,13 +287,13 @@ class Engine:
                         'lot_size': self.state.client.master.TOKEN_TO_LOTSIZE.get(token, 1)
                     }
                     if future_details['tsym'] and "|" not in str(future_details['tsym']):
-                        margin = self.state.client.calculate_future_margin(future_details, product_type=product)
+                        margin = self.state.client.margin.calculate_future_margin(future_details, self.state.client.conn.api, self.state.client.conn.cred['user'], product_type=product)
                         span_pe = margin
                         span_ce = margin # Mirror for visual consistency
 
-                if self.state.client.span_cache is not None:
-                    self.state.client.span_cache[span_key] = {'pe': span_pe, 'ce': span_ce}
-                    self.state.client.save_span_cache()
+                if self.state.client.margin.span_cache is not None:
+                    self.state.client.margin.span_cache.cache[span_key] = {'pe': span_pe, 'ce': span_ce}
+                    self.state.client.margin.save_span_cache()
 
             # Map tech facts to expected report keys (F1-F4)
             f_results = {

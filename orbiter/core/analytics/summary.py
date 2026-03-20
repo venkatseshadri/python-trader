@@ -213,7 +213,7 @@ class SummaryManager:
         if top_10:
             msg.append("\n🔝 <b>Top 10 Scans (Score | Move | LTP):</b>")
             for token, score in top_10:
-                data = state.client.SYMBOLDICT.get(token, {})
+                data = state.client.conn.tick_handler.SYMBOLDICT.get(token, {})
                 
                 # A. Robust Name Resolution (Check SYMBOLDICT first, then Master)
                 token_id = token.split('|')[-1]
