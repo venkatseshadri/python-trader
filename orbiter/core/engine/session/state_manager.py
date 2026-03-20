@@ -60,7 +60,7 @@ class StateManager:
         self.verbose_logs = self.config.get('verbose_logs', False)
         
         self.state_file = DataManager.get_manifest_path(project_root, 'settings', 'session_state_file')
-        self.client.set_span_cache_path(DataManager.get_manifest_path(project_root, 'settings', 'span_cache_file'))
+        self.client.margin.set_span_cache_path(DataManager.get_manifest_path(project_root, 'settings', 'span_cache_file'))
 
 
     def _clear_paper_positions_simple(self):
@@ -233,7 +233,7 @@ class StateManager:
         Missing positions are re-imported with configurable defaults from a template.
         """
         logger.debug(f"[{self.__class__.__name__}.sync_with_broker] - Starting broker synchronization.")
-        real_positions = self.client.get_positions()
+        real_positions = self.client.executor.get_positions()
         if not real_positions:
             logger.info(self.constants.get('magic_strings', 'broker_zero_pos_msg'))
             return
