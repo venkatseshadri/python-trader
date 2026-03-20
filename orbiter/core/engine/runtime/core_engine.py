@@ -387,7 +387,7 @@ class Engine:
             )
             
             # Register tick callback with broker client
-            self.state.client.register_tick_callback(self._tick_processor.on_tick)
+            self.state.client.conn.tick_handler.register_tick_callback(self._tick_processor.on_tick)
             self._tick_processor.start()
             
             logger.info(f"✅ TickProcessor started (interval: {interval}s, enabled: {enabled})")
