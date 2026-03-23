@@ -26,7 +26,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml
-          pip install NorenRestApiPy websocket
+          pip install NorenRestApiPy websocket pandas
       
       - name: Run unit tests (no broker required)
         run: |
