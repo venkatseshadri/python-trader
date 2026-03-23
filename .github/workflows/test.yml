@@ -37,7 +37,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml pandas
-          pip install NorenRestApiPy websocket google-genai
+          pip install NorenRestApiPy websocket google-genai gspread oauth2client
       
       - name: Run unit tests (no broker required)
         run: |
