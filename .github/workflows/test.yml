@@ -25,15 +25,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install -q pytest pytest-asyncio pytest-mock pyyaml
-          pip install NorenRestApiPy websocket pandas
+          pip install -q pytest pytest-asyncio pytest-mock pyyaml pandas
+          pip install TA-Lib
       
       - name: Run unit tests (no broker required)
         run: |
           python -m pytest orbiter/tests/ \
             -v \
             --tb=short \
-            -m "not broker" \
+            --ignore=orbiter/tests/brokers \
             --no-header \
             -q
       
