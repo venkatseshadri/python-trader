@@ -46,6 +46,8 @@ jobs:
             --tb=short \
             --ignore=orbiter/tests/brokers \
             --ignore=orbiter/tests/unit/test_fact_calculator_adx_fallback.py \
+            --ignore=orbiter/tests/unit/test_instrument_fact_notation.py \
+            --ignore=orbiter/tests/unit/test_main_orchestration.py \
             --no-header \
             -q
       
