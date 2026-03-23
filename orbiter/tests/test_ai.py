@@ -1,7 +1,9 @@
+import pytest
 from google import genai
 import yaml
 import os
 
+@pytest.mark.skip(reason="Requires Google AI API key and credentials")
 def test_gemini():
     cred_path = "./ShoonyaApi-py/cred.yml"
     if not os.path.exists(cred_path):
