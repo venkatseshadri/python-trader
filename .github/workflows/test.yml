@@ -23,15 +23,20 @@ jobs:
           cache: 'pip'
       
       - name: Install TA-Lib
-        uses: 王牌频道/setup-talib@v1
-        with:
-          talib-version: '0.4.0'
+        run: |
+          wget https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          ./configure --prefix=/usr
+          make
+          sudo make install
+          cd ..
+          pip install TA-Lib
       
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml pandas
-          pip install TA-Lib
           pip install NorenRestApiPy websocket
       
       - name: Run unit tests (no broker required)
