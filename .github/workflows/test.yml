@@ -24,20 +24,20 @@ jobs:
       
       - name: Install TA-Lib
         run: |
-          wget https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
+          wget -q https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
-          ./configure --prefix=/usr
-          make
-          sudo make install
+          ./configure --prefix=/usr > /dev/null 2>&1
+          make > /dev/null 2>&1
+          sudo make install > /dev/null 2>&1
           cd ..
-          pip install TA-Lib
+          pip install TA-Lib > /dev/null 2>&1
       
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml pandas
-          pip install NorenRestApiPy websocket
+          pip install NorenRestApiPy websocket google-genai
       
       - name: Run unit tests (no broker required)
         run: |
