@@ -1,0 +1,68 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'orbiter/**/*.py'
+      - 'tests/**/*.py'
+      - 'requirements.txt'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -q pytest pytest-asyncio pytest-mock pyyaml
+        
+      - name: Run unit tests (no broker required)
+        run: |
+          python -m pytest orbiter/tests/ \
+            -v \
+            --tb=short \
+            -m "not broker" \
+            --no-header \
+            -q
+      
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            orbiter/tests/*.log
+            orbiter/logs/*.log
+          retention-days: 7
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Check Python syntax
+        run: |
+          pip install -q py_compile
+          find orbiter -name "*.py" -exec python -m py_compile {} + || exit 1
+      
+      - name: Check for common issues
+        run: |
+          # Check for debug statements left in code
+          grep -r "import pdb" orbiter/ || true
+          grep -r "import ipdb" orbiter/ || true
+          grep -r "breakpoint()" orbiter/ || true

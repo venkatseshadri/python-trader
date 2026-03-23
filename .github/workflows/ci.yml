@@ -1,0 +1,80 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-mock
+        
+    - name: Check for captured data
+      run: |
+        if [ -f orbiter/tests/data/capture_summary.json ]; then
+          echo "✅ Captured test data found"
+          cat orbiter/tests/data/capture_summary.json
+        else
+          echo "⚠️ No captured data - tests will use mocks"
+        fi
+    
+    - name: Run tests
+      run: |
+        python -m pytest orbiter/tests/ -v --tb=short -m "not broker" --no-header
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: test-results/
+        retention-days: 7
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install build dependencies
+      run: pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        chmod +x build.sh
+        ./build.sh
+    
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: orbiter-binary
+        path: dist/orbiter-*
+        retention-days: 30
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/orbiter-*
+        generate_release_notes: true
