@@ -24,8 +24,10 @@ jobs:
       
       - name: Install dependencies
         run: |
+          pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml
-        
+          pip install NorenRestApiPy
+      
       - name: Run unit tests (no broker required)
         run: |
           python -m pytest orbiter/tests/ \
@@ -57,7 +59,6 @@ jobs:
       
       - name: Check Python syntax
         run: |
-          pip install -q py_compile
           find orbiter -name "*.py" -exec python -m py_compile {} + || exit 1
       
       - name: Check for common issues
