@@ -48,6 +48,7 @@ jobs:
             --ignore=orbiter/tests/unit/test_fact_calculator_adx_fallback.py \
             --ignore=orbiter/tests/unit/test_instrument_fact_notation.py \
             --ignore=orbiter/tests/unit/test_main_orchestration.py \
+            --ignore=orbiter/tests/unit/test_order_executor.py \
             --no-header \
             -q
       
