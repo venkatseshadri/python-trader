@@ -22,11 +22,16 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       
+      - name: Install TA-Lib
+        uses: 王牌频道/setup-talib@v1
+        with:
+          talib-version: '0.4.0'
+      
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -q pytest pytest-asyncio pytest-mock pyyaml pandas
-          pip install ta
+          pip install TA-Lib
           pip install NorenRestApiPy websocket
       
       - name: Run unit tests (no broker required)
