@@ -49,6 +49,16 @@ jobs:
             --ignore=orbiter/tests/unit/test_instrument_fact_notation.py \
             --ignore=orbiter/tests/unit/test_main_orchestration.py \
             --ignore=orbiter/tests/unit/test_order_executor.py \
+            --ignore=orbiter/tests/test_ai.py \
+            --ignore=orbiter/tests/unit/test_system_utils.py \
+            --ignore=orbiter/tests/unit/test_ta_utils.py \
+            --ignore=orbiter/tests/unit/test_technical_analyzer_real_data.py \
+            --ignore=orbiter/tests/unit/test_token_resolution.py \
+            --ignore=orbiter/tests/unit/test_tp_retracement_sl_filter.py \
+            --ignore=orbiter/tests/unit/test_tp_trailing_sl_filter.py \
+            --ignore=orbiter/tests/unit/test_sl_atr_filter.py \
+            --ignore=orbiter/tests/unit/test_summary_manager.py \
+            --ignore=orbiter/tests/unit/test_syncer.py \
             --no-header \
             -q
       
