@@ -1,7 +1,7 @@
 {
   "rule_schema": {
     "rules_key": "strategies",
-    "conditions_key": "market_signals",
+    "conditions_key": "index_signals",
     "actions_key": "order_operations",
     "priority_key": "priority",
     "sequence_key": "sequence",
@@ -10,6 +10,9 @@
     "value_key": "value",
     "all_of_key": "allOf",
     "any_of_key": "anyOf"
+  },
+  "project_manifest_schema": {
+    "structure_key": "structure"
   },
   "fact_definition_schema": {
     "facts_key": "facts",
@@ -27,7 +30,7 @@
     "set_field_key": "set_field",
     "value_if_qty_positive_key": "value_if_qty_positive",
     "value_if_qty_negative_key": "value_if_qty_negative",
-    "conditions_key": "market_signals",
+    "conditions_key": "index_signals",
     "actions_key": "order_operations"
   },
   "global_schema": {

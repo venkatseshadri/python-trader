@@ -3,11 +3,11 @@
     {
       "name": "SENSEX_Iron_Condor_Entry",
       "priority": 100,
-      "market_signals": {
+      "index_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "value": true },
           { "fact": "portfolio.active_positions", "value": 0 },
-          { "fact": "market.adx", "operator": "less_than", "value": 25 }
+          { "fact": "index.adx", "operator": "less_than", "value": 25 }
         ]
       },
       "order_operations": [

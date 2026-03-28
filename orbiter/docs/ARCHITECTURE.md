@@ -61,9 +61,10 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  1. main.py                                                                 │
-│     ├── Parse CLI arguments (--strategyCode, --paper_trade, etc.)          │
+│     ├── Parse CLI (--caller, --logLevel, --mode, --strategyCode)        │
 │     ├── Acquire lock file (prevent duplicate instances)                    │
-│     ├── Create OrbiterApp                                                  │
+│     ├── setup_logging()                                                   │
+│     └── bootstrap() loads manifest, constants, config                       │
 │                                                                             │
 │  2. OrbiterApp.__init__                                                   │
 │     ├── Load SchemaManager (loads schema.json)                             │
@@ -412,12 +413,12 @@ Manages strategy selection and session context.
 
 | File | Purpose |
 |------|---------|
-| `config/system.json` | System config, strategy codes mapping |
-| `config/schema.json` | Schema keys for dynamic config loading |
-| `config/global.json` | Global trading parameters |
-| `config/exchange_config.json` | Exchange-specific settings |
-| `config/session.json` | Session defaults |
-| `data/mcx_futures_map.json` | MCX token mappings with expiry dates |
+| `orbiter/config/manifest.json` | Master registry of all config files |
+| `orbiter/config/constants.json` | Hardcoded strings, event types |
+| `orbiter/config/config.json` | Strategy codes, defaults |
+| `orbiter/config/global_config.json` | Global trading params (optional) |
+| `orbiter/config/session.json` | Broker credentials path |
+| `orbiter/data/mcx_futures_map.json` | MCX token mappings with expiry |
 
 > **Token Verification:** Run `python -m orbiter.utils.mcx.update_mcx_config --full` to fetch latest tokens from Shoonya API. Verify instruments.json tokens match MCX_symbols.txt.
 

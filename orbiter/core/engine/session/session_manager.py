@@ -54,7 +54,8 @@ class SessionManager:
         if not rel_path or rel_path == 'default':
             rel_path = os.environ.get("ORBITER_STRATEGY")
         if not rel_path:
-            rel_path = self.session_config.get(s_schema.get('active_strategy_path_key', 'active_strategy_path'))
+            active_key = s_schema.get('active_strategy_path_key', 'active_strategy_path')
+            rel_path = self.session_config.get(active_key)
         
         if rel_path and not rel_path.endswith('.json'):
             rel_path = os.path.join(rel_path, 'strategy.json')
@@ -71,9 +72,15 @@ class SessionManager:
 
         strat_base = self.schema_manager.get_key('project_manifest_schema', 'structure_key') or 'structure'
         strat_path_val = self.schema_manager.get_key(strat_base, 'strategies') or structure.get('strategies')
+        
+        # Fallback to default if still None
         if strat_path_val is None:
             strat_path_val = 'orbiter/strategies'
 
+        if not rel_path:
+            logger.error("No valid rel_path provided, cannot load strategy")
+            raise ValueError("No valid strategy path provided")
+            
         full_strategy_path = os.path.join(self.project_root, strat_path_val, rel_path)
         self.strategy_dir = os.path.dirname(full_strategy_path)
         self.strategy_bundle = DataManager.load_json(full_strategy_path)
@@ -143,5 +150,5 @@ class SessionManager:
 
     def hibernate(self, duration: int = 60):
         """Action: Pauses the application loop for a specified duration."""
-        logger.info(self.constants.get('magic_strings', 'hibernate_msg', "💤 Hibernating for {duration}s").format(duration=duration))
+        logger.info(self.constants.get('constants', 'hibernate_msg', "💤 Hibernating for {duration}s").format(duration=duration))
         time.sleep(duration)

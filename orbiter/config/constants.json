@@ -1,67 +1,440 @@
 {
-  "weekly_expiry_days": {
+  "weeklyExpiryDays": {
     "NIFTY": "Tuesday",
     "SENSEX": "Thursday",
     "note": "Weekly expiry days unless it's a holiday - then moves to previous trading day. Other indices (BANKNIFTY, FINNIFTY, MIDCPNIFTY) have monthly expiries."
   },
-  "action_types": {
-    "app_setup": "app.setup",
-    "app_login": "app.login",
-    "app_stop": "app.stop",
-    "engine_tick": "engine.tick",
-    "engine_shutdown": "engine.shutdown",
-    "session_hibernate": "session.hibernate",
-    "trade_place_spread": "trade.place_spread",
-    "trade_place_future_order": "trade.place_future_order",
-    "trade_square_off_all": "trade.square_off_all",
-    "trade_send_alert": "trade.send_alert"
+  "eventTypes": {
+    "app.setup": {
+      "description": "Lifecycle: app initialization (load config, initialize logger, validate credentials)",
+      "handlers": [
+        {
+          "function": "app.load_config",
+          "priority": 1,
+          "required": true,
+          "description": "Load configuration files and validate paths"
+        },
+        {
+          "function": "app.initialize_logger",
+          "priority": 2,
+          "required": true,
+          "description": "Initialize logging system"
+        },
+        {
+          "function": "app.validate_credentials",
+          "priority": 3,
+          "required": true,
+          "description": "Validate broker credentials exist and are valid"
+        },
+        {
+          "function": "app.setup",
+          "priority": 4,
+          "required": true,
+          "description": "Main app setup (broker client init, scrip master download)"
+        }
+      ]
+    },
+    "app.login": {
+      "description": "Lifecycle: broker authentication and connection verification",
+      "handlers": [
+        {
+          "function": "app.authenticate_broker",
+          "priority": 1,
+          "required": true,
+          "description": "Authenticate with broker API"
+        },
+        {
+          "function": "app.verify_connection",
+          "priority": 2,
+          "required": true,
+          "description": "Verify connection is alive"
+        },
+        {
+          "function": "app.fetch_broker_limits",
+          "priority": 3,
+          "required": false,
+          "description": "Fetch margin/limits from broker"
+        },
+        {
+          "function": "app.login",
+          "priority": 4,
+          "required": true,
+          "description": "Main login handler (app.login or engine.client.login)"
+        }
+      ]
+    },
+    "app.prime_data": {
+      "description": "Lifecycle: load historical candles and prime data for trading",
+      "handlers": [
+        {
+          "function": "app.load_instrument_masters",
+          "priority": 1,
+          "required": true,
+          "description": "Load NSE/MCX scrip masters"
+        },
+        {
+          "function": "app.build_symbol_mappings",
+          "priority": 2,
+          "required": true,
+          "description": "Build token-to-symbol mappings"
+        },
+        {
+          "function": "app.initialize_margin_calculator",
+          "priority": 3,
+          "required": true,
+          "description": "Initialize span margin calculator"
+        },
+        {
+          "function": "app.prime_data",
+          "priority": 4,
+          "required": true,
+          "description": "Main prime data handler (engine.prime_data)"
+        }
+      ]
+    },
+    "app.stop": {
+      "description": "Lifecycle: graceful shutdown (save session, cleanup, notify)",
+      "handlers": [
+        {
+          "function": "app.save_session_state",
+          "priority": 1,
+          "required": true,
+          "description": "Save current session state to disk"
+        },
+        {
+          "function": "app.cleanup_resources",
+          "priority": 2,
+          "required": true,
+          "description": "Close file handles, clear caches"
+        },
+        {
+          "function": "app.send_shutdown_notification",
+          "priority": 3,
+          "required": false,
+          "description": "Send shutdown notification to user"
+        },
+        {
+          "function": "app.stop",
+          "priority": 4,
+          "required": true,
+          "description": "Main app stop handler"
+        }
+      ]
+    },
+    "engine.tick": {
+      "description": "Core: each trading cycle (analyze, decide, execute)",
+      "handlers": [
+        {
+          "function": "engine.update_market_data",
+          "priority": 1,
+          "required": true,
+          "description": "Refresh LTP, calculate indicators"
+        },
+        {
+          "function": "engine.evaluate_entry_conditions",
+          "priority": 2,
+          "required": true,
+          "description": "Check if entry criteria met"
+        },
+        {
+          "function": "engine.evaluate_exit_conditions",
+          "priority": 3,
+          "required": true,
+          "description": "Check if exit criteria met"
+        },
+        {
+          "function": "engine.execute_trade_actions",
+          "priority": 4,
+          "required": true,
+          "description": "Place orders, manage positions"
+        },
+        {
+          "function": "engine.update_portfolio_state",
+          "priority": 5,
+          "required": true,
+          "description": "Update internal position state"
+        },
+        {
+          "function": "engine.tick",
+          "priority": 6,
+          "required": true,
+          "description": "Main tick handler (engine.tick)"
+        }
+      ]
+    },
+    "engine.shutdown": {
+      "description": "Core: stop the engine (close positions, save state, notify)",
+      "handlers": [
+        {
+          "function": "engine.close_all_positions",
+          "priority": 1,
+          "required": true,
+          "description": "Close all open positions before shutdown"
+        },
+        {
+          "function": "engine.save_engine_state",
+          "priority": 2,
+          "required": true,
+          "description": "Save engine state to session"
+        },
+        {
+          "function": "engine.log_shutdown_reason",
+          "priority": 3,
+          "required": false,
+          "description": "Log why shutdown was triggered"
+        },
+        {
+          "function": "engine.send_shutdown_alert",
+          "priority": 4,
+          "required": false,
+          "description": "Notify user of shutdown"
+        },
+        {
+          "function": "engine.shutdown",
+          "priority": 5,
+          "required": true,
+          "description": "Main engine shutdown handler"
+        }
+      ]
+    },
+    "session.hibernate": {
+      "description": "Market: pause trading during market close",
+      "handlers": [
+        {
+          "function": "session.pause_strategy",
+          "priority": 1,
+          "required": true,
+          "description": "Pause strategy from taking new positions"
+        },
+        {
+          "function": "session.notify_hibernate",
+          "priority": 2,
+          "required": false,
+          "description": "Notify user of hibernate state"
+        },
+        {
+          "function": "session.hibernate",
+          "priority": 3,
+          "required": true,
+          "description": "Main hibernate handler (session_manager.hibernate)"
+        }
+      ]
+    },
+    "session.resume": {
+      "description": "Market: resume from hibernate (reconnect, refresh data)",
+      "handlers": [
+        {
+          "function": "session.refresh_market_data",
+          "priority": 1,
+          "required": true,
+          "description": "Refresh LTP and reconnect feeds"
+        },
+        {
+          "function": "session.resume_strategy",
+          "priority": 2,
+          "required": true,
+          "description": "Resume strategy from paused state"
+        },
+        {
+          "function": "session.send_resume_notification",
+          "priority": 3,
+          "required": false,
+          "description": "Notify user that trading resumed"
+        }
+      ]
+    },
+    "trade.place_spread": {
+      "description": "Trade: place credit spread order",
+      "handlers": [
+        {
+          "function": "trade.validate_margin",
+          "priority": 1,
+          "required": true,
+          "description": "Check sufficient margin available"
+        },
+        {
+          "function": "trade.resolve_contracts",
+          "priority": 2,
+          "required": true,
+          "description": "Resolve option contracts (strike, expiry)"
+        },
+        {
+          "function": "trade.calculate_spread_span",
+          "priority": 3,
+          "required": true,
+          "description": "Calculate span margin for spread"
+        },
+        {
+          "function": "trade.execute_spread_order",
+          "priority": 4,
+          "required": true,
+          "description": "Place the spread order"
+        },
+        {
+          "function": "trade.log_trade",
+          "priority": 5,
+          "required": true,
+          "description": "Log trade details for audit"
+        },
+        {
+          "function": "trade.update_portfolio",
+          "priority": 6,
+          "required": true,
+          "description": "Update internal portfolio state"
+        },
+        {
+          "function": "trade.place_spread",
+          "priority": 7,
+          "required": true,
+          "description": "Main place spread handler (engine.action_logic.place_order)"
+        }
+      ]
+    },
+    "trade.place_future_order": {
+      "description": "Trade: place futures order",
+      "handlers": [
+        {
+          "function": "trade.validate_margin",
+          "priority": 1,
+          "required": true,
+          "description": "Check sufficient margin available"
+        },
+        {
+          "function": "trade.resolve_future_contract",
+          "priority": 2,
+          "required": true,
+          "description": "Resolve futures contract (expiry month)"
+        },
+        {
+          "function": "trade.calculate_future_margin",
+          "priority": 3,
+          "required": true,
+          "description": "Calculate margin requirement"
+        },
+        {
+          "function": "trade.execute_future_order",
+          "priority": 4,
+          "required": true,
+          "description": "Place the futures order"
+        },
+        {
+          "function": "trade.log_trade",
+          "priority": 5,
+          "required": true,
+          "description": "Log trade details for audit"
+        },
+        {
+          "function": "trade.update_portfolio",
+          "priority": 6,
+          "required": true,
+          "description": "Update internal portfolio state"
+        },
+        {
+          "function": "trade.place_future_order",
+          "priority": 7,
+          "required": true,
+          "description": "Main place future handler (engine.action_logic.place_order)"
+        }
+      ]
+    },
+    "trade.square_off_all": {
+      "description": "Trade: close all open positions",
+      "handlers": [
+        {
+          "function": "trade.get_open_positions",
+          "priority": 1,
+          "required": true,
+          "description": "Fetch all open positions from broker"
+        },
+        {
+          "function": "trade.validate_square_off",
+          "priority": 2,
+          "required": true,
+          "description": "Validate positions can be closed"
+        },
+        {
+          "function": "trade.execute_square_off_orders",
+          "priority": 3,
+          "required": true,
+          "description": "Place square-off orders"
+        },
+        {
+          "function": "trade.confirm_all_closed",
+          "priority": 4,
+          "required": true,
+          "description": "Verify all positions are closed"
+        },
+        {
+          "function": "trade.calculate_pnl",
+          "priority": 5,
+          "required": true,
+          "description": "Calculate realized P&L"
+        },
+        {
+          "function": "trade.log_square_off",
+          "priority": 6,
+          "required": true,
+          "description": "Log square-off details for audit"
+        },
+        {
+          "function": "trade.square_off_all",
+          "priority": 7,
+          "required": true,
+          "description": "Main square-off handler (engine.action_logic.square_off_all)"
+        }
+      ]
+    },
+    "trade.send_alert": {
+      "description": "Trade: send notification/alert to user",
+      "handlers": [
+        {
+          "function": "trade.format_alert_message",
+          "priority": 1,
+          "required": true,
+          "description": "Format alert with proper template"
+        },
+        {
+          "function": "trade.send_telegram_alert",
+          "priority": 2,
+          "required": true,
+          "description": "Send via Telegram bot"
+        },
+        {
+          "function": "trade.log_alert",
+          "priority": 3,
+          "required": true,
+          "description": "Log alert to file for audit"
+        },
+        {
+          "function": "trade.send_alert",
+          "priority": 4,
+          "required": true,
+          "description": "Main alert handler (engine.action_logic.send_alert)"
+        }
+      ]
+    }
   },
-  "fact_prefixes": {
-    "app_initialized": "app.initialized",
-    "app_logged_in": "app.logged_in",
-    "context_prefix": "context.",
-    "override_prefix": "override.",
-    "session_is_open": "session.is_open",
-    "session_is_eod": "session.is_eod",
-    "session_segment": "session.segment",
-    "session_time": "session.time",
-    "portfolio_realized_pnl": "portfolio.realized_pnl",
-    "portfolio_unrealized_pnl": "portfolio.unrealized_pnl",
-    "portfolio_total_pnl": "portfolio.total_pnl",
-    "portfolio_active_positions": "portfolio.active_positions",
-    "instrument_symbol": "instrument.symbol",
-    "instrument_ltp": "instrument.ltp",
-    "instrument_type": "instrument.type",
-    "market_adx": "market.adx",
-    "market_is_trending": "market.is_trending",
-    "engine_shutdown_triggered": "engine.shutdown_triggered"
-  },
-  "fact_contexts": {
-    "app_context": "app",
-    "engine_global_context": "engine_global",
-    "instrument_context": "instrument"
-  },
-  "magic_strings": {
-    "nifty_symbol_name": "NIFTY",
-    "system_request_reason": "SYSTEM_REQUEST",
-    "eod_reason": "EOD",
-    "crash_reason": "CRASH",
-    "manual_override_reason": "MANUAL",
-    "default_session_eod_time": "15:15:00",
-    "default_hibernate_duration": 60,
-    "default_product_type": "I",
-    "default_price_type": "MKT",
-    "default_option_execute": false,
-    "default_ghost_strategy": "FUTURE_LONG",
-    "default_ghost_margin": 50000.0,
-    "default_ghost_regime": "SIDEWAYS",
-    "default_ghost_tp_trail_activation": 1.5,
-    "default_ghost_tp_trail_gap": 0.75,
-    "log_name": "ORBITER",
+  "constants": {
+    "app_started_msg": "🚀 Machine Started",
+    "app_stopped_msg": "🛑 Machine Stopped",
+    "app_crash_msg": "💥 App Crash: {error}\n{traceback}",
+    "setup_failed_msg": "❌ Setup failed: {error}",
+    "engine_initialized_msg": "✅ Engine initialized successfully.",
     "engine_shutdown_triggered_msg": "🏁 Engine shutdown sequence triggered by action. Reason: {reason}",
     "universe_loaded_msg": "📊 Universe: {count} tokens loaded for {segment}",
     "entry_threshold_msg": "🎯 Entry Threshold: {threshold}pts",
-    "trade_score": "trade_score",
+    "token_to_symbol_key": "token_to_symbol",
+    "symbol_to_token_key": "symbol_to_token",
+    "token_to_company_key": "token_to_company",
+    "nfo_derivatives_file": "options_master.json",
+    "options_master_file_key": "options_master_file",
+    "futures_master_file_key": "futures_master_file",
+    "derivatives_options_key": "options",
+    "derivatives_token_key": "token",
+    "derivatives_tradingsymbol_key": "tradingsymbol",
+    "derivatives_companyname_key": "companyname",
+    "derivatives_lotsize_key": "lotsize",
+    "derivs_loaded_msg": "✅ Loaded {count} derivatives for {segment}",
     "token_to_symbol_nifty_51714": "NIFTY",
     "token_to_symbol_nfo_51714": "NIFTY",
     "save_session_fail_msg": "⚠️ Failed to save session: {error}",
@@ -70,24 +443,10 @@
     "local_load_fail_msg": "⚠️ Local load failed: {error}",
     "pos_recovered_msg": "🧠 Recovered {count} positions (via {source}).",
     "rehydrate_fail_msg": "⚠️ Failed to re-hydrate session: {error}",
-    "broker_sync_msg": "🔄 Syncing internal state with Broker API...",
     "broker_zero_pos_msg": "✅ Broker reporting zero open positions.",
+    "broker_sync_msg": "🔄 Syncing internal state with Broker API...",
     "ghost_pos_msg": "👻 Re-importing missing position: {symbol} ({qty} lots)",
     "handover_complete_msg": "✅ Handover complete. Managing {count} total positions.",
-    "nfo_derivatives_file": "options_master.json",
-    "mcx_derivatives_file": "mcx_futures_map.json",
-    "derivatives_options_key": "",
-    "derivatives_token_key": "token",
-    "derivatives_tradingsymbol_key": "tradingsymbol",
-    "derivatives_companyname_key": "symbol",
-    "derivatives_lotsize_key": "lot_size",
-    "derivs_loaded_msg": "✅ Loaded {count} derivatives for {segment}",
-    "app_started_msg": "🚀 Generic Machine Started",
-    "engine_initialized_msg": "✅ Engine initialized successfully.",
-    "setup_failed_msg": "❌ Setup failed: {error}",
-    "app_crash_msg": "💥 App Crash: {error}\n{traceback}",
-    "app_stopped_msg": "🛑 Machine Stopped",
-    "engine_shutdown_triggered_msg": "🏁 Engine shutdown sequence triggered by action. Reason: {reason}",
     "register_app_actions_msg": "⚙️ Registering App Actions...",
     "app_actions_registered_msg": "✅ App Actions Registered.",
     "engine_not_ready_msg": "⚠️ Engine not ready for action registration.",
@@ -95,109 +454,7 @@
     "engine_actions_registered_msg": "✅ Engine Actions Registered.",
     "register_fact_providers_msg": "⚙️ Registering Fact Providers...",
     "fact_providers_registered_msg": "✅ Fact Providers Registered.",
-    "broker_client_init_master_msg": "Initialized ScripMaster (shared instance).",
-    "broker_client_master_download_msg": "Scrip master downloaded for segment: {segment}.",
-    "broker_client_symbol_mapping_msg": "Symbol mappings loaded.",
-    "broker_client_resolver_init_msg": "Resolver, Margin, Executor initialized.",
-    "broker_login_success_msg": "Broker login successful.",
-    "broker_login_fail_msg": "Broker login failed.",
-    "live_feed_start_msg": "Starting live feed for {count} symbols.",
-    "prime_candles_start_msg": "⏳ Priming {count} symbols with last {minutes}m data...",
-    "prime_candles_success_msg": "✅ Primed {success_count}/{total_count} symbols successfully.",
-    "prime_candles_no_history_msg": "⚠️ No history returned for {key}",
-    "prime_candles_fail_msg": "⚠️ Failed to prime {item}: {error}",
-    "broker_close_msg": "Closing broker connection.",
-    "span_cache_set_path_msg": "Setting span cache path to: {path}",
-    "span_cache_load_start_msg": "Loading span cache from: {path}",
-    "span_cache_loaded_msg": "Span cache loaded successfully.",
-    "span_cache_file_not_found_msg": "Span cache file not found, initializing empty cache.",
-    "span_cache_load_fail_msg": "Failed to load span cache: {error}",
-    "span_cache_save_start_msg": "Saving span cache to: {path}",
-    "span_cache_save_skip_msg": "Span cache path not set or cache is empty. Skipping save.",
-    "span_cache_saved_msg": "Span cache saved successfully.",
-    "span_cache_save_fail_msg": "Failed to save span cache: {error}",
-    "get_symbol_msg": "Getting symbol for token: {token}, exchange: {exchange}",
-    "get_company_name_msg": "Getting company name for token: {token}, exchange: {exchange}",
-    "get_token_msg": "Getting token for symbol: {symbol}",
-    "get_ltp_msg": "Getting LTP for key: {key}",
-    "get_dk_levels_msg": "Getting DK levels for key: {key}",
-    "get_near_future_msg": "Getting near future for symbol: {symbol}, exchange: {exchange}",
-    "get_credit_spread_contracts_msg": "Getting credit spread contracts for symbol: {symbol}, ltp: {ltp}, side: {side}",
-    "calculate_span_spread_msg": "Calculating span for spread: {spread}",
-    "calculate_future_margin_msg": "Calculating future margin for: {future_details}",
-    "get_option_ltp_msg": "Getting option LTP by symbol: {tsym}",
-    "mcx_futures_only_msg": "MCX segment, looking for futures only.",
-    "ltp_found_in_symboldict_msg": "Found LTP in SYMBOLDICT: {ltp}",
-    "deriv_option_found_quotes_msg": "Found derivative option, fetching quotes.",
-    "ltp_not_found_msg": "LTP not found for {tsym}.",
-    "place_put_spread_start_msg": "Placing PUT credit spread with kwargs: {kwargs}",
-    "place_spread_fail_msg": "Failed to get credit spread contracts: {reason}",
-    "place_call_spread_start_msg": "Placing CALL credit spread with kwargs: {kwargs}",
-    "get_limits_msg": "Fetching limits from broker.",
-    "broker_limits_not_ok_msg": "Broker did not return OK status for limits: {res}",
-    "limits_fetched_msg": "Limits fetched: {limits_data}",
-    "error_fetching_limits_msg": "Error fetching limits: {error}",
-    "get_positions_msg": "Fetching positions from broker.",
-    "no_pos_returned_by_broker_msg": "No positions returned by broker.",
-    "ok_positions_fetched_msg": "{count} 'Ok' positions fetched.",
-    "raw_positions_msg": "Raw positions: {res}",
-    "error_fetching_positions_msg": "Error fetching positions: {error}",
-    "get_order_history_msg": "Fetching order history from broker.",
-    "no_orders_returned_by_broker_msg": "No order history returned by broker.",
-    "ok_orders_fetched_msg": "{count} 'Ok' orders fetched.",
-    "raw_order_book_msg": "Raw order book: {res}",
-    "error_fetching_order_history_msg": "Error fetching order history: {error}",
-    "place_future_order_start_msg": "Preparing to place future order with kwargs: {kwargs}",
-    "resolved_via_map_msg": "Resolved via Map: {token} -> {tsym}",
-    "future_contract_not_found_msg": "Future contract not found for {symbol}.",
-    "invalid_lot_size_msg": "Invalid lot size for {tsym}.",
-    "deriv_master_download_noop_msg": "Download Scrip Master called for exchange: {exchange}. (Currently a no-op, assumes mappings loaded from file).",
-    "equity_manager_init_msg": "Initializing EquityManager.",
-    "nse_mapping_loaded_msg": "Successfully loaded NSE token mapping from {file}.",
-    "nse_mapping_file_not_found_msg": "NSE token mapping file not found at {file}.",
-    "nse_mapping_load_error_msg": "Error loading NSE token mapping: {error}",
-    "nse_mapping_save_msg": "Saving NSE token mapping.",
-    "nse_mapping_saved_msg": "Successfully saved NSE token mapping to {file}.",
-    "nse_mapping_save_error_msg": "Error saving NSE token mapping: {error}",
-    "futures_manager_init_msg": "Initializing FuturesManager.",
-    "futures_master_cache_loaded_msg": "Successfully loaded futures master cache.",
-    "futures_master_cache_not_found_msg": "Futures master cache file not found at {path}.",
-    "futures_master_cache_load_error_msg": "Error loading futures master cache from {path}: {error}",
-    "futures_master_cache_saving_msg": "Saving futures master cache to: {path}.",
-    "futures_master_cache_saved_msg": "Successfully saved futures master cache.",
-    "futures_master_cache_save_error_msg": "Error saving futures master cache to {path}: {error}",
-    "futures_master_entries_add_msg": "Adding {count} entries to futures master.",
-    "options_manager_init_msg": "Initializing OptionsManager.",
-    "options_master_cache_loaded_msg": "Successfully loaded options master cache.",
-    "options_master_cache_not_found_msg": "Options master cache file not found at {path}.",
-    "options_master_cache_load_error_msg": "Error loading options master cache from {path}: {error}",
-    "options_master_cache_saving_msg": "Saving options master cache to: {path}.",
-    "options_master_cache_saved_msg": "Successfully saved options master cache.",
-    "options_master_cache_save_error_msg": "Error saving options master cache to {path}: {error}",
-    "options_master_entries_add_msg": "Adding {count} entries to options master.",
-    "session_manager_init_msg": "Initializing SessionManager.",
-    "session_config_loaded_msg": "Session config loaded: {config}.",
-    "strategy_bundle_loaded_msg": "Active strategy bundle loaded from: {path}.",
-    "strategy_bundle_content_msg": "Strategy bundle content: {content}.",
-    "session_manager_initialized_msg": "SessionManager initialized with strategy bundle.",
-    "extract_segment_info_msg": "Extracting segment info from strategy bundle.",
-    "strategy_bundle_missing_base_segment_key_msg": "Strategy bundle missing '{key}' key. Cannot proceed.",
-    "active_segment_info_constructed_msg": "Active segment info constructed: {info}.",
-    "segment_config_loaded_msg": "Segment-specific config loaded from bundle path: {path}.",
-    "segment_config_empty_msg": "Segment-specific config is empty.",
-    "final_segment_config_msg": "Final segment config: {config}.",
-    "re_validating_active_segment_msg": "Re-validating active segment based on time and holidays.",
-    "segment_time_range_msg": "Segment time range: {start_time}-{end_time}.",
-    "invalid_time_format_in_segment_config_msg": "Invalid time format in segment config for '{key1}' ('{value1}') or '{key2}' ('{value2}'): {error}. Using defaults.",
-    "current_time_outside_segment_range_msg": "Current time {current_time} is outside segment {segment_name} time range {start_time}-{end_time}. Session considered inactive.",
-    "segment_holiday_or_weekend_msg": "Segment {segment_name} is holiday or weekend. Marking inactive.",
-    "segment_active_msg": "Segment {segment_name} is active.",
-    "no_active_segment_found_msg": "No active segment found for current time {current_time}.",
-    "collecting_session_facts_msg": "Collecting session facts.",
-    "session_facts_collected_msg": "Session facts collected: {facts}.",
     "hibernate_msg": "💤 Hibernating for {duration} seconds.",
-    "hibernate_debug_msg": "Hibernating for {duration} seconds.",
-    "default_market_start_time": "00:00:00",
-    "default_market_end_time": "23:59:59"
+    "unknown_strategy_name": "unknown_strategy"
   }
 }

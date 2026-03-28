@@ -348,63 +348,79 @@
     "token": "26000",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "index"
+    "instrument_type": "index",
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "BANKNIFTY",
     "token": "26009",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "index"
+    "instrument_type": "index",
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "FINNIFTY",
     "token": "26037",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "index"
+    "instrument_type": "index",
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "MIDCPNIFTY",
     "token": "26004",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "index"
+    "instrument_type": "index",
+    "expiry_cycle": "monthly"
   },
   {
     "symbol": "RELIANCE",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "2885"
   },
   {
     "symbol": "TCS",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "11630"
   },
   {
     "symbol": "HDFCBANK",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "1333"
   },
   {
     "symbol": "INFY",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "1594"
   },
   {
     "symbol": "ICICIBANK",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "4963"
   },
   {
     "symbol": "SBIN",
     "exchange": "NFO",
     "derivative": "future",
-    "instrument_type": "stock"
+    "instrument_type": "stock",
+    "expiry_cycle": "weekly",
+    "token": "3045"
   }
 ]

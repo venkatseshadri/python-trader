@@ -22,7 +22,7 @@ class OptionsManager(BaseParser):
         self.DATA: List[Dict[str, Any]] = []
 
     def _get_path(self):
-        options_master_file_key = self.constants.get('magic_strings', 'options_master_file_key', 'options_master_file')
+        options_master_file_key = self.constants.get('constants', 'options_master_file_key', 'options_master_file')
         return DataManager.get_manifest_path(self.project_root, self.mandatory_files_key, options_master_file_key)
 
     def load_cache(self):

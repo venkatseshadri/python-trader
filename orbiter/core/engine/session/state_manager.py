@@ -177,7 +177,7 @@ class StateManager:
             logger.info(f"[{self.__class__.__name__}.save_session] - Session state saved successfully.")
                 
         except Exception as e:
-            msg_tpl = self.constants.get('magic_strings', 'save_session_fail_msg', "⚠️ Failed to save session: {error}")
+            msg_tpl = self.constants.get('constants', 'save_session_fail_msg', "⚠️ Failed to save session: {error}")
             logger.error(msg_tpl.format(error=e))
             logger.debug(f"[{self.__class__.__name__}.save_session] - Full traceback: {traceback.format_exc()}")
 
@@ -191,12 +191,12 @@ class StateManager:
                 with open(self.state_file, 'r') as f:
                     data = json.load(f)
                 
-                freshness_minutes = self.config.get('session_freshness_minutes', self.constants.get('magic_strings', 'default_session_freshness_minutes', 30))
+                freshness_minutes = self.config.get('session_freshness_minutes', self.constants.get('constants', 'default_session_freshness_minutes', 30))
                 if (datetime.now().timestamp() - data.get('last_updated', 0)) > (freshness_minutes * 60):
-                    logger.warning(self.constants.get('magic_strings', 'session_stale_msg').format(minutes=freshness_minutes))
+                    logger.warning(self.constants.get('constants', 'session_stale_msg').format(minutes=freshness_minutes))
                     data = None
             except Exception as e:
-                msg_tpl = self.constants.get('magic_strings', 'local_load_fail_msg', "⚠️ Local load failed: {error}")
+                msg_tpl = self.constants.get('constants', 'local_load_fail_msg', "⚠️ Local load failed: {error}")
                 logger.error(msg_tpl.format(error=e))
                 logger.debug(f"[{self.__class__.__name__}.load_session] - Full traceback for local load failure: {traceback.format_exc()}")
 
@@ -219,10 +219,10 @@ class StateManager:
             self.trade_count = data.get('trade_count', 0)
             
             if self.active_positions:
-                logger.info(self.constants.get('magic_strings', 'pos_recovered_msg').format(count=len(self.active_positions), source='Cloud' if not os.path.exists(self.state_file) else 'Disk'))
+                logger.info(self.constants.get('constants', 'pos_recovered_msg').format(count=len(self.active_positions), source='Cloud' if not os.path.exists(self.state_file) else 'Disk'))
             logger.debug(f"[{self.__class__.__name__}.load_session] - Session state loaded and re-hydrated.")
         except Exception as e:
-            msg_tpl = self.constants.get('magic_strings', 'rehydrate_fail_msg', "⚠️ Failed to re-hydrate session: {error}")
+            msg_tpl = self.constants.get('constants', 'rehydrate_fail_msg', "⚠️ Failed to re-hydrate session: {error}")
             logger.error(msg_tpl.format(error=e))
             logger.debug(f"[{self.__class__.__name__}.load_session] - Full traceback for re-hydration failure: {traceback.format_exc()}")
 
@@ -235,7 +235,7 @@ class StateManager:
         logger.debug(f"[{self.__class__.__name__}.sync_with_broker] - Starting broker synchronization.")
         real_positions = self.client.executor.get_positions()
         if not real_positions:
-            logger.info(self.constants.get('magic_strings', 'broker_zero_pos_msg'))
+            logger.info(self.constants.get('constants', 'broker_zero_pos_msg'))
             return
 
         for p in real_positions:
@@ -244,7 +244,7 @@ class StateManager:
             
             token = f"{p['exch']}|{p['token']}"
             if token not in self.active_positions:
-                logger.warning(self.constants.get('magic_strings', 'ghost_pos_msg').format(symbol=p['tsym'], qty=abs(qty)))
+                logger.warning(self.constants.get('constants', 'ghost_pos_msg').format(symbol=p['tsym'], qty=abs(qty)))
                 
                 default_template_key = self.ghost_template_schema.get('default_template_key', 'default_ghost_position_template')
                 ghost_pos = self.ghost_template.get(default_template_key, {}).copy()
@@ -257,12 +257,12 @@ class StateManager:
                 ghost_pos["pnl_rs"] = float(p.get('rpnl', 0)) + float(p.get('urpnl', 0))
 
                 derived_strategy = self._derive_ghost_strategy(p, qty)
-                ghost_pos["strategy"] = derived_strategy if derived_strategy else ghost_pos.get("strategy", self.constants.get('magic_strings', 'unknown_strategy_name', "UNKNOWN"))
+                ghost_pos["strategy"] = derived_strategy if derived_strategy else ghost_pos.get("strategy", self.constants.get('constants', 'unknown_strategy_name', "UNKNOWN"))
                 
                 self.active_positions[token] = ghost_pos
                 logger.debug(f"[{self.__class__.__name__}.sync_with_broker] - Re-imported ghost position: {ghost_pos}")
         
-        logger.info(self.constants.get('magic_strings', 'handover_complete_msg').format(count=len(self.active_positions)))
+        logger.info(self.constants.get('constants', 'handover_complete_msg').format(count=len(self.active_positions)))
 
     def _derive_ghost_strategy(self, broker_pos: Dict[str, Any], qty: int) -> Optional[str]:
         """

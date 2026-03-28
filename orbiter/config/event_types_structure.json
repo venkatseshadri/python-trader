@@ -1,0 +1,48 @@
+{
+  "eventTypes": {
+    "app.setup": {
+      "mandatory": ["description", "timestamp"],
+      "optional": ["version", "environment"]
+    },
+    "app.start": {
+      "mandatory": ["description", "timestamp"],
+      "optional": ["pid", "version"]
+    },
+    "strategy.selection": {
+      "mandatory": ["strategyCode", "timestamp"],
+      "optional": ["weights", "overrides", "caller"]
+    },
+    "strategy.start": {
+      "mandatory": ["strategyCode", "timestamp"],
+      "optional": ["marketBias", "weights"]
+    },
+    "strategy.end": {
+      "mandatory": ["strategyCode", "timestamp"],
+      "optional": ["result", "pnl", "duration"]
+    },
+    "scan.start": {
+      "mandatory": ["strategyCode", "timestamp"],
+      "optional": ["scannerType"]
+    },
+    "scan.end": {
+      "mandatory": ["strategyCode", "timestamp", "results"],
+      "optional": ["duration", "scannerType"]
+    },
+    "trade.opened": {
+      "mandatory": ["strategyCode", "timestamp", "symbol"],
+      "optional": ["strike", "expiry", "premium", "quantity", "direction"]
+    },
+    "trade.closed": {
+      "mandatory": ["strategyCode", "timestamp", "symbol"],
+      "optional": ["pnl", "exitPrice", "reason"]
+    },
+    "error": {
+      "mandatory": ["description", "timestamp"],
+      "optional": ["errorCode", "stackTrace", "strategyCode"]
+    },
+    "heartbeat": {
+      "mandatory": ["description", "timestamp"],
+      "optional": ["cpu", "memory", "brokerStatus"]
+    }
+  }
+}

@@ -250,9 +250,9 @@ class TestMCXLiveDataAllInstruments(unittest.TestCase):
                     continue
                 
                 # Check key facts
-                adx = facts.get('market.adx') or facts.get('market_adx')
-                ema_fast = facts.get('market.ema_fast') or facts.get('market_ema_fast')
-                ema_slow = facts.get('market.ema_slow') or facts.get('market_ema_slow')
+                adx = facts.get('index.adx') or facts.get('index_adx')
+                ema_fast = facts.get('index.ema_fast') or facts.get('index_ema_fast')
+                ema_slow = facts.get('index.ema_slow') or facts.get('index_ema_slow')
                 
                 if adx and adx > 0:
                     success.append(symbol)

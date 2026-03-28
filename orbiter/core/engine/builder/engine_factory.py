@@ -21,7 +21,7 @@ class EngineFactory:
     Builds the unified trading engine using the DataManager for any file lookups.
     """
     @staticmethod
-    def build_engine(session_manager: SessionManager, action_manager: ActionManager, real_broker_trade: bool = False, context: dict = None):
+    def build_engine(session_manager: SessionManager, action_manager: ActionManager, real_broker_trade: bool = False, mock_data: bool = False, context: dict = None):
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Starting engine build process.")
         constants = ConstantsManager.get_instance()
         meta_config = MetaConfigManager.get_instance(session_manager.project_root)
@@ -56,13 +56,13 @@ class EngineFactory:
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Merged full configuration: {full_config}")
 
         # 3. Initialize Core Components
-        use_mock = context.get('mock_data', False) if context else False
-        mock_data_file = context.get('mock_data_file') if context else None
+        # Mode handling: simulation (mock), paper (live data, no orders), live (real trading)
         
-        if use_mock:
-            logger.info(f"[{EngineFactory.__name__}.build_engine] - Using MOCK broker (mock_data=true)")
+        if mock_data:
+            logger.info(f"[{EngineFactory.__name__}.build_engine] - Using MOCK broker (mode=simulation)")
             
-            # Set environment variable for mock broker to pick up custom file
+            # Check for custom mock data file
+            mock_data_file = context.get('mock_data_file') if context else None
             if mock_data_file:
                 import os
                 os.environ['ORBITER_MOCK_DATA_FILE'] = mock_data_file
@@ -74,12 +74,13 @@ class EngineFactory:
             if universe:
                 client.prime_candles(universe, lookback_mins=300)  # 300 mins = ~60 candles for ADX warmup
         else:
+            # Use real broker (mode=paper or mode=live)
             client = BrokerClient(session_manager.project_root, segment_name=seg_name, real_broker_trade=real_broker_trade)
-            logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized.")
+            logger.debug(f"[{EngineFactory.__name__}.build_engine] - BrokerClient initialized (real_trade={real_broker_trade})")
             
-            # Hardcoded NIFTY token mappings only for real broker
-            client.master.TOKEN_TO_SYMBOL['51714'] = constants.get('magic_strings', 'token_to_symbol_nifty_51714')
-            client.master.TOKEN_TO_SYMBOL['NFO|51714'] = constants.get('magic_strings', 'token_to_symbol_nfo_51714')
+            # Hardcoded NIFTY token mappings only for real broker (not simulation mode)
+            client.master.TOKEN_TO_SYMBOL['51714'] = constants.get('constants', 'token_to_symbol_nifty_51714')
+            client.master.TOKEN_TO_SYMBOL['NFO|51714'] = constants.get('constants', 'token_to_symbol_nfo_51714')
             logger.debug(f"[{EngineFactory.__name__}.build_engine] - Hardcoded NIFTY token mappings applied.")
         
         state = StateManager(client, universe, full_config, segment_name=seg_name, clear_paper_positions=context.get('clear_paper_positions', False) if context else False)
@@ -96,9 +97,9 @@ class EngineFactory:
         state.sync_with_broker()
         logger.debug(f"[{EngineFactory.__name__}.build_engine] - Session loaded and synced with broker.")
         
-        print(constants.get('magic_strings', 'universe_loaded_msg').format(count=len(universe), segment=seg_name.upper()))
+        print(constants.get('constants', 'universe_loaded_msg').format(count=len(universe), segment=seg_name.upper()))
         trade_score_key = global_config_schema.get('trade_score_key', 'trade_score')
-        print(constants.get('magic_strings', 'entry_threshold_msg').format(threshold=full_config.get(trade_score_key)))
+        print(constants.get('constants', 'entry_threshold_msg').format(threshold=full_config.get(trade_score_key)))
 
         logger.info(f"[{EngineFactory.__name__}.build_engine] - Engine build process complete. Returning Engine instance.")
         return Engine(state, session_manager, action_manager)

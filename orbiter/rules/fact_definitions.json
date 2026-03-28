@@ -1,24 +1,24 @@
 {
   "facts": {
-    "market.adx": {
+    "index.adx": {
       "provider": "talib",
       "method": "ADX",
       "params": { "timeperiod": 14 },
       "inputs": ["high", "low", "close"]
     },
-    "market.ema_fast": {
+    "index.ema_fast": {
       "provider": "talib",
       "method": "EMA",
       "params": { "timeperiod": 5 },
       "inputs": ["close"]
     },
-    "market.ema_slow": {
+    "index.ema_slow": {
       "provider": "talib",
       "method": "EMA",
       "params": { "timeperiod": 9 },
       "inputs": ["close"]
     },
-    "market.rsi": {
+    "index.rsi": {
       "provider": "talib",
       "method": "RSI",
       "params": { "timeperiod": 14 },

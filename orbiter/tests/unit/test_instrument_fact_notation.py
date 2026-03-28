@@ -43,7 +43,7 @@ class MockSessionManager:
 class MockConstants:
     """Mock constants for testing"""
     def get(self, key, default=None):
-        if key == 'fact_contexts':
+        if key == 'factContexts':
             return 'instrument_context'
         return default
 

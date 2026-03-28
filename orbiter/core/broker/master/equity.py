@@ -32,9 +32,9 @@ class EquityManager(BaseParser):
             if os.path.exists(json_file):
                 with open(json_file, 'r') as f:
                     data = json.load(f)
-                    self.TOKEN_TO_SYMBOL = data[self.constants.get('magic_strings', 'token_to_symbol_key', 'token_to_symbol')]
-                    self.SYMBOL_TO_TOKEN = data[self.constants.get('magic_strings', 'symbol_to_token_key', 'symbol_to_token')]
-                    self.TOKEN_TO_COMPANY = data.get(self.constants.get('magic_strings', 'token_to_company_key', 'token_to_company'), {})
+                    self.TOKEN_TO_SYMBOL = data[self.constants.get('constants', 'token_to_symbol_key', 'token_to_symbol')]
+                    self.SYMBOL_TO_TOKEN = data[self.constants.get('constants', 'symbol_to_token_key', 'symbol_to_token')]
+                    self.TOKEN_TO_COMPANY = data.get(self.constants.get('constants', 'token_to_company_key', 'token_to_company'), {})
                 logger.info(f"[{self.__class__.__name__}.load_nse_mapping] - Successfully loaded NSE token mapping from {json_file}.")
                 return True
             else:

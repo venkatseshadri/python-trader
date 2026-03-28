@@ -44,9 +44,13 @@ class AppBuilder:
         """Build the application context with all dependencies."""
         logger.info("Building application context...")
 
+        # Derive paper_trade from mode (for backward compatibility with SessionManager)
+        mode = context.get('mode', 'simulation')
+        paper_trade = (mode != 'live')  # simulation or paper = paper_trade=True, live = paper_trade=False
+
         session_manager = SessionManager(
             project_root,
-            context.get('paper_trade', False),
+            paper_trade=paper_trade,
             strategy_id=context.get('strategyid'),
             context=context
         )

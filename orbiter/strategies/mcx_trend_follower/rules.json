@@ -3,13 +3,13 @@
     {
       "name": "Calculate Bidirectional Score",
       "priority": 10,
-      "scoring_expression": "(market_ema_fast - market_ema_slow) / market_ema_slow * 100 * filters_scoring_bidirectional_weight_ema_slope + market_supertrend_dir * filters_scoring_bidirectional_weight_supertrend",
+      "scoring_expression": "(index_ema_fast - index_ema_slow) / index_ema_slow * 100 * filters_scoring_bidirectional_weight_ema_slope + index_supertrend_dir * filters_scoring_bidirectional_weight_supertrend",
       "description": "Sum of bidirectional filters: EMA slope + SuperTrend direction"
     },
     {
       "name": "Calculate Unidirectional Score",
       "priority": 11,
-      "scoring_expression": "market_adx * filters_scoring_unidirectional_weight_adx",
+      "scoring_expression": "index_adx * filters_scoring_unidirectional_weight_adx",
       "description": "Sum of unidirectional filters: ADX"
     }
   ],
@@ -17,12 +17,12 @@
     {
       "name": "MCX_TopN_Trend_Long",
       "priority": 100,
-      "market_signals": {
+      "index_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
           { "fact": "strategy_sum_bi", "operator": "greater_than", "value": 0.1 },
-          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+          { "fact": "index_adx", "operator": "greater_or_equal", "value": 20 }
         ]
       },
       "execution_logic": "TOP_N",
@@ -44,12 +44,12 @@
     {
       "name": "MCX_TopN_Trend_Short",
       "priority": 101,
-      "market_signals": {
+      "index_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
           { "fact": "strategy_sum_bi", "operator": "less_than", "value": -0.1 },
-          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+          { "fact": "index_adx", "operator": "greater_or_equal", "value": 20 }
         ]
       },
       "execution_logic": "TOP_N",
@@ -71,12 +71,12 @@
     {
       "name": "MCX_Uni_Long",
       "priority": 90,
-      "market_signals": {
+      "index_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
           { "fact": "strategy_sum_uni", "operator": "greater_than", "value": 10 },
-          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+          { "fact": "index_adx", "operator": "greater_or_equal", "value": 20 }
         ]
       },
       "execution_logic": "TOP_N",
@@ -98,12 +98,12 @@
     {
       "name": "MCX_Uni_Short",
       "priority": 89,
-      "market_signals": {
+      "index_signals": {
         "allOf": [
           { "fact": "session.is_trade_window", "operator": "equal", "value": true },
           { "fact": "portfolio.active_positions", "operator": "equal", "value": 0 },
           { "fact": "strategy_sum_uni", "operator": "greater_than", "value": 10 },
-          { "fact": "market_adx", "operator": "greater_or_equal", "value": 20 }
+          { "fact": "index_adx", "operator": "greater_or_equal", "value": 20 }
         ]
       },
       "execution_logic": "TOP_N",

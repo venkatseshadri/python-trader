@@ -23,13 +23,13 @@ class TestConfigValidation(unittest.TestCase):
         cls.config_dir = cls.project_root / "config"
         cls.strategies_dir = cls.project_root / "strategies"
         
-    def test_constants_have_all_action_types(self):
-        """Verify constants.json has all required action types."""
+    def test_constants_have_all_eventTypes(self):
+        """Verify constants.json has all required event types."""
         constants_path = self.config_dir / "constants.json"
         with open(constants_path) as f:
             constants = json.load(f)
         
-        action_types = constants.get("action_types", {})
+        eventTypes = constants.get("eventTypes", {})
         
         # Required action types
         required = {
@@ -39,18 +39,18 @@ class TestConfigValidation(unittest.TestCase):
             "trade_send_alert"
         }
         
-        missing = required - set(action_types.keys())
-        self.assertEqual(missing, set(), f"Missing action types in constants.json: {missing}")
+        missing = required - set(eventTypes.keys())
+        self.assertEqual(missing, set(), f"Missing event types in constants.json: {missing}")
         
-    def test_strategies_use_valid_action_types(self):
-        """Verify all action types in rules.json exist in constants.json."""
+    def test_strategies_use_valid_eventTypes(self):
+        """Verify all event types in rules.json exist in constants.json."""
         constants_path = self.config_dir / "constants.json"
         with open(constants_path) as f:
             constants = json.load(f)
         
-        valid_actions = set(constants.get("action_types", {}).values())
+        valid_actions = set(constants.get("eventTypes", {}).values())
         # Also allow direct action names
-        valid_actions.update(constants.get("action_types", {}).keys())
+        valid_actions.update(constants.get("eventTypes", {}).keys())
         
         invalid_actions = []
         

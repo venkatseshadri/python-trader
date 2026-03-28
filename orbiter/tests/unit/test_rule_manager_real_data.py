@@ -44,8 +44,8 @@ class TestRuleManagerRealData(unittest.TestCase):
         state = SimpleNamespace(client=client, active_positions=[])
         source = SimpleNamespace(state=state)
 
-        actions = manager.evaluate(source, context=manager.constants.get('fact_contexts', 'instrument_context'), token=token)
-        score = manager.evaluate_score(source, context=manager.constants.get('fact_contexts', 'instrument_context'), token=token)
+        actions = manager.evaluate(source, context=manager.constants.get('factContexts', 'instrument_context'), token=token)
+        score = manager.evaluate_score(source, context=manager.constants.get('factContexts', 'instrument_context'), token=token)
 
         self.assertIsInstance(actions, list)
         self.assertIsInstance(score, float)

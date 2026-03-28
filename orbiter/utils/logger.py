@@ -41,6 +41,9 @@ def _get(d: dict, category: str, key: str, default=None):
 
 def setup_logging(project_root: str, log_level: str = "INFO") -> logging.Logger:
     """Setup dual logging with paths from manifest.json and configurable level."""
+    # CRITICAL: Disable "Logging error" messages BEFORE any logging setup
+    logging.raiseExceptions = False
+    
     manifest = get_manifest()
     constants = get_constants()
     
@@ -49,7 +52,7 @@ def setup_logging(project_root: str, log_level: str = "INFO") -> logging.Logger:
     os.makedirs(log_dir, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_name = _get(constants, 'magic_strings', 'log_name', 'ORBITER')
+    log_name = _get(constants, 'magicStrings', 'log_name', 'ORBITER')
     log_file = os.path.join(log_dir, f"{log_name.lower()}_{timestamp}.log")
 
     # Convert string log level to logging module constant
@@ -69,7 +72,8 @@ def setup_logging(project_root: str, log_level: str = "INFO") -> logging.Logger:
     )
     
     l = logging.getLogger(log_name)
+    l.setLevel(numeric_level)  # Explicitly set logger level (not just effective level)
     sys.stdout = LoggerWriter(l.info, raw=True)
     sys.stderr = LoggerWriter(l.error)
-    l.info(f"Logging initialized to level: {log_level.upper()}")
+    # Skip - init message handled separately, or set a marker
     return l

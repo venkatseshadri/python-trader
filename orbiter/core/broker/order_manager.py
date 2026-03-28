@@ -30,8 +30,25 @@ class OrderManager:
         if os.path.exists(path):
             try:
                 with open(path, 'r') as f:
-                    self._positions = json.load(f)
-            except:
+                    data = json.load(f)
+                    # Handle both formats: {"positions": {...}} or {"positions": [...]} or direct [...]
+                    if isinstance(data, dict):
+                        pos_data = data.get('positions', {})
+                        if isinstance(pos_data, dict):
+                            # Dict format: {"positions": {"key": {...}, "key2": {...}}}
+                            self._positions = list(pos_data.values()) if pos_data else []
+                        elif isinstance(pos_data, list):
+                            # List format: {"positions": [...]}
+                            self._positions = pos_data
+                        else:
+                            self._positions = []
+                    elif isinstance(data, list):
+                        # Direct list format: [...]
+                        self._positions = data
+                    else:
+                        self._positions = []
+            except Exception as e:
+                print(f"Error loading paper positions: {e}")
                 self._positions = []
     
     def _save_paper_positions(self):

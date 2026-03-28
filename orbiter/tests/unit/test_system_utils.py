@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch, mock_open, MagicMock
 import os
 import sys
+import importlib
 
 # Precise Path Resolution
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -153,16 +154,211 @@ class TestSystemUtils(unittest.TestCase):
         # Should not warn about "Strategy 'None' not found"
         self.assertEqual(facts_missing.get('strategyid'), 'fallback_strat')
 
-    @patch('orbiter.utils.system.DataManager.load_manifest')
-    @patch('orbiter.utils.system.resolve_project_root')
-    def test_bootstrap_success(self, mock_resolve, mock_load_manifest):
+    @patch('orbiter.utils.system.ConfigLoader.load_manifest')
+    @patch('orbiter.utils.system.get_project_root')
+    def test_bootstrap_success(self, mock_get_root, mock_load_manifest):
         """Verify bootstrap success sequence."""
-        mock_resolve.return_value = "/fake/root"
+        mock_get_root.return_value = "/fake/root"
         mock_load_manifest.return_value = self.mock_manifest
         
-        root = bootstrap()
+        root, context = bootstrap()
         
         self.assertEqual(root, "/fake/root")
+        self.assertIn('simulation', context)
+
+    # =========================================================================
+    # Tests for get_project_root() - Direct unit tests
+    # =========================================================================
+
+    @patch('os.path.dirname', side_effect=lambda x: x.replace('/orbiter/utils/system.py', '').replace('/orbiter/utils', '').replace('/orbiter', ''))
+    def test_get_project_root_script_mode(self, mock_dirname):
+        """Test get_project_root() when running as Python script."""
+        import orbiter.utils.system as system_module
+        
+        # Reset global
+        system_module.PROJECT_ROOT = None
+        
+        # Mock sys.frozen = False (script mode)
+        with patch('sys.frozen', False, create=True):
+            with patch('sys.path', []):
+                result = system_module.get_project_root()
+        
+        # Expected: /home/trading_ceo/python-trader (3 levels up from utils/system.py)
+        self.assertIn("trading_ceo", result)
+
+    def test_get_project_root_frozen_mode(self):
+        """Test get_project_root() when running as PyInstaller binary."""
+        import orbiter.utils.system as system_module
+        
+        # Reset global
+        system_module.PROJECT_ROOT = None
+        
+        # Temporarily set sys.frozen
+        original_frozen = getattr(sys, 'frozen', False)
+        original_executable = sys.executable
+        
+        try:
+            sys.frozen = True
+            sys.executable = '/opt/orbiter/bin/orbiter'
+            # Clear sys.path to test the path insertion logic
+            original_path = sys.path.copy()
+            sys.path = []
+            result = system_module.get_project_root()
+        finally:
+            # Restore
+            if original_frozen:
+                sys.frozen = original_frozen
+            else:
+                if hasattr(sys, 'frozen'):
+                    delattr(sys, 'frozen')
+            sys.executable = original_executable
+            sys.path[:] = original_path
+        
+        # /opt/orbiter/bin/orbiter -> parent is /opt/orbiter/bin -> parent is /opt/orbiter
+        self.assertEqual(result, "/opt/orbiter")
+
+    def test_get_project_root_returns_same_instance(self):
+        """Test that get_project_root() returns the same instance on repeated calls."""
+        import orbiter.utils.system as system_module
+        
+        # Store original
+        original_root = system_module.get_project_root()
+        
+        # Call again
+        second_call = system_module.get_project_root()
+        
+        # Should be the same
+        self.assertEqual(original_root, second_call)
+
+    def test_get_project_root_adds_to_sys_path(self):
+        """Test that get_project_root() adds PROJECT_ROOT to sys.path."""
+        import orbiter.utils.system as system_module
+        
+        # Get current sys.path
+        original_path = sys.path.copy()
+        
+        root = system_module.get_project_root()
+        
+        # PROJECT_ROOT should now be in sys.path
+        self.assertIn(root, sys.path)
+
+    # =========================================================================
+    # Tests for get_manifest()
+    # =========================================================================
+
+    def test_get_manifest_returns_loaded_manifest(self):
+        """Test get_manifest() returns MANIFEST global."""
+        import orbiter.utils.system as system_module
+        
+        # Set a mock manifest
+        test_manifest = {"app_name": "TEST", "version": "1.0"}
+        system_module.MANIFEST = test_manifest
+        
+        result = system_module.get_manifest()
+        
+        self.assertEqual(result, test_manifest)
+
+    def test_get_manifest_returns_empty_when_not_loaded(self):
+        """Test get_manifest() returns empty dict when MANIFEST is empty."""
+        import orbiter.utils.system as system_module
+        
+        # Reset manifest
+        system_module.MANIFEST = {}
+        
+        result = system_module.get_manifest()
+        
+        self.assertEqual(result, {})
+
+    # =========================================================================
+    # Tests for get_constants()
+    # =========================================================================
+
+    def test_get_constants_returns_loaded_constants(self):
+        """Test get_constants() returns CONSTANTS global."""
+        import orbiter.utils.system as system_module
+        
+        # Set mock constants
+        test_constants = {"max_retries": 3, "timeout": 30}
+        system_module.CONSTANTS = test_constants
+        
+        result = system_module.get_constants()
+        
+        self.assertEqual(result, test_constants)
+
+    def test_get_constants_returns_empty_when_not_loaded(self):
+        """Test get_constants() returns empty dict when CONSTANTS is empty."""
+        import orbiter.utils.system as system_module
+        
+        # Reset constants
+        system_module.CONSTANTS = {}
+        
+        result = system_module.get_constants()
+        
+        self.assertEqual(result, {})
+
+    # =========================================================================
+    # Tests for get_global_config()
+    # =========================================================================
+
+    def test_get_global_config_returns_loaded_config(self):
+        """Test get_global_config() returns GLOBAL_CONFIG global."""
+        import orbiter.utils.system as system_module
+        
+        # Set mock config
+        test_config = {"log_level": "INFO", "debug": False}
+        system_module.GLOBAL_CONFIG = test_config
+        
+        result = system_module.get_global_config()
+        
+        self.assertEqual(result, test_config)
+
+    def test_get_global_config_returns_empty_when_not_loaded(self):
+        """Test get_global_config() returns empty dict when GLOBAL_CONFIG is empty."""
+        import orbiter.utils.system as system_module
+        
+        # Reset global config
+        system_module.GLOBAL_CONFIG = {}
+        
+        result = system_module.get_global_config()
+        
+        self.assertEqual(result, {})
+
+    # =========================================================================
+    # Tests for bootstrap() edge cases
+    # =========================================================================
+
+    @patch('orbiter.utils.system.get_project_root')
+    @patch('orbiter.utils.system.ConfigLoader.load_manifest')
+    def test_bootstrap_manifest_missing(self, mock_load_manifest, mock_get_root):
+        """Test bootstrap() when manifest.json is missing."""
+        mock_get_root.return_value = "/fake/root"
+        mock_load_manifest.return_value = {}  # Empty manifest
+        
+        root, context = bootstrap()
+        
+        self.assertEqual(root, "/fake/root")
+        self.assertEqual(context, {})  # Empty context on failure
+
+    @patch('orbiter.utils.system.get_project_root')
+    @patch('orbiter.utils.system.ConfigLoader.load_manifest')
+    @patch('orbiter.utils.system.ConfigLoader.load_config')
+    @patch('orbiter.utils.system.ArgumentParser.parse_cli_to_facts')
+    def test_bootstrap_full_flow(self, mock_parse, mock_load_config, mock_load_manifest, mock_get_root):
+        """Test bootstrap() full initialization flow."""
+        mock_get_root.return_value = "/fake/root"
+        mock_load_manifest.return_value = self.mock_manifest
+        mock_load_config.side_effect = [
+            {"max_retries": 3},  # constants
+            {"log_level": "INFO"}  # global_config
+        ]
+        mock_parse.return_value = {"simulation": True, "strategyid": "test"}
+        
+        root, context = bootstrap()
+        
+        self.assertEqual(root, "/fake/root")
+        self.assertEqual(context["simulation"], True)
+        self.assertEqual(context["strategyid"], "test")
+
 
 if __name__ == '__main__':
     unittest.main()

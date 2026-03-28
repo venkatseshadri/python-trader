@@ -1,0 +1,22 @@
+{
+  "_comment": "global_config.json - Strategy-wide parameters (optional file)",
+  "_purpose": "Override default trade score thresholds, risk limits, and system-wide trading parameters",
+  "_location": "This file should be placed at orbiter/config/global_config.json",
+  "_see_also": "docs/technical/architecture.md - Configuration Layer section",
+
+  "trade_settings": {
+    "min_score_threshold": 0.5,
+    "max_spread_width": 4,
+    "default_sl_points": 50
+  },
+  "risk_limits": {
+    "max_daily_loss": 5000,
+    "max_positions": 10,
+    "max_capital_per_trade": 25000
+  },
+  "system_wide_overrides": {
+    "adx_weight": 0.4,
+    "ema_weight": 0.3,
+    "supertrend_weight": 0.3
+  }
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=Orbiter Operations Agent
+After=network.target
+
+[Service]
+Type=simple
+User=trading_ceo
+WorkingDirectory=/home/trading_ceo/python-trader/orbiter/ops
+ExecStart=/usr/bin/python3 /home/trading_ceo/python-trader/orbiter/ops/monitor.py
+Restart=always
+RestartSec=60
+
+# Logging
+StandardOutput=append:/tmp/orbiter_ops.log
+StandardError=append:/tmp/orbiter_ops.log
+
+[Install]
+WantedBy=multi-user.target

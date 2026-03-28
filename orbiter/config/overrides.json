@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-03-27T03:00:21.296337",
+  "index_bias": "BULLISH",
+  "bias_detail": "14 positive vs 5 negative",
+  "recommended_weights": {
+    "weight_adx": 0.5,
+    "weight_ema_slope": 0.3,
+    "weight_supertrend": 0.2
+  },
+  "sentiment_multiplier": 0.15,
+  "status": "PENDING_APPROVAL"
+}

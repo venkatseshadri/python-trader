@@ -79,7 +79,7 @@ class Engine:
 
         # Evaluate global (non-instrument specific) rules
         logger.trace(f"[{self.__class__.__name__}.tick] - Evaluating global engine rules.")
-        global_actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'engine_global_context'))
+        global_actions = self.rule_manager.evaluate(source=self, context=self.constants.get('factContexts', 'engine_global_context'))
         if global_actions:
             logger.debug(f"[{self.__class__.__name__}.tick] - Executing {len(global_actions)} global engine actions.")
             self.action_manager.execute_batch(global_actions)
@@ -209,10 +209,10 @@ class Engine:
             
             # 🔥 Detailed scoring debug - log key indicators with weights
             # Weights: ADX=0.4, EMA_slope=0.3, SuperTrend=0.3
-            adx = tech_facts.get('market.adx') or tech_facts.get('market_adx', 0)
-            ema_fast = tech_facts.get('market.ema_fast') or tech_facts.get('market_ema_fast', 0)
-            ema_slow = tech_facts.get('market.ema_slow') or tech_facts.get('market_ema_slow', 0)
-            supertrend = tech_facts.get('filter.supertrend_direction') or tech_facts.get('market_supertrend_dir', 0)
+            adx = tech_facts.get('index.adx') or tech_facts.get('index_adx', 0)
+            ema_fast = tech_facts.get('index.ema_fast') or tech_facts.get('index_ema_fast', 0)
+            ema_slow = tech_facts.get('index.ema_slow') or tech_facts.get('index_ema_slow', 0)
+            supertrend = tech_facts.get('filter.supertrend_direction') or tech_facts.get('index_supertrend_dir', 0)
             ema_slope = ((ema_fast - ema_slow) / ema_slow * 100) if ema_slow else 0
             
             # Manual score calculation: ADX*0.4 + EMA_slope*0.3 + SuperTrend*0.3
@@ -225,7 +225,7 @@ class Engine:
             score = 0.0
             score_details = {'sum_bi': 0.0, 'sum_uni': 0.0}
             if tech_facts:
-                result = self.rule_manager.evaluate_score(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **{**extra_facts, 'raw_data_for_filter': raw_data_for_filter})
+                result = self.rule_manager.evaluate_score(source=self, context=self.constants.get('factContexts', 'instrument_context'), **{**extra_facts, 'raw_data_for_filter': raw_data_for_filter})
                 # Handle both old (float) and new (tuple) return formats
                 if isinstance(result, tuple):
                     score, score_details = result
@@ -305,11 +305,11 @@ class Engine:
                 },
                 'ef2_price_above_5ema': {
                     'score': tech_facts.get('filter.price_above_5ema', 0.0), 
-                    'ema5': tech_facts.get('filter.price_above_5ema.ema5', tech_facts.get('market.ema_fast', 0.0))
+                    'ema5': tech_facts.get('filter.price_above_5ema.ema5', tech_facts.get('index.ema_fast', 0.0))
                 },
                 'ef3_5ema_above_9ema': {'score': tech_facts.get('filter.ema5_above_9ema', 0.0)},
                 'ef4_supertrend': {'score': tech_facts.get('filter.supertrend', 0.0)},
-                'adx': tech_facts.get('market.adx', 0.0)
+                'adx': tech_facts.get('index.adx', 0.0)
             }
 
             metric_entry = {
@@ -323,7 +323,7 @@ class Engine:
             self.state.last_scan_metrics.append(metric_entry)
 
             # Use extra_facts_with_scores which includes sum_bi and sum_uni
-            actions = self.rule_manager.evaluate(source=self, context=self.constants.get('fact_contexts', 'instrument_context'), **extra_facts_with_scores)
+            actions = self.rule_manager.evaluate(source=self, context=self.constants.get('factContexts', 'instrument_context'), **extra_facts_with_scores)
             
             # 🔥 SCORE THRESHOLD CHECK - Prevent trades with low/zero scores
             score_threshold = self.state.config.get('trend_score_threshold', 0.25)
@@ -358,7 +358,7 @@ class Engine:
             self._tick_processor.stop()
         
         self.shutdown_triggered = True
-        logger.info(self.constants.get('magic_strings', 'engine_shutdown_triggered_msg').format(reason=reason))
+        logger.info(self.constants.get('constants', 'engine_shutdown_triggered_msg').format(reason=reason))
 
     def prime_data(self):
         """Start market data feed - historical priming + live WebSocket + TickProcessor."""

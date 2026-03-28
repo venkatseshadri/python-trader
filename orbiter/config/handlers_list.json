@@ -1,0 +1,8 @@
+{
+  "handlers": [
+    "logHandler",
+    "alertHandler",
+    "telegramHandler",
+    "metricsHandler"
+  ]
+}

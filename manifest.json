@@ -1,6 +1,6 @@
 {
   "app_name": "orbiter",
-  "version": "0.1.0",
+  "version": "4.6.1",
   "structure": {
     "package": "orbiter",
     "config": "orbiter/config",
@@ -20,6 +20,21 @@
     "ghost_position_template": "orbiter/config/ghost_position_template.json",
     "broker_data_mapping": "orbiter/config/broker_data_mapping.json",
     "exchange_config": "orbiter/config/exchange_config.json"
+  },
+  "optional_files": {
+    "global_config": "orbiter/config/global_config.json",
+    "nfo_holidays": "orbiter/data/nfo/holidays.json",
+    "mcx_holidays": "orbiter/data/mcx/holidays.json",
+    "event_types_list": "orbiter/config/event_types_list.json",
+    "event_types_structure": "orbiter/config/event_types_structure.json",
+    "handlers_list": "orbiter/config/handlers_list.json",
+    "event_handler_mapping": "orbiter/config/event_handler_mapping.json",
+    "exchanges": "orbiter/config/exchanges.json",
+    "dynamic_strategy_rules": "orbiter/config/dynamic_strategy_rules.json",
+    "overrides": "orbiter/config/overrides.json",
+    "score_overrides": "orbiter/config/score_overrides.json",
+    "system_json": "orbiter/config/system.json",
+    "mcx_instruments": "orbiter/config/mcx/mcx_instruments.json"
   },
   "settings": {
     "session_state_file": "orbiter/data/session_state.json",

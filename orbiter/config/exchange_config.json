@@ -4,8 +4,8 @@
     "remarks_template": "ORBITER_{strategy}"
   },
   "nfo": {
-    "market_start": "09:15:00",
-    "market_end": "15:30:00",
+    "index_start": "09:15:00",
+    "index_end": "15:30:00",
     "trade_start": "09:30:00",
     "trade_end": "15:15:00",
     "plumbing": {
@@ -27,8 +27,8 @@
     }
   },
   "mcx": {
-    "market_start": "09:00:00",
-    "market_end": "23:30:00",
+    "index_start": "09:00:00",
+    "index_end": "23:30:00",
     "trade_start": "17:00:00",
     "trade_end": "23:15:00",
     "plumbing": {
@@ -43,8 +43,8 @@
     }
   },
   "bfo": {
-    "market_start": "09:15:00",
-    "market_end": "15:30:00",
+    "index_start": "09:15:00",
+    "index_end": "15:30:00",
     "trade_start": "09:30:00",
     "trade_end": "15:15:00",
     "plumbing": {

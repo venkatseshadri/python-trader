@@ -87,7 +87,7 @@ class RuleManager:
             facts['strategy_sum_uni'] = extra_facts.get('strategy_sum_uni', 0)
             logger.trace(f"[RuleManager.evaluate] Added score facts: sum_bi={extra_facts.get('strategy_sum_bi')}, sum_uni={extra_facts.get('strategy_sum_uni')}")
         
-        ins_ctx = self.constants.get('fact_contexts', 'instrument_context')
+        ins_ctx = self.constants.get('factContexts', 'instrument_context')
 
         if context == ins_ctx:
             # 🚀 Optimization: If technical facts are already in extra_facts, don't re-calculate
@@ -192,7 +192,7 @@ class RuleManager:
 
     def evaluate_score(self, source: Any, context: str = "global", **extra_facts) -> float:
         facts = self._get_common_facts(source)
-        ins_ctx = self.constants.get('fact_contexts', 'instrument_context')
+        ins_ctx = self.constants.get('factContexts', 'instrument_context')
 
         if context == ins_ctx:
             # 🚀 Optimization: If technical facts are already in extra_facts, don't re-calculate

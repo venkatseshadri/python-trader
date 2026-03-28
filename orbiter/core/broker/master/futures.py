@@ -22,7 +22,7 @@ class FuturesManager(BaseParser):
         self.DATA: List[Dict[str, Any]] = []
 
     def _get_path(self):
-        futures_master_file_key = self.constants.get('magic_strings', 'futures_master_file_key', 'futures_master_file')
+        futures_master_file_key = self.constants.get('constants', 'futures_master_file_key', 'futures_master_file')
         return DataManager.get_manifest_path(self.project_root, self.mandatory_files_key, futures_master_file_key)
 
     def load_cache(self):

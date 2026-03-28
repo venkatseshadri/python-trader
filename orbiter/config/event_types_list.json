@@ -1,0 +1,15 @@
+{
+  "eventTypes": [
+    "app.setup",
+    "app.start",
+    "strategy.selection",
+    "strategy.start",
+    "strategy.end",
+    "scan.start",
+    "scan.end",
+    "trade.opened",
+    "trade.closed",
+    "error",
+    "heartbeat"
+  ]
+}

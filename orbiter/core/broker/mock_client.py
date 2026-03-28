@@ -2,11 +2,24 @@
 """
 Mock Broker Client - Replays recorded data for testing Orbiter off-hours
 
+Modes (--mode):
+    simulation (default): Captured data, no broker hits
+    paper: Live data, no order execution
+    live: Full trading with real orders
+
 Usage:
-    python -m orbiter.main --paper_trade=true --mock_data=true --strategyCode=n1
-    
-Or with custom data file:
-    python -m orbiter.main --paper_trade=true --mock_data=true --mock_data_file=/path/to/data.json --strategyCode=n1
+    # Default - simulation mode (captured data, no broker hits)
+    python -m orbiter.main --strategyCode=n1
+    python -m orbiter.main --mode=simulation --strategyCode=n1
+
+    # Paper trading - Live market data, no actual orders
+    python -m orbiter.main --mode=paper --strategyCode=n1
+
+    # Live trading - Real orders placed
+    python -m orbiter.main --mode=live --strategyCode=n1
+
+With custom data file:
+    python -m orbiter.main --mode=simulation --strategyCode=n1 --mock_data_file=/path/to/data.json
 """
 import os
 import json

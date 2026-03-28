@@ -106,22 +106,22 @@ class FactCalculator:
                     # Apply cached YF values
                     if cache_key in _yf_indicators_cache:
                         yf = _yf_indicators_cache[cache_key]
-                        facts['market.adx'] = facts['market_adx'] = yf.get('adx', 0)
-                        facts['market.ema_fast'] = facts['market_ema_fast'] = yf.get('ema_fast', 0)
-                        facts['market.ema_slow'] = facts['market_ema_slow'] = yf.get('ema_slow', 0)
-                        facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = yf.get('supertrend_dir', 0)
-                        facts['market.supertrend'] = facts['market_supertrend'] = yf.get('supertrend', 0)
+                        facts['index.adx'] = facts['index_adx'] = yf.get('adx', 0)
+                        facts['index.ema_fast'] = facts['index_ema_fast'] = yf.get('ema_fast', 0)
+                        facts['index.ema_slow'] = facts['index_ema_slow'] = yf.get('ema_slow', 0)
+                        facts['index.supertrend_dir'] = facts['index_supertrend_dir'] = yf.get('supertrend_dir', 0)
+                        facts['index.supertrend'] = facts['index_supertrend'] = yf.get('supertrend', 0)
                         facts['data_source'] = 'yf_mcx_fallback'
                         logger.info(f"🔄 Applied MCX YF fallback: ADX={yf.get('adx')}")
                         return facts
                 
                 # No YF mapping or YF failed - return zeros
                 logger.warning(f"[{self.__class__.__name__}] - MCX instrument {token} has no data ({data_len} bars) and no YF fallback. Returning zeros.")
-                facts['market.adx'] = facts['market_adx'] = 0
-                facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
-                facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
-                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
-                facts['market.supertrend'] = facts['market_supertrend'] = 0
+                facts['index.adx'] = facts['index_adx'] = 0
+                facts['index.ema_fast'] = facts['index_ema_fast'] = 0.0
+                facts['index.ema_slow'] = facts['index_ema_slow'] = 0.0
+                facts['index.supertrend_dir'] = facts['index_supertrend_dir'] = 0
+                facts['index.supertrend'] = facts['index_supertrend'] = 0
                 facts['data_source'] = 'none'
                 return facts
             
@@ -153,20 +153,20 @@ class FactCalculator:
             # Apply YF fallback values
             if _yf_indicators_cache.get('value'):
                 yf = _yf_indicators_cache['value']
-                facts['market.adx'] = facts['market_adx'] = yf.get('adx', 0)
-                facts['market.ema_fast'] = facts['market_ema_fast'] = yf.get('ema_fast', 0)
-                facts['market.ema_slow'] = facts['market_ema_slow'] = yf.get('ema_slow', 0)
-                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = yf.get('supertrend_dir', 0)
-                facts['market.supertrend'] = facts['market_supertrend'] = yf.get('supertrend', 0)
+                facts['index.adx'] = facts['index_adx'] = yf.get('adx', 0)
+                facts['index.ema_fast'] = facts['index_ema_fast'] = yf.get('ema_fast', 0)
+                facts['index.ema_slow'] = facts['index_ema_slow'] = yf.get('ema_slow', 0)
+                facts['index.supertrend_dir'] = facts['index_supertrend_dir'] = yf.get('supertrend_dir', 0)
+                facts['index.supertrend'] = facts['index_supertrend'] = yf.get('supertrend', 0)
                 facts['data_source'] = 'yf_fallback'
                 logger.info(f"🔄 Applied YF fallback: ADX={yf.get('adx')}, EMA_fast={yf.get('ema_fast')}, ST_dir={yf.get('supertrend_dir')}")
             else:
                 # No YF data - use zeros
-                facts['market.adx'] = facts['market_adx'] = 0
-                facts['market.ema_fast'] = facts['market_ema_fast'] = 0.0
-                facts['market.ema_slow'] = facts['market_ema_slow'] = 0.0
-                facts['market.supertrend_dir'] = facts['market_supertrend_dir'] = 0
-                facts['market.supertrend'] = facts['market_supertrend'] = 0
+                facts['index.adx'] = facts['index_adx'] = 0
+                facts['index.ema_fast'] = facts['index_ema_fast'] = 0.0
+                facts['index.ema_slow'] = facts['index_ema_slow'] = 0.0
+                facts['index.supertrend_dir'] = facts['index_supertrend_dir'] = 0
+                facts['index.supertrend'] = facts['index_supertrend'] = 0
                 facts['data_source'] = 'none'
             
             return facts
@@ -212,17 +212,17 @@ class FactCalculator:
                         lower = hl2 - (3 * atr)
                         st_dir = 1 if close[-1] > lower[-1] else -1
                         
-                        indicators['market_adx'] = indicators['market.adx'] = round(float(adx), 2) if not np.isnan(adx) else 0
-                        indicators['market_ema_fast'] = indicators['market.ema_fast'] = round(float(ema_fast), 2)
-                        indicators['market_ema_slow'] = indicators['market.ema_slow'] = round(float(ema_slow), 2)
-                        indicators['market_supertrend_dir'] = indicators['market.supertrend_dir'] = st_dir
-                        indicators['market_supertrend'] = indicators['market.supertrend'] = round(float(atr * 3), 2)
+                        indicators['index_adx'] = indicators['index.adx'] = round(float(adx), 2) if not np.isnan(adx) else 0
+                        indicators['index_ema_fast'] = indicators['index.ema_fast'] = round(float(ema_fast), 2)
+                        indicators['index_ema_slow'] = indicators['index.ema_slow'] = round(float(ema_slow), 2)
+                        indicators['index_supertrend_dir'] = indicators['index.supertrend_dir'] = st_dir
+                        indicators['index_supertrend'] = indicators['index.supertrend'] = round(float(atr * 3), 2)
                         
-                        logger.info(f"🔄 MCX YF fallback applied: ADX={indicators['market_adx']}, ST_dir={st_dir}")
+                        logger.info(f"🔄 MCX YF fallback applied: ADX={indicators['index_adx']}, ST_dir={st_dir}")
                 except Exception as e:
                     logger.warning(f"MCX YF fallback failed: {e}")
         
-        # Add indicators as market.* facts (BOTH dot and underscore formats)
+        # Add indicators as index.* facts (BOTH dot and underscore formats)
         # Indicators from TechnicalAnalyzer already have full key names like 'market_supertrend_dir'
         for k, v in indicators.items():
             facts[k] = v  # Use key as-is
@@ -324,7 +324,7 @@ class FactCalculator:
                     
                     if isinstance(res, dict):
                         facts[name] = res.get('score', 0.0)
-                        # Expand other keys as sub-facts (e.g. market.orb.high)
+                        # Expand other keys as sub-facts (e.g. index.orb.high)
                         for k, v in res.items():
                             if k != 'score': facts[f"{name}.{k}"] = v
                     else:

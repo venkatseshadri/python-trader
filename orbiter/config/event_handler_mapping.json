@@ -1,0 +1,38 @@
+{
+  "description": "Maps event types to handlers. Each event type lists enabled handlers.",
+  "mapping": {
+    "app.setup": {
+      "handlers": ["logHandler", "metricsHandler"]
+    },
+    "app.start": {
+      "handlers": ["logHandler", "alertHandler", "metricsHandler"]
+    },
+    "strategy.selection": {
+      "handlers": ["logHandler", "alertHandler"]
+    },
+    "strategy.start": {
+      "handlers": ["logHandler", "alertHandler", "telegramHandler", "metricsHandler"]
+    },
+    "strategy.end": {
+      "handlers": ["logHandler", "alertHandler", "telegramHandler", "metricsHandler"]
+    },
+    "scan.start": {
+      "handlers": ["logHandler"]
+    },
+    "scan.end": {
+      "handlers": ["logHandler", "metricsHandler"]
+    },
+    "trade.opened": {
+      "handlers": ["logHandler", "alertHandler", "telegramHandler"]
+    },
+    "trade.closed": {
+      "handlers": ["logHandler", "alertHandler", "telegramHandler", "metricsHandler"]
+    },
+    "error": {
+      "handlers": ["logHandler", "alertHandler", "telegramHandler", "metricsHandler"]
+    },
+    "heartbeat": {
+      "handlers": ["logHandler"]
+    }
+  }
+}

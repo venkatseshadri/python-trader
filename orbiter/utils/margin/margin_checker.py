@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -183,7 +184,10 @@ class PaperTradeSimulator:
             return max(50000, notional * 0.20)
     
     def _save_state(self):
-        state_file = os.path.join(os.path.dirname(__file__), 'paper_trade_state.json')
+        # Use a temp directory that exists in both dev and PyInstaller builds
+        # In PyInstaller, __file__ points to a temp dir inside _MEIPASS
+        state_file = os.path.join(tempfile.gettempdir(), 'orbiter', 'paper_trade_state.json')
+        os.makedirs(os.path.dirname(state_file), exist_ok=True)
         with open(state_file, 'w') as f:
             json.dump({
                 'config': self.config,
@@ -193,7 +197,7 @@ class PaperTradeSimulator:
     
     @classmethod
     def load_state(cls) -> 'PaperTradeSimulator':
-        state_file = os.path.join(os.path.dirname(__file__), 'paper_trade_state.json')
+        state_file = os.path.join(tempfile.gettempdir(), 'orbiter', 'paper_trade_state.json')
         if os.path.exists(state_file):
             with open(state_file, 'r') as f:
                 state = json.load(f)

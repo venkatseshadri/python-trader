@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'ShoonyaApi-py/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'ShoonyaApi-py/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install ruff
+        run: pip install ruff
+        
+      - name: Run ruff
+        run: ruff check ShoonyaApi-py/ --ignore E501,F401
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    name: Test (Python ${{ matrix.python-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-cov
+          pip install pyyaml xlsxwriter
+          pip install ShoonyaApi-py/dist/NorenRestApi-0.0.30-py2.py3-none-any.whl
+          
+      - name: Run unit tests
+        working-directory: ./ShoonyaApi-py
+        run: pytest tests/ -m "not integration" -v --tb=short
+        
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./ShoonyaApi-py
+          flags: unittests
+          name: python-${{ matrix.python-version }}

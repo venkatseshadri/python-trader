@@ -43,7 +43,7 @@ class ArgumentParser:
     @staticmethod
     def _resolve_strategy(code_or_id: str, project_root: str = None) -> str:
         """
-        Resolve strategy code (e.g., '1') to strategyId, or return as-is if not a code.
+        Resolve strategy code (e.g., 'n1') to strategyId, or return as-is if not a code.
         """
         if not code_or_id:
             return None
@@ -53,10 +53,11 @@ class ArgumentParser:
         # Check if it's a known code
         if code_or_id in strategy_codes:
             resolved = strategy_codes[code_or_id]
-            logging.getLogger(__name__).info(f"Resolved strategy code '{code_or_id}' -> '{resolved}'")
+            logging.getLogger(__name__).info(f"📋 Strategy code: '{code_or_id}' -> '{resolved}'")
             return resolved
         
         # Not a code, return as-is (full strategyId)
+        logging.getLogger(__name__).info(f"📋 Strategy ID: '{code_or_id}' (direct)")
         return code_or_id
 
     @staticmethod
@@ -64,33 +65,41 @@ class ArgumentParser:
         """
         Turns list of CLI args into facts dict.
         
+        Modes (--mode):
+        - backtest (default): Uses mock/captured data, no broker hits, paper trading
+        - paper: Live data feed, but no orders sent to broker
+        - live: Full trading with real orders
+        
         Examples:
-        - ['--strategyCode=m1'] -> {paper_trade: True, strategyid: 'mcx_trend_follower', strategy_execution: 'fixed'}
-        - ['--real_broker_trade=true', '--strategyCode=m1'] -> {paper_trade: False, strategyid: 'mcx_trend_follower'}
-        - ['--strategyExecution=dynamic'] -> {paper_trade: True, strategy_execution: 'dynamic'}
+        - ['--strategyCode=m1'] -> {mode: 'simulation'}
+        - ['--mode=paper', '--strategyCode=m1'] -> {mode: 'paper'}
+        - ['--mode=live', '--strategyCode=m1'] -> {mode: 'live'}
+        - ['--mode=simulation', '--mock_data_file=/path/to/data.json', '--strategyCode=m1'] -> simulation with file
         
         Raises:
             ValueError: If both --strategyExecution=dynamic and --strategyCode/--strategyId are provided
         """
         logger = logging.getLogger(__name__)
+        
+        # Default mode: simulation (safe - no broker hits)
         facts = {
-            'paper_trade': True,  # Default to paper trade for safety
-            'real_broker_trade': False,  # Default to paper trading
-            'simulation': True,
+            'mode': 'simulation',        # New: explicit mode (simulation/paper/live)
             'strategy_execution': 'fixed',
-            'mock_data': False,
             'mock_data_file': None
         }
         
         parsed_strategy_input = None
         use_strategy_code = False
         strategy_execution = 'fixed'
-        paper_trade_set = False
-        real_broker_trade_set = False
+        mode_set = False
         
         # Known arguments - process these, but still pass through unknown args
-        # Use kebab-case in CLI, convert to snake_case internally
-        known_args = {'real_broker_trade', 'strategy_id', 'strategyid', 'strategy_code', 'strategy_execution', 'strategycode', 'strategyexecution', 'mock_data', 'mock_data_file', 'clear_paper_positions'}
+        known_args = {
+            'strategy_id', 'strategyid', 'strategy_code', 
+            'strategy_execution', 'strategycode', 'strategyexecution', 
+            'clear_paper_positions',
+            'mode'  # New: --mode flag
+        }
         
         # Process only first 5 arguments (to maintain backward compatibility)
         for arg in args_list[:5]:
@@ -137,9 +146,30 @@ class ArgumentParser:
                         facts['real_broker_trade'] = True
                         paper_trade_set = True
         
-        # Set defaults based on flags
-        if not paper_trade_set:
-            facts['paper_trade'] = True
+        # ============================================================
+        # MODE HANDLING: --mode=simulation|paper|live
+        # ============================================================
+        # Track what user explicitly set
+        mode_explicitly_set = 'mode' in facts and args_list and any('--mode' in arg for arg in args_list)
+        
+        mode = facts.get('mode', 'simulation')
+        
+        # Handle explicit --mode
+        if mode_explicitly_set:
+            if mode == 'simulation':
+                logger.info("📊 Mode: SIMULATION (captured data, no broker hits)")
+            elif mode == 'paper':
+                logger.info("📊 Mode: PAPER (live data, no order execution)")
+            elif mode == 'live':
+                logger.info("📊 Mode: LIVE (full trading enabled)")
+            else:
+                logger.warning(f"⚠️ Unknown mode '{mode}', defaulting to SIMULATION")
+                facts['mode'] = 'simulation'
+                logger.info("📊 Mode: SIMULATION (default - captured data, no broker hits)")
+        # Default: simulation mode (safe)
+        else:
+            facts['mode'] = 'simulation'
+            logger.info("📊 Mode: SIMULATION (default - captured data, no broker hits)")
         
         # Handle dynamic vs fixed mode
         if strategy_execution == 'dynamic':
@@ -176,6 +206,8 @@ class ArgumentParser:
                         with open(config_json_path, 'r') as f:
                             config = json.load(f)
                             system_default_strategy = config.get('default_strategy')
+                            logger.debug(f"Loaded default_strategy from {config_json_path}: {system_default_strategy}")
+                            logger.debug(f"Available strategy_codes: {config.get('strategy_codes', {})}")
                     except Exception as e:
                         logger.error(f"Failed to read {config_json_path}: {e}")
 
@@ -187,14 +219,18 @@ class ArgumentParser:
 
             if resolved_strategy_input:
                 final_strategy_id = resolved_strategy_input
+                logger.info(f"📋 Strategy loaded: {resolved_strategy_input}")
             elif system_default_strategy:
                 sys_strat_dir = os.path.join(project_root, "orbiter", "strategies", system_default_strategy) if project_root else None
                 if sys_strat_dir and (not os.path.exists(sys_strat_dir) or not os.path.isdir(sys_strat_dir)):
-                     logger.warning(f"System default strategy '{system_default_strategy}' not found. Falling back to 'default'.")
+                     logger.warning(f"⚠️ System default '{system_default_strategy}' not found. Using 'default'.")
+                     final_strategy_id = 'default'
                 else:
                      final_strategy_id = system_default_strategy
+                     logger.info(f"📋 Using system default: {system_default_strategy}")
             else:
-                logger.warning("No valid strategyId provided or found in config.json. Falling back to 'default'.")
+                logger.warning("⚠️ No strategy specified — using 'default' (bootstrap only)")
+                final_strategy_id = 'default'
 
             facts['strategyid'] = final_strategy_id
             facts['strategy_input'] = parsed_strategy_input

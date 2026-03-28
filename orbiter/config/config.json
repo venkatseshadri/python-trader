@@ -1,34 +1,34 @@
 {
-  "paths": {
-    "log_dir": "logs/system",
-    "lock_file": ".orbiter.lock",
-    "overrides_file": "orbiter/config/overrides.json"
-  },
-  "bootstrap": {
-    "auto_login": true,
-    "default_update_interval": 5
-  },
-  "strategy_codes": {
-    "m1": "mcx_trend_follower",
-    "n1": "nifty_fno_topn_trend",
-    "n2": "nifty_50_nfo_expiry_day_short_straddle",
-    "s1": "bsensex_bfo_topn_trend",
-    "s2": "sensex_bfo_expiry_day_short_straddle",
-    "x1": "nifty_fno_topn_trend"
-  },
-  "default_strategy": "mcx_trend_follower",
-  "defaults": {
-    "trade_score": 0.4,
-    "top_n": 1,
-    "option_execute": false,
-    "option_product_type": "I",
-    "option_price_type": "MKT",
-    "option_expiry": "weekly",
-    "hedge_steps": 4,
-    "update_interval": 5,
-    "verbose_logs": true,
-    "log_level": "INFO",
-    "tick_processor_enabled": true,
-    "tick_process_interval_seconds": 60
-  }
+    "paths": {
+        "log_dir": "logs/system",
+        "lock_file": ".orbiter.lock",
+        "overrides_file": "orbiter/config/overrides.json"
+    },
+    "bootstrap": {
+        "auto_login": true,
+        "default_update_interval": 5
+    },
+    "strategy_codes": {
+        "m1": "mcx_trend_follower",
+        "n1": "nifty_fno_topn_trend",
+        "n2": "nifty_50_nfo_expiry_day_short_straddle",
+        "s1": "bsensex_bfo_topn_trend",
+        "s2": "sensex_bfo_expiry_day_short_straddle",
+        "x1": "nifty_fno_topn_trend"
+    },
+    "default_strategy": "mcx_trend_follower",
+    "defaults": {
+        "trade_score": 0.4,
+        "top_n": 5,
+        "option_execute": false,
+        "option_product_type": "I",
+        "option_price_type": "MKT",
+        "option_expiry": "weekly",
+        "hedge_steps": 4,
+        "update_interval": 5,
+        "verbose_logs": true,
+        "log_level": "INFO",
+        "tick_processor_enabled": true,
+        "tick_process_interval_seconds": 60
+    }
 }

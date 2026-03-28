@@ -8,18 +8,25 @@ import yaml
 logging.basicConfig(level=logging.DEBUG)
 
 #start of our program
-api = ShoonyaApiPy()
-api2 = ShoonyaApiPy()
+api = ShoonyaApiPy(broker="flattrade")
+api2 = ShoonyaApiPy(broker="flattrade")
 
-#credentials
-with open('..\\cred.yml') as f:
-    cred = yaml.load(f, Loader=yaml.FullLoader)
+#credentials - use Flattrade credentials
+with open('cred.yml') as f:
+    cred = yaml.safe_load(f)
     print(cred)
 
-ret = api.login(userid = cred['user'], password = cred['pwd'], twoFA=cred['factor2'], vendor_code=cred['vc'], api_secret=cred['apikey'], imei=cred['imei'])
+ret = api.login(userid = cred['user'], password = cred['pwd'], 
+                 twoFA=cred.get('factor2') or '', 
+                 vendor_code=cred.get('vc') or '', 
+                 api_secret=cred['apikey'], 
+                 imei=cred.get('imei') or '')
 
+if not ret or ret.get('stat') != 'Ok':
+    print(f"❌ Login failed: {ret}")
+    sys.exit(1)
 
-usersession=ret['susertoken']
+usersession = ret['susertoken']
 
 ret = api2.set_session(userid= cred['user'], password = cred['pwd'], usertoken= usersession)
 

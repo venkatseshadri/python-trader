@@ -49,7 +49,7 @@ class ScripMaster:
 
         derivatives_file = None
         if segment_name == 'nfo':
-            derivatives_file = os.path.join(data_path, self.constants.get('magic_strings', 'nfo_derivatives_file'))
+            derivatives_file = os.path.join(data_path, self.constants.get('constants', 'nfo_derivatives_file'))
         elif segment_name == 'bfo':
             # BSE F&O - load from bfo_symbols if available
             bfo_file = os.path.join(data_path, 'bfo_symbols.json')
@@ -108,11 +108,11 @@ class ScripMaster:
             try:
                 with open(derivatives_file, 'r') as f:
                     data = json.load(f)
-                    options_key = self.constants.get('magic_strings', 'derivatives_options_key', 'options')
-                    token_key = self.constants.get('magic_strings', 'derivatives_token_key', 'token')
-                    tradingsymbol_key = self.constants.get('magic_strings', 'derivatives_tradingsymbol_key', 'tradingsymbol')
-                    companyname_key = self.constants.get('magic_strings', 'derivatives_companyname_key', 'companyname')
-                    lotsize_key = self.constants.get('magic_strings', 'derivatives_lotsize_key', 'lotsize')
+                    options_key = self.constants.get('constants', 'derivatives_options_key', 'options')
+                    token_key = self.constants.get('constants', 'derivatives_token_key', 'token')
+                    tradingsymbol_key = self.constants.get('constants', 'derivatives_tradingsymbol_key', 'tradingsymbol')
+                    companyname_key = self.constants.get('constants', 'derivatives_companyname_key', 'companyname')
+                    lotsize_key = self.constants.get('constants', 'derivatives_lotsize_key', 'lotsize')
 
                     if isinstance(data, list):
                         self.DERIVATIVE_OPTIONS = data
@@ -129,7 +129,7 @@ class ScripMaster:
                         self.TOKEN_TO_COMPANY[token] = item[companyname_key]
                         self.TOKEN_TO_LOTSIZE[token] = int(item[lotsize_key])
                     self.DERIVATIVE_LOADED = True
-                    logger.info(self.constants.get('magic_strings', 'derivs_loaded_msg').format(count=len(self.DERIVATIVE_OPTIONS), segment=segment_name.upper()))
+                    logger.info(self.constants.get('constants', 'derivs_loaded_msg').format(count=len(self.DERIVATIVE_OPTIONS), segment=segment_name.upper()))
                     logger.debug(f"[{self.__class__.__name__}.load_mappings] - First 5 loaded derivatives: {self.DERIVATIVE_OPTIONS[:5]}")
             except Exception as e:
                 logger.error(f"[{self.__class__.__name__}.load_mappings] - Error loading derivatives from {derivatives_file}: {e}. Traceback: {traceback.format_exc()}")
