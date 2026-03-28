@@ -15,17 +15,16 @@ from orbiter.utils.utils import merge_dicts, safe_float
 logger = logging.getLogger("ORBITER")
 
 class RuleManager:
-    def __init__(self, project_root: str, system_rules: dict, session_manager: SessionManager):
+    def __init__(self, project_root: str, rules_file_path: str, session_manager: SessionManager):
         self.project_root = project_root
-        self.system_rules = system_rules  # Already loaded dict, not path
+        self.rules_file_path = rules_file_path
         self.session_manager = session_manager
         self.constants = ConstantsManager.get_instance()
         self.schema_manager = SchemaManager.get_instance(project_root)
         self.rule_schema = self.schema_manager.get_key('rule_schema')
         
-        # Lazy load fact_definitions (only when fact calculator needs it)
-        from orbiter.utils.system import get_fact_definitions
-        self.fact_definitions = get_fact_definitions()
+        fact_defs_path = DataManager.get_manifest_path(project_root, 'mandatory_files', 'fact_definitions')
+        self.fact_definitions = DataManager.load_json(fact_defs_path)
 
         self.fact_calc = FactCalculator(project_root, self.fact_definitions)
         self.fact_converter = FactConverter(project_root)
@@ -351,7 +350,7 @@ class RuleManager:
         return scores['sum_bi'] + scores['sum_uni'], scores
 
     def _load_and_compile_rules(self) -> List[Dict]:
-        logger.debug(f"📋 Loading rules from system_rules (lazy loaded)")
+        logger.debug(f"📋 Loading rules from: {self.rules_file_path}")
         rules = self._compile_rules(self.rule_schema.get('rules_key', 'strategies'), self.rule_sets)
         logger.debug(f"📋 Loaded {len(rules)} rules")
         return rules
@@ -361,8 +360,7 @@ class RuleManager:
 
     def _compile_rules(self, rule_list_key: str, target_list: List[Dict]) -> List[Dict]:
         try:
-            # Use already-loaded system_rules dict (lazy loaded)
-            data = self.system_rules
+            data = DataManager.load_json(self.rules_file_path)
             if not data: return []
             compiled = []
             strategies_key = self.rule_schema.get('rules_key', 'strategies')
