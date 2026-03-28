@@ -14,6 +14,10 @@ MANIFEST: dict = {}
 CONSTANTS: dict = {}
 GLOBAL_CONFIG: dict = {}
 
+# Lazy-loaded configs (loaded on demand, not at bootstrap)
+SYSTEM_RULES: dict | None = None
+FACT_DEFINITIONS: dict | None = None
+
 def get_project_root() -> str:
     """Get project root, initializing path if needed."""
     global PROJECT_ROOT
@@ -108,3 +112,31 @@ def bootstrap(logger) -> tuple[str, dict]:
 
     logger.info(f"✨ Bootstrap complete | Root: {project_root}")
     return project_root, context
+
+
+# ============================================================
+# Lazy Loading Getters (for configs not needed at bootstrap)
+# ============================================================
+
+def get_system_rules() -> dict:
+    """Lazy load system rules (only when rule engine needs it)."""
+    global SYSTEM_RULES
+    if SYSTEM_RULES is None:
+        path = ConfigLoader.get_path(PROJECT_ROOT, 'mandatory_files', 'system_rules')
+        if path:
+            SYSTEM_RULES = ConfigLoader.load_json_file(path)
+        else:
+            SYSTEM_RULES = {}
+    return SYSTEM_RULES
+
+
+def get_fact_definitions() -> dict:
+    """Lazy load fact definitions (only when fact calculator needs it)."""
+    global FACT_DEFINITIONS
+    if FACT_DEFINITIONS is None:
+        path = ConfigLoader.get_path(PROJECT_ROOT, 'mandatory_files', 'fact_definitions')
+        if path:
+            FACT_DEFINITIONS = ConfigLoader.load_json_file(path)
+        else:
+            FACT_DEFINITIONS = {}
+    return FACT_DEFINITIONS

@@ -7,7 +7,7 @@ from orbiter.core.engine.rule.rule_manager import RuleManager
 from orbiter.core.engine.action.action_manager import ActionManager
 from orbiter.core.engine.action.registration_manager import RegistrationManager
 from orbiter.utils.constants_manager import ConstantsManager
-from orbiter.utils.system import get_manifest
+from orbiter.utils.system import get_manifest, get_system_rules
 
 logger = logging.getLogger("ORBITER")
 
@@ -57,8 +57,9 @@ class AppBuilder:
         
         action_manager = ActionManager()
         
-        rules_path = get_manifest().get('mandatory_files', {}).get('system_rules')
-        rule_manager = RuleManager(project_root, rules_path, session_manager)
+        # Lazy load system_rules (only when rule engine needs it)
+        system_rules = get_system_rules()
+        rule_manager = RuleManager(project_root, system_rules, session_manager)
         
         registration_manager = RegistrationManager(
             app=None,
