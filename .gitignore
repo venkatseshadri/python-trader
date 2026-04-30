@@ -1,58 +1,59 @@
-# IDE & System
-.vscode/
-.idea/
-.DS_Store
-__pycache__/
-*.py[cod]
-*.so
-.Python
-env/
-venv/
-.venv/
-shoonya_env/
-
 # Credentials & Secrets
-**/cred.yml
-**/credentials.json
+*.yml
+*.yaml
+cred.yml
+tokens.json
+flattrade_cred.yml
+shoonya_cred.yml
 .env
 .env.local
-*.key
-*.pem
+secrets.json
 
-# Backtest Lab (Data & Large Artifacts)
-backtest_lab/data/
-backtest_lab/reports/
-backtest_lab/reports/*.html
-backtest_lab/research/
-backtest_lab/scenarios_best/
-backtest_lab/scenarios/master_suite/
-backtest_lab/orbiter_revamp_data.csv
-backtest_lab/nifty_1pct_movers_detailed.csv
-*.csv
-*.CSV
-*.zip
-!project.json
-!orbiter/config/*.json
-!orbiter/strategies/**/*.json
-!orbiter/data/*.json
-!orbiter/data/research/*.json
-!orbiter/data/span/cache.json
-!backtest_results/*.xlsx
+# API Keys & Tokens
+*_token*
+*_secret*
+*_key*
+apikey*
 
-# Application Logs & Cache
-logs/
-orbiter/logs/
-orbiter/data/span/*.json
-orbiter/data/nse_token_map.json
-.orbiter.lock
+# Logs
+*.log
+kurma_system.log
+kurma_cron.log
 
-# Build & Dist
-build/
-dist/
+# Cache & Temp
+__pycache__/
+*.pyc
+*.pyo
 *.egg-info/
-*.egg
-ShoonyaApi-py/cred*.yml
+.pytest_cache/
+.claude/
+*.tmp
+/tmp/
 
-# Test data
-orbiter/test_data/*.json
-!orbiter/test_data/README.md
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+*.db
+.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local development
+venv/
+env/
+.env.local
+
+# Don't ignore documentation
+!CLAUDE.md
+!README.md
+!TOKEN_GENERATION_GUIDE.md
+!CREDENTIALS_README.md
+!BROKER_AUTHENTICATION_GUIDE.md

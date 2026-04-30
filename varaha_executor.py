@@ -16,6 +16,9 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, List
 
+# Get logger - will be set by main module
+logger = logging.getLogger("Varaha")
+
 
 class VarahaExecutor:
     """Handles sequential order execution for Iron Butterfly strategy"""
@@ -160,16 +163,16 @@ class VarahaExecutor:
         #     response = self.api.place_order(**order_payload)
         #     order_record['order_id'] = response.get('norenordno', 'UNKNOWN')
         #     order_record['status'] = 'PLACED'
-        #     logging.info(f"🐗 Order PLACED: {buy_or_sell} {symbol_info['tsym']} Qty:{quantity} @ ₹{limit_price}")
+        #     logger.info(f"🐗 Order PLACED: {buy_or_sell} {symbol_info['tsym']} Qty:{quantity} @ ₹{limit_price}")
         # except Exception as e:
         #     order_record['status'] = 'FAILED'
         #     order_record['error'] = str(e)
-        #     logging.error(f"🐗 Order FAILED: {buy_or_sell} {symbol_info['tsym']} -> {e}")
+        #     logger.error(f"🐗 Order FAILED: {buy_or_sell} {symbol_info['tsym']} -> {e}")
         
         # SIMULATION - just log
         order_record['order_id'] = f"SI{len(self.order_log)+1:04d}"
         order_record['status'] = 'SIMULATED'
-        logging.info(f"🔒 [SIM] {timestamp} | {buy_or_sell} {symbol_info['tsym']} Qty:{quantity} @ ₹{limit_price}")
+        logger.info(f"🔒 [SIM] {timestamp} | {buy_or_sell} {symbol_info['tsym']} Qty:{quantity} @ ₹{limit_price}")
         
         self.order_log.append(order_record)
         return order_record
@@ -185,7 +188,7 @@ class VarahaExecutor:
         Returns:
             dict with execution summary
         """
-        logging.info(f"🐗 Varaha: Starting Iron Butterfly for {lots} lot(s)")
+        logger.info(f"🐗 Varaha: Starting Iron Butterfly for {lots} lot(s)")
         
         # 1. Calculate quantity (Lot Size × Lots)
         lot_size = legs.get('lot_size', 50)  # Default 50 for Nifty
@@ -258,7 +261,7 @@ class VarahaExecutor:
             self.order_log[3]['side'] == 'SELL'
         )
         
-        logging.info(f"🐗 Sequence Verified: {wings_before_straddle}")
+        logger.info(f"🐗 Sequence Verified: {wings_before_straddle}")
         return wings_before_straddle
     
     def close_all_positions(self, open_positions: list) -> dict:

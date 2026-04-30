@@ -17,6 +17,9 @@ import sys
 import os
 import time
 import logging
+
+# Global logger instance
+logger = None
 import argparse
 from datetime import datetime, time as dt_time
 from pathlib import Path
@@ -71,6 +74,8 @@ def setup_logging(dry_run: bool = True):
     """
     import sys
     
+    global logger  # Update global logger instance
+    
     # Create custom logger (not the root logger)
     logger = logging.getLogger("Varaha")
     logger.setLevel(logging.DEBUG)
@@ -92,7 +97,7 @@ def setup_logging(dry_run: bool = True):
     logger.addHandler(console_handler)
     
     if dry_run:
-        logging.info("🐗 RUNNING IN DRY-RUN MODE - No real orders will be placed")
+        logger.info("🐗 RUNNING IN DRY-RUN MODE - No real orders will be placed")
 
 
 # ============================================================
@@ -131,32 +136,42 @@ def wait_for_market_open():
             datetime.combine(datetime.now().date(), Config.MARKET_START) - 
             datetime.now()
         ).seconds
-        logging.info(f"🐗 Waiting for market open ({wait_seconds//60} min)...")
+        logger.info(f"🐗 Waiting for market open ({wait_seconds//60} min)...")
         time.sleep(wait_seconds)
     else:
-        logging.info("🐗 Market already open - proceeding with entry")
+        logger.info("🐗 Market already open - proceeding with entry")
 
 
 # ============================================================
 # PHASE 1: AUTHENTICATION
 # ============================================================
 
-def authenticate(dry_run: bool = True) -> VarahaConnect:
+def authenticate(dry_run: bool = True, trade_broker: str = 's', 
+                 datafeed_broker: str = 'f') -> VarahaConnect:
     """
     Phase 1: Authenticate with broker API
+    
+    Args:
+        dry_run: If True, skip actual login
+        trade_broker: Broker code for trade placement (s=Shoonya, f=Flattrade)
+        datafeed_broker: Broker code for data feed (s=Shoonya, f=Flattrade, y=YahooFinance)
     
     Returns:
         VarahaConnect instance or None on failure
     """
     logging.info("🔐 PHASE 1: AUTHENTICATION")
     logging.info("-" * 40)
+    logging.info(f"   Trade Broker: {trade_broker}")
+    logging.info(f"   Datafeed Broker: {datafeed_broker}")
+    logging.info("-" * 40)
     
     try:
-        engine = VarahaConnect()
+        engine = VarahaConnect(trade_broker=trade_broker, 
+                            datafeed_broker=datafeed_broker)
         
         if not dry_run:
             if not engine.start_session():
-                logging.error("❌ Authentication failed - cannot proceed")
+                logger.error("❌ Authentication failed - cannot proceed")
                 return None
             logging.info("✅ Authenticated successfully")
         else:
@@ -164,11 +179,11 @@ def authenticate(dry_run: bool = True) -> VarahaConnect:
             # In dry-run, create mock engine
             engine = create_mock_engine()
         
-        logging.info("-" * 40 + "\n")
+        logger.info("-" * 40 + "\n")
         return engine
         
     except Exception as e:
-        logging.error(f"❌ Authentication error: {e}")
+        logger.error(f"❌ Authentication error: {e}")
         return None
 
 
@@ -213,11 +228,11 @@ def sync_master_data(dry_run: bool = True) -> VarahaMaster:
             # Load cached data in dry-run
             master.load_data()
         
-        logging.info("-" * 40 + "\n")
+        logger.info("-" * 40 + "\n")
         return master
         
     except Exception as e:
-        logging.error(f"❌ Master sync error: {e}")
+        logger.error(f"❌ Master sync error: {e}")
         return None
 
 
@@ -246,8 +261,8 @@ def select_strikes(engine, master) -> dict:
         # Round to nearest 50
         atm_strike = round(spot / 50) * 50
         
-        logging.info(f"   Spot: ₹{spot}")
-        logging.info(f"   ATM Strike: {atm_strike}")
+        logger.info(f"   Spot: ₹{spot}")
+        logger.info(f"   ATM Strike: {atm_strike}")
         
         # Get expiry (current weekly)
         # In production, calculate from master
@@ -256,17 +271,17 @@ def select_strikes(engine, master) -> dict:
         # Build 4 legs for Iron Butterfly
         legs = build_iron_butterfly_legs(atm_strike, expiry)
         
-        logging.info(f"   Expiry: {expiry}")
-        logging.info(f"   Sell CE: {legs['sell_ce']['tsym']}")
-        logging.info(f"   Buy CE:  {legs['buy_ce']['tsym']}")
-        logging.info(f"   Sell PE: {legs['sell_pe']['tsym']}")
-        logging.info(f"   Buy PE:  {legs['buy_pe']['tsym']}")
+        logger.info(f"   Expiry: {expiry}")
+        logger.info(f"   Sell CE: {legs['sell_ce']['tsym']}")
+        logger.info(f"   Buy CE:  {legs['buy_ce']['tsym']}")
+        logger.info(f"   Sell PE: {legs['sell_pe']['tsym']}")
+        logger.info(f"   Buy PE:  {legs['buy_pe']['tsym']}")
         
-        logging.info("-" * 40 + "\n")
+        logger.info("-" * 40 + "\n")
         return legs
         
     except Exception as e:
-        logging.error(f"❌ Strike selection error: {e}")
+        logger.error(f"❌ Strike selection error: {e}")
         return {}
 
 
@@ -357,7 +372,7 @@ def execute_position(engine, legs: dict, lots: int = 4) -> list:
     try:
         executor = VarahaExecutor(engine)
         
-        logging.info(f"   Placing Iron Butterfly: {lots} lots")
+        logger.info(f"   Placing Iron Butterfly: {lots} lots")
         
         # Execute in simulation mode (dry-run)
         result = executor.execute_iron_butterfly(legs, lots)
@@ -371,11 +386,11 @@ def execute_position(engine, legs: dict, lots: int = 4) -> list:
         # Build positions list for monitoring
         open_positions = build_positions_from_result(result, legs)
         
-        logging.info("-" * 40 + "\n")
+        logger.info("-" * 40 + "\n")
         return open_positions
         
     except Exception as e:
-        logging.error(f"❌ Execution error: {e}")
+        logger.error(f"❌ Execution error: {e}")
         return []
 
 
@@ -468,7 +483,7 @@ def start_monitoring(engine, open_positions: list, legs: dict, dry_run: bool = T
         
         net_pnl = mtm - Config.COST_BUFFER
         
-        logging.info(f"   [Check {i+1}] MTM: ₹{mtm:.2f} | Net: ₹{net_pnl:.2f}")
+        logger.info(f"   [Check {i+1}] MTM: ₹{mtm:.2f} | Net: ₹{net_pnl:.2f}")
         
         if net_pnl >= Config.TARGET_MTM:
             logging.info(f"🎯 TARGET HIT! Exiting at +₹{net_pnl:.2f}")
@@ -534,7 +549,7 @@ def check_existing_positions(engine, dry_run: bool = True) -> list:
     logging.info("🛡️ SESSION RECOVERY: Checking for existing positions...")
     
     if dry_run or not engine:
-        logging.info("   [DRY-RUN] Skipping position check")
+        logger.info("   [DRY-RUN] Skipping position check")
         return []
     
     try:
@@ -553,7 +568,7 @@ def check_existing_positions(engine, dry_run: bool = True) -> list:
             logging.info("   Position book is empty")
             return []
         
-        logging.info(f"   Found {len(positions)} positions in book")
+        logger.info(f"   Found {len(positions)} positions in book")
         
         # Look for Iron Butterfly pattern (4 legs)
         # We expect: 2 SELL (ATM straddle) + 2 BUY (OTM wings)
@@ -595,7 +610,7 @@ def check_existing_positions(engine, dry_run: bool = True) -> list:
             return []
             
     except Exception as e:
-        logging.warning(f"   Position check failed: {e}")
+        logger.warning(f"   Position check failed: {e}")
         return []
 
 
@@ -617,7 +632,7 @@ def start_monitoring_from_recovery(engine, existing_positions: list, dry_run: bo
         sentinel.current_sl = -2200  # Reset to max loss
     except ImportError:
         sentinel = None
-        logging.warning("   VarahaSentinel not available - using basic monitoring")
+        logger.warning("   VarahaSentinel not available - using basic monitoring")
     
     # In production, this would start the live monitoring loop
     # For now, log the recovery
@@ -676,12 +691,12 @@ def close_all_positions(engine, open_positions: list) -> bool:
             close_side = 'SELL'
             logging.info(f"   Closing LONG: {close_side} {pos['symbol']}")
         
-        logging.info("✅ All positions closed")
-        logging.info("-" * 40 + "\n")
+        logger.info("✅ All positions closed")
+        logger.info("-" * 40 + "\n")
         return True
         
     except Exception as e:
-        logging.error(f"❌ Exit error: {e}")
+        logger.error(f"❌ Exit error: {e}")
         return False
 
 
@@ -689,13 +704,16 @@ def close_all_positions(engine, open_positions: list) -> bool:
 # MAIN ORCHESTRATOR
 # ============================================================
 
-def run_orchestrator(dry_run: bool = True, live: bool = False):
+def run_orchestrator(dry_run: bool = True, live: bool = False,
+                      trade_broker: str = 's', datafeed_broker: str = 'f'):
     """
     The main orchestrator function
     
     Args:
         dry_run: If True, simulate everything (log only)
         live: If True, execute real orders
+        trade_broker: Broker for order placement (s=Shoonya, f=Flattrade, s,f=chain)
+        datafeed_broker: Broker for data feed (s,f,y = priority chain)
     """
     # Setup logging
     setup_logging(dry_run)
@@ -704,6 +722,8 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     logging.info("=" * 60)
     logging.info("🐗 PROJECT VARAHA - MASTER ORCHESTRATOR v1.0")
     logging.info(f"   Mode: {'DRY-RUN' if dry_run else 'LIVE'}")
+    logging.info(f"   Trade Broker: {trade_broker}")
+    logging.info(f"   Datafeed Broker: {datafeed_broker}")
     logging.info(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logging.info("=" * 60 + "\n")
     
@@ -712,8 +732,8 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     # ========================================================
     
     if not is_weekday():
-        logging.info("🛑 WEEKEND - No trading today")
-        logging.info("   Varaha runs Monday-Thursday only")
+        logger.info("🛑 WEEKEND - No trading today")
+        logger.info("   Varaha runs Monday-Thursday only")
         return
     
     if not is_market_hours(include_pre=True):
@@ -729,9 +749,9 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     # PHASE 1: AUTHENTICATION
     # ========================================================
     
-    engine = authenticate(dry_run)
+    engine = authenticate(dry_run, trade_broker, datafeed_broker)
     if not engine and not dry_run:
-        logging.error("❌ FATAL: Authentication failed - aborting")
+        logger.error("❌ FATAL: Authentication failed - aborting")
         return
     
     # ========================================================
@@ -742,8 +762,8 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     existing_positions = check_existing_positions(engine, dry_run)
     
     if existing_positions:
-        logging.info("🔄 SESSION RECOVERY: Found existing positions")
-        logging.info(f"   Resuming monitoring with {len(existing_positions)} legs")
+        logger.info("🔄 SESSION RECOVERY: Found existing positions")
+        logger.info(f"   Resuming monitoring with {len(existing_positions)} legs")
         # Resume monitoring with existing positions instead of opening new
         return start_monitoring_from_recovery(engine, existing_positions, dry_run)
     
@@ -753,7 +773,7 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     
     master = sync_master_data(dry_run)
     if not master and not dry_run:
-        logging.error("❌ FATAL: Master sync failed - aborting")
+        logger.error("❌ FATAL: Master sync failed - aborting")
         close_all_positions(engine, [])
         return
     
@@ -764,12 +784,12 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     wait_for_market_open()
     
     if not is_market_hours():
-        logging.info("⏰ Missed entry window (09:20-15:00)")
+        logger.info("⏰ Missed entry window (09:20-15:00)")
         return
     
     legs = select_strikes(engine, master)
     if not legs:
-        logging.error("❌ FATAL: Strike selection failed")
+        logger.error("❌ FATAL: Strike selection failed")
         return
     
     # ========================================================
@@ -779,7 +799,7 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
     open_positions = execute_position(engine, legs, Config.LOTS)
     
     if not open_positions:
-        logging.error("❌ FATAL: Position entry failed")
+        logger.error("❌ FATAL: Position entry failed")
         return
     
     # ========================================================
@@ -807,16 +827,143 @@ def run_orchestrator(dry_run: bool = True, live: bool = False):
 # ============================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="🐗 Project Varaha Orchestrator")
-    parser.add_argument('--dry-run', action='store_true', default=True,
-                        help="Run in simulation mode (default: True)")
-    parser.add_argument('--live', action='store_true', default=False,
-                        help="Run in live trading mode")
-    
+    parser = argparse.ArgumentParser(
+        description="🐗 Project Varaha - Iron Butterfly Trading Bot",
+        epilog="Examples:\n"
+               "  Dry-run (safe, fully mocked):           python3 varaha_main.py --dry-run\n"
+               "  Paper mode (real data, no orders):      python3 varaha_main.py --data-broker shoonya,flattrade\n"
+               "  Live trading (real data & orders):      python3 varaha_main.py --live-execution --confirm-live-execution=yes\n",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    # ============================================================
+    # EXECUTION MODE PARAMETERS
+    # ============================================================
+
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        default=False,
+        help="Run in fully mocked mode (mock data + mock orders). "
+             "Ignores all broker parameters. Default mode if no other params set."
+    )
+
+    # ============================================================
+    # DATA SOURCE PARAMETERS (ignored in dry-run)
+    # ============================================================
+
+    parser.add_argument(
+        '--data-broker',
+        type=str,
+        default='shoonya,flattrade,yfinance',
+        help="Data source broker(s) for market quotes. "
+             "Options: shoonya, flattrade, yfinance, or comma-separated chain. "
+             "Fallback order: shoonya,flattrade,yfinance (default)"
+    )
+
+    # ============================================================
+    # EXECUTION PARAMETERS (ignored in dry-run)
+    # ============================================================
+
+    parser.add_argument(
+        '--exec-broker',
+        type=str,
+        default='shoonya',
+        help="Broker for order execution: shoonya or flattrade. Default: shoonya"
+    )
+
+    # ============================================================
+    # LIVE TRADING FLAGS (for safety)
+    # ============================================================
+
+    parser.add_argument(
+        '--live-execution',
+        action='store_true',
+        default=False,
+        help="Enable REAL order execution to broker. "
+             "REQUIRES --confirm-live-execution=yes to prevent accidents. "
+             "Cannot be used with --dry-run."
+    )
+
+    parser.add_argument(
+        '--confirm-live-execution',
+        type=str,
+        default='no',
+        help="Confirm intent to execute REAL ORDERS. Must be exactly 'yes'. "
+             "Required when using --live-execution."
+    )
+
     args = parser.parse_args()
-    
-    # Disable dry-run if --live is explicitly set
-    dry_run = not args.live
-    
-    # Run the orchestrator
-    run_orchestrator(dry_run=dry_run, live=args.live)
+
+    # ============================================================
+    # VALIDATION & MODE DETERMINATION
+    # ============================================================
+
+    # Rule 1: Check for conflicting flags
+    if args.dry_run and args.live_execution:
+        print("❌ SAFETY VIOLATION: Cannot use --dry-run with --live-execution", file=sys.stderr)
+        print("   Choose one mode: either --dry-run OR --live-execution", file=sys.stderr)
+        sys.exit(2)
+
+    # Rule 2: Live execution requires confirmation
+    if args.live_execution and args.confirm_live_execution.lower() != 'yes':
+        print("❌ SAFETY VIOLATION: --live-execution requires --confirm-live-execution=yes", file=sys.stderr)
+        print(f"   Current value: --confirm-live-execution={args.confirm_live_execution}", file=sys.stderr)
+        print("   Preventing accidental real trades.", file=sys.stderr)
+        sys.exit(2)
+
+    # Determine execution mode
+    if args.dry_run:
+        mode = "DRY-RUN"
+        use_real_data = False
+        use_real_execution = False
+        data_broker = None
+        exec_broker = None
+    elif args.live_execution:
+        mode = "LIVE TRADING"
+        use_real_data = True
+        use_real_execution = True
+        data_broker = args.data_broker
+        exec_broker = args.exec_broker
+    else:
+        # Default to paper mode if any broker param is specified
+        mode = "PAPER TRADING"
+        use_real_data = True
+        use_real_execution = False
+        data_broker = args.data_broker
+        exec_broker = args.exec_broker
+
+    # ============================================================
+    # DISPLAY MODE SUMMARY
+    # ============================================================
+
+    print("\n" + "=" * 60)
+    print("🐗 VARAHA MODE SUMMARY")
+    print("=" * 60)
+    print(f"Mode: {mode}")
+
+    if mode == "DRY-RUN":
+        print("  Data Source: (mocked)")
+        print("  Trade Execution: (mocked - no real orders)")
+        print("  Real login: NO")
+    elif mode == "PAPER TRADING":
+        print(f"  Data Source: {data_broker}")
+        print(f"  Trade Execution: SIMULATED (no real orders placed)")
+        print(f"  Real login: YES")
+    elif mode == "LIVE TRADING":
+        print(f"  Data Source: {data_broker}")
+        print(f"  Trade Execution: REAL ORDERS (actual broker execution)")
+        print(f"  ⚠️  WARNING: REAL MONEY AT RISK")
+
+    print("=" * 60 + "\n")
+
+    # ============================================================
+    # RUN ORCHESTRATOR
+    # ============================================================
+
+    run_orchestrator(
+        dry_run=(mode == "DRY-RUN"),
+        live=(mode == "LIVE TRADING"),
+        trade_broker=exec_broker or 's',
+        datafeed_broker=data_broker or 'f'
+    )
