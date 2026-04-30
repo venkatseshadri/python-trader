@@ -1,4 +1,4 @@
-# 🐢 Varaha - NFO/BFO Index Trading Bot
+# 🐗 Varaha - NFO/BFO Index Trading Bot
 
 **Varaha** is an automated NSE index trading bot that trades during regular market hours (9:20 AM - 3:30 PM IST) on NIFTY and SENSEX index futures/options (NFO/BFO), releasing margin for Kurma's evening commodities trading.
 

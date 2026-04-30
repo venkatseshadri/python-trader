@@ -31,7 +31,7 @@
 - ✅ OHLC data validation examples
 - ✅ Margin API verification steps
 
-### Varaha (NFO/BFO Index Trading Bot)
+### 🐗 Varaha (NFO/BFO Index Trading Bot)
 
 | Document | Status | Purpose |
 |----------|--------|---------|

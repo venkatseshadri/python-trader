@@ -15,7 +15,7 @@ A comprehensive suite of tools and frameworks for automated trading in the India
 - **Brokers:** Shoonya (OAuth2, ✅ working) | Flattrade (blocked - MCX not enabled)
 - **[Quick Start →](./kurma/README.md) | [Architecture →](./kurma/CLAUDE.md) | [Broker Setup →](./kurma/BROKER_AUTHENTICATION_GUIDE.md)**
 
-### 2. 🐢 [Varaha](./VARAHA_GUIDE.md) — NFO/BFO Index Futures Trading
+### 2. 🐗 [Varaha](./VARAHA_GUIDE.md) — NFO/BFO Index Futures Trading
 **Systematic index trading bot for NIFTY and SENSEX** (9:20 AM - 3:05 PM IST)
 - **Strategy:** Trend-following with 3-tranche exits (50/25/25 partial TP + TSL)
 - **Capital:** ₹4,00,000 margin from account, releases at 3:05 PM for Kurma
