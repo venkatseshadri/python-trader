@@ -51,9 +51,29 @@ venv/
 env/
 .env.local
 
+# Large Data Files (4.8GB+ historical OHLC, test data, reports)
+# See DATASETS_REFERENCE.md for backtesting dataset documentation
+nifty_data/                    # 4.8GB equity minute-level OHLC (105 stocks, 11 years)
+*.csv                          # Individual stock CSV files
+orbiter/test_data/             # MCX/NFO/BFO test data (JSON)
+orbiter/data/                  # Cache files (span_cache, adx_cache)
+orbiter/reports/               # Strategy backtest reports
+orbiter/strategies/*/data/     # Strategy-specific data
+kurma_eod_reports/             # Kurma session reports
+logs/                          # Trading logs and session records
+build/                         # PyInstaller build artifacts
+*.xlsx                         # Excel test data
+option_chain.xlsx
+
+# Ephemeral Data (regenerated at runtime)
+*.json (if cache/generated)    # Except tracked config files
+span_cache.json
+adx_cache.json
+
 # Don't ignore documentation
 !CLAUDE.md
 !README.md
 !TOKEN_GENERATION_GUIDE.md
 !CREDENTIALS_README.md
 !BROKER_AUTHENTICATION_GUIDE.md
+!DATASETS_REFERENCE.md         # Dataset documentation (KEEP in repo)
