@@ -1176,31 +1176,34 @@ def run_capture_loop(use_broker: bool = True, once: bool = False, index: str = "
 
         last_date = today
 
-        snap, captured_daily = capture_once(
-            db,
-            ds,
-            buf,
-            daily_done,
-            prev_day_data,
-            csv_logger=csv_logger,
-            cached_open_price=open_price,
-            cached_prev_close=prev_close,
-        )
-        if captured_daily:
-            daily_done = True
-            # Cache the values for the rest of the day
-            if open_price is None and "open_price" in snap:
-                open_price = snap["open_price"]
-            if prev_close is None and "prev_close" in snap:
-                prev_close = snap["prev_close"]
+        try:
+            snap, captured_daily = capture_once(
+                db,
+                ds,
+                buf,
+                daily_done,
+                prev_day_data,
+                csv_logger=csv_logger,
+                cached_open_price=open_price,
+                cached_prev_close=prev_close,
+            )
+            if captured_daily:
+                daily_done = True
+                # Cache the values for the rest of the day
+                if open_price is None and "open_price" in snap:
+                    open_price = snap["open_price"]
+                if prev_close is None and "prev_close" in snap:
+                    prev_close = snap["prev_close"]
 
-        iterations += 1
-        logger.info(
-            f"[{iterations}] {snap['index']} Spot: {snap['spot']} | Buffer: {len(buf.buf)}"
-        )
-
-        # Release DB lock between writes so brahmand readers can query
-        db.close()
+            iterations += 1
+            logger.info(
+                f"[{iterations}] {snap['index']} Spot: {snap['spot']} | Buffer: {len(buf.buf)}"
+            )
+        except Exception as e:
+            logger.error(f"ERROR in capture_once: {type(e).__name__}: {e}", exc_info=True)
+        finally:
+            # Always release DB lock so brahmand readers can query between writes
+            db.close()
 
         if once:
             break
