@@ -1131,7 +1131,6 @@ def run_capture_loop(use_broker: bool = True, once: bool = False, index: str = "
     index = index.upper()
     logger.info(f"Starting DuckDB capture loop for {index}...")
     db = duckdb.connect(str(DB_PATH))
-    db.execute("PRAGMA journal_mode=WAL")
     init_schema(db)
 
     ds = DataSource(use_broker=use_broker, index=index)
