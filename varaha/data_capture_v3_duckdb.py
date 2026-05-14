@@ -378,6 +378,11 @@ class DataSource:
 
             ltp = float(ltp)
 
+            # Sanity: option LTP must be < 5000 (spot-level values = bad data)
+            if ltp > 5000:
+                logger.debug(f"Option LTP rejected (>{ltp}): {tsym}")
+                return None, "bad_data"
+
             # Calculate IV using Black-Scholes if spot price available
             calculated_iv = 0.0
             if spot and spot > 0:
@@ -1194,17 +1199,27 @@ def run_capture_loop(use_broker: bool = True, once: bool = False, index: str = "
             f"[{iterations}] {snap['index']} Spot: {snap['spot']} | Buffer: {len(buf.buf)}"
         )
 
+        # Release DB lock between writes so brahmand readers can query
+        db.close()
+
         if once:
             break
         sleep_until_next_minute()
 
-    count = db.execute(
-        f"SELECT COUNT(*) FROM market_data WHERE date = CURRENT_DATE AND index_name = '{index}'"
-    ).fetchone()[0]
-    logger.info(
-        f"Capture loop exited. Today: {count} rows. Total iterations: {iterations}"
-    )
-    db.close()
+        # Reconnect for next write cycle
+        db = duckdb.connect(str(DB_PATH))
+
+    try:
+        db = duckdb.connect(str(DB_PATH), read_only=True)
+        count = db.execute(
+            f"SELECT COUNT(*) FROM market_data WHERE date = CURRENT_DATE AND index_name = '{index}'"
+        ).fetchone()[0]
+        logger.info(
+            f"Capture loop exited. Today: {count} rows. Total iterations: {iterations}"
+        )
+        db.close()
+    except Exception:
+        pass  # DB already closed, no stats
 
 
 def get_prev_day_summary(
