@@ -1194,10 +1194,17 @@ def run_capture_loop(use_broker: bool = True, once: bool = False, index: str = "
             f"[{iterations}] {snap['index']} Spot: {snap['spot']} | Buffer: {len(buf.buf)}"
         )
 
+        # Release DB lock between writes so brahmand readers can query
+        db.close()
+
         if once:
             break
         sleep_until_next_minute()
 
+        # Reconnect for next cycle
+        db = duckdb.connect(str(DB_PATH))
+
+    db = duckdb.connect(str(DB_PATH), read_only=True)
     count = db.execute(
         f"SELECT COUNT(*) FROM market_data WHERE date = CURRENT_DATE AND index_name = '{index}'"
     ).fetchone()[0]
