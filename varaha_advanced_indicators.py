@@ -376,7 +376,7 @@ def compute_pivot_clusters(db, index: str) -> Dict:
               AND pivot_pp IS NOT NULL
               AND CAST(date AS DATE) >= DATE(CURRENT_DATE - INTERVAL 5 DAY)
             ORDER BY date DESC
-            LIMIT 1440  # ~5 trading days
+            LIMIT 1440
         """).fetchall()
 
         if not rows or len(rows) < 5:
